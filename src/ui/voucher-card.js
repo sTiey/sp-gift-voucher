@@ -40,8 +40,12 @@ export function conditionLine(v) {
   const bits = [];
   if (v.conditions.minSpend) bits.push(`${t('card.minSpendPrefix')} ${money(v.conditions.minSpend)}`);
   if (v.conditions.maxDiscount) bits.push(`${t('card.maxDiscountPrefix')} ${money(v.conditions.maxDiscount)}`);
+  // โชว์จำนวนสิทธิ์ที่เหลือเฉพาะตอนที่เป็น "ของแย่งกัน" จริง ๆ
+  // ใบส่วนตัวที่มีสิทธิ์เดียวอยู่แล้ว เขียน "เหลืออีก 1 สิทธิ์" = รกเปล่า ๆ
   const left = remainingUses(v);
-  if (left != null && left > 0) bits.push(`${t('card.remainingPrefix')} ${left} ${t('card.remainingSuffix')}`);
+  if (left != null && left > 0 && v.limits.total > 1) {
+    bits.push(`${t('card.remainingPrefix')} ${left} ${t('card.remainingSuffix')}`);
+  }
   return bits.join(' · ');
 }
 
