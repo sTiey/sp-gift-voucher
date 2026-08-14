@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เลือกดีไซน์คูปอง · 5 แบบ</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/seal.css">
+<link rel="stylesheet" href="../src/styles/designs/ironwindow.css">
+<link rel="stylesheet" href="../src/styles/designs/goldplate.css">
+<link rel="stylesheet" href="../src/styles/designs/poster.css">
+<link rel="stylesheet" href="../src/styles/designs/limeticket.css">
+<style>
+  /* หน้านี้ทำหน้าที่เดียว: ให้ใบคูปองเป็นพระเอก
+     เปลือกหน้าจึงเงียบที่สุดเท่าที่จะทำได้ — เทากลาง ไม่มีสีแข่ง */
+  :root { --pg: #7f838a; --pg-2: #6f737a; --ink: #14161a; --ink-2: #43474e; }
+  body { background: var(--pg); color: var(--ink); font-family: 'Anuphan', sans-serif; }
+
+  .hd {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 14px 28px;
+    background: rgb(20 22 26 / 92%); backdrop-filter: blur(10px);
+    color: #f2f3f5;
+  }
+  .hd__t { font-size: 13px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .hd__s { font-size: 12px; color: #a7abb3; }
+  .sp { flex: 1; }
+
+  .seg { display: inline-flex; gap: 2px; padding: 2px; background: #2a2d33; border-radius: 6px; }
+  .seg button {
+    padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 500;
+    color: #a7abb3; background: none; border: 0; cursor: pointer;
+  }
+  .seg button[aria-pressed='true'] { background: #f2f3f5; color: #14161a; font-weight: 600; }
+
+  .wrap { max-width: 1180px; margin-inline: auto; padding: 40px 24px 96px; }
+
+  .row { padding-block: 44px; border-top: 1px solid rgb(20 22 26 / 14%); }
+  .row:first-child { border-top: 0; }
+
+  .row__hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 26px; }
+  .row__n { font: 500 12px/1 'IBM Plex Mono', monospace; color: var(--ink-2); }
+  .row__name { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+  .row__blurb { font-size: 13px; color: var(--ink-2); flex-basis: 100%; max-width: 62ch; }
+  .tag {
+    padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    border: 1px solid rgb(20 22 26 / 28%); color: var(--ink);
+  }
+  .tag[data-k='brand'] { background: rgb(160 136 96 / 34%); }
+  .tag[data-k='bold'] { background: rgb(20 22 26 / 12%); }
+
+  .pair { display: grid; gap: 30px; align-items: start; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .pair { grid-template-columns: minmax(0, 720px) minmax(0, 380px); } }
+
+  .slot { display: grid; gap: 9px; justify-items: start; }
+  .slot__cap { font: 500 11px/1 'IBM Plex Mono', monospace; color: rgb(20 22 26 / 55%); letter-spacing: .08em; }
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <span class="hd__t">เลือกดีไซน์คูปอง</span>
+  <span class="hd__s">5 แบบ · แบบละ 2 ทรง</span>
+  <span class="sp"></span>
+  <span class="hd__s">ตัวอย่างคูปอง</span>
+  <div class="seg" id="sampleSeg">
+    <button type="button" data-v="percent" aria-pressed="true">ลด %</button>
+    <button type="button" data-v="amount" aria-pressed="false">ลดเป็นบาท</button>
+    <button type="button" data-v="fixed" aria-pressed="false">ราคาพิเศษ</button>
+    <button type="button" data-v="ship" aria-pressed="false">ส่งฟรี</button>
+    <button type="button" data-v="used" aria-pressed="false">ใช้แล้ว</button>
+  </div>
+</div>
+
+<div class="wrap" id="wrap"></div>
+
+<script type="module">
+import { cardHtml, DESIGNS } from '../src/ui/voucher-design.js';
+import { createVoucher } from '../src/index.js';
+
+const SAMPLES = {
+  percent: { code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
+    title: 'ส่วนลดพาร์ทเนอร์ ไตรมาส 3', note: 'ขอบคุณที่ร่วมงานกับเรามาตลอด 3 ปี',
+    conditions: { minSpend: 10000, maxDiscount: 2000 }, audience: { segments: ['partner'] },
+    validUntil: '2026-12-31T23:59:59+07:00', design: { badge: 'PARTNER' } },
+  amount: { code: 'VIP-3H8N-5TQA', kind: 'amount', value: 1500,
+    title: 'บัตรกำนัลลูกค้าประจำ', conditions: { minSpend: 8000 },
+    audience: { segments: ['vip'] }, validUntil: '2026-09-30T23:59:59+07:00' },
+  fixed: { code: 'BACK-9RD2-6MWB', kind: 'fixed_price', value: 7900,
+    title: 'ราคาพิเศษ · ราวระเบียง 1 ชุด', audience: { segments: ['returning'] },
+    validUntil: '2026-10-31T23:59:59+07:00', design: { badge: '30 สิทธิ์' } },
+  ship: { code: 'SHIP-4C7B-8XJR', kind: 'free_shipping', value: 0,
+    title: 'ส่งฟรีทั่วประเทศ', conditions: { minSpend: 5000 }, validUntil: null },
+  used: { code: 'SPE-6J2X-4NBY', kind: 'amount', value: 500,
+    title: 'ส่วนลดต้อนรับลูกค้าใหม่', conditions: { minSpend: 3000 },
+    state: 'redeemed', validUntil: '2026-12-31T23:59:59+07:00' },
+};
+
+const ART = { seal: 'balcony', ironwindow: 'stair', goldplate: 'gate', poster: 'fence', limeticket: 'window' };
+const FAMILY = { brand: 'สีแบรนด์', bold: 'ปล่อยกล้า' };
+
+let sample = 'percent';
+
+function paint() {
+  const v = createVoucher(SAMPLES[sample]);
+  document.querySelector('#wrap').innerHTML = DESIGNS.map((d, i) => `
+    <section class="row">
+      <div class="row__hd">
+        <span class="row__n">${String(i + 1).padStart(2, '0')}</span>
+        <span class="row__name">${d.name}</span>
+        <span class="tag" data-k="${d.family}">${FAMILY[d.family]}</span>
+        <span class="tag" data-k="${d.family}">${d.photo ? 'มีภาพสินค้า' : 'ไม่มีภาพ'}</span>
+        <p class="row__blurb">${d.blurb}</p>
+      </div>
+      <div class="pair">
+        <div class="slot">
+          ${cardHtml(v, { design: d.id, shape: 'ticket', art: ART[d.id] })}
+          <span class="slot__cap">ทรงยาว — ส่ง LINE / อีเมล / จอคอม</span>
+        </div>
+        <div class="slot">
+          ${cardHtml(v, { design: d.id, shape: 'compact', art: ART[d.id] })}
+          <span class="slot__cap">ทรงกระทัดรัด — บนมือถือ</span>
+        </div>
+      </div>
+    </section>`).join('');
+}
+
+document.querySelector('#sampleSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  sample = b.dataset.v;
+  for (const x of document.querySelectorAll('#sampleSeg button')) {
+    x.setAttribute('aria-pressed', String(x === b));
+  }
+  paint();
+});
+
+paint();
+</script>
+</body>
+</html>

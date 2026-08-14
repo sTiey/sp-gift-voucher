@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตัวอย่างดีไซน์เดี่ยว</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/seal.css">
+<link rel="stylesheet" href="../src/styles/designs/ironwindow.css">
+<link rel="stylesheet" href="../src/styles/designs/goldplate.css">
+<link rel="stylesheet" href="../src/styles/designs/poster.css">
+<link rel="stylesheet" href="../src/styles/designs/limeticket.css">
+<style>
+  /* หน้านี้ใช้ดูดีไซน์เดียวโดด ๆ ตอนกำลังทำงาน — พื้นกลาง ๆ ไม่แย่งซีน */
+  body { background: #8e9199; }
+  .stage { display: grid; gap: 48px; justify-items: center; padding: 48px 24px; }
+  .stage__row { display: grid; gap: 14px; justify-items: center; }
+  .stage__cap {
+    font: 500 12px/1.4 var(--vk-font-mono);
+    letter-spacing: .08em; color: #22242a; text-transform: uppercase;
+  }
+  .stage__box { width: 100%; display: grid; justify-items: center; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage"></div>
+
+<script type="module">
+import { cardHtml, DESIGNS } from '../src/ui/voucher-design.js';
+import { createVoucher } from '../src/index.js';
+
+const q = new URLSearchParams(location.search);
+const design = q.get('d') || 'seal';
+const only = q.get('shape');            // ระบุทรงเดียวได้ เช่น ?shape=ticket
+const which = q.get('v') || 'percent';  // เปลี่ยนตัวอย่างคูปองได้
+
+const SAMPLES = {
+  percent: {
+    code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
+    title: 'ส่วนลดพาร์ทเนอร์ ไตรมาส 3',
+    note: 'ขอบคุณที่ร่วมงานกับเรามาตลอด 3 ปี',
+    conditions: { minSpend: 10000, maxDiscount: 2000 },
+    audience: { segments: ['partner'] },
+    validUntil: '2026-12-31T23:59:59+07:00',
+    design: { badge: 'PARTNER' },
+  },
+  amount: {
+    code: 'VIP-3H8N-5TQA', kind: 'amount', value: 1500,
+    title: 'บัตรกำนัลลูกค้าประจำ',
+    conditions: { minSpend: 8000 },
+    audience: { segments: ['vip'] },
+    validUntil: '2026-09-30T23:59:59+07:00',
+  },
+  fixed: {
+    code: 'BACK-9RD2-6MWB', kind: 'fixed_price', value: 7900,
+    title: 'ราคาพิเศษ · ราวระเบียง 1 ชุด',
+    audience: { segments: ['returning'] },
+    validUntil: '2026-10-31T23:59:59+07:00',
+    design: { badge: '30 สิทธิ์' },
+  },
+  ship: {
+    code: 'SHIP-4C7B-8XJR', kind: 'free_shipping', value: 0,
+    title: 'ส่งฟรีทั่วประเทศ',
+    conditions: { minSpend: 5000 },
+    validUntil: null,
+  },
+  used: {
+    code: 'SPE-6J2X-4NBY', kind: 'amount', value: 500,
+    title: 'ส่วนลดต้อนรับลูกค้าใหม่',
+    conditions: { minSpend: 3000 },
+    state: 'redeemed',
+    validUntil: '2026-12-31T23:59:59+07:00',
+  },
+};
+
+const art = { seal: 'balcony', ironwindow: 'stair', goldplate: 'gate', poster: 'fence', limeticket: 'window' };
+const v = createVoucher(SAMPLES[which] || SAMPLES.percent);
+const shapes = only ? [only] : ['ticket', 'compact'];
+
+document.title = `${design} · ${(DESIGNS.find((d) => d.id === design) || {}).name || ''}`;
+document.querySelector('#stage').innerHTML = shapes.map((shape) => `
+  <div class="stage__row">
+    <div class="stage__box">${cardHtml(v, { design, shape, art: art[design] || 'balcony' })}</div>
+    <span class="stage__cap">${design} · ${shape}</span>
+  </div>`).join('');
+</script>
+</body>
+</html>
