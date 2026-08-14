@@ -1,1 +1,456 @@
-/* goldplate — ยังไม่ได้ออกแบบ */
+/* ============================================================================
+   goldplate — "แผ่นทอง"
+   ----------------------------------------------------------------------------
+   แนวคิด: ไม่ใช่คูปอง แต่เป็น **แผ่นโลหะที่ถูกเจียรแล้วสลักตัวอักษร**
+   พื้นดำเหล็กอมอุ่น · ตัวหนังสือเทาอุ่น · ทองเหลืองหม่นใช้แค่ 3 ที่เท่านั้น
+     1. เส้นขอบเส้นผมรอบใบ (กรอบนอก + กรอบใน = ร่องเจียร 2 ชั้น)
+     2. ตัวเลขมูลค่า — พระเอกของใบ
+     3. ขีดจิ๋ว ๆ ที่นำหน้าป้ายกำกับ
+   ที่เหลือเป็นเทาอุ่นบนดำล้วน — ความแพงมาจาก "การไม่ใช้ทอง" ไม่ใช่การใช้ทอง
+
+   ลายเซ็น 3 อย่างที่ทำให้จำได้:
+   ก) มอโนแกรม SP ตัวมหึมา จาง ๆ เป็นลายน้ำอยู่ **หลังตัวเลข** โดยตรง
+   ข) เส้นผมตั้ง (ทรงยาว) / เส้นผมนอน (ทรงกระทัดรัด) เส้นเดียวยาวเต็มช่วง
+      แบ่ง "ช่องตัวเลข" ออกจาก "ช่องข้อความ" — ตำแหน่งเส้นคงที่ทุกใบ
+      ไม่ว่าตัวเลขจะสั้นยาวแค่ไหน ทั้งชุดจึงดูเป็นระบบเดียวกัน
+   ค) โลโก้ในหัวใบถูก **ครอบเหลือแค่มอโนแกรม** แล้วเขียน SP EMPIRE
+      ด้วยตัวพิมพ์ใหญ่ถ่างกว้างข้าง ๆ — ไม่ใช้โลโก้เต็มก้อนแบบสำเร็จรูป
+
+   ⛔ ห้าม metallic gradient / เงาฟุ้ง / เส้นประ+รูวงกลม / มุมมนใหญ่
+   ========================================================================== */
+
+[data-design='goldplate'] .vk-card {
+  /* tokens.css ตั้ง --vk-u: 1rem ทับไว้ที่ .vk-card ทำให้ค่าที่ card-base
+     ตั้งไว้ที่ .vk-voucher (ซึ่งยืดตามความกว้างจริง) ส่งไม่ถึงข้างใน
+     ดึงกลับมาด้วย inherit — ไม่งั้นทรงกระทัดรัดบนจอ 320px จะไม่ย่อตาม */
+  --vk-u: inherit;
+
+  /* ---- จานสีเดียวของทั้งดีไซน์ (ใบใช้แล้วเขียนทับทั้งชุดทีเดียว) ---- */
+  --gp-plate: #15120e;        /* ดำเหล็กอมอุ่น — ตัวแผ่น */
+  --gp-plate-2: #1c1811;      /* แผ่นก้าน ยกอ่อน ๆ ให้เห็นว่าเป็นคนละชิ้น */
+  --gp-gold: #a68d63;         /* ทองเหลืองหม่น — ดูดจากงานเหล็กจริง */
+  --gp-gold-soft: #8a7550;
+  --gp-gold-dim: #574930;     /* เส้นเจียรชั้นใน */
+  --gp-ink: #ddd6ca;          /* เทาอุ่นอ่อน — ตัวหนังสือหลัก */
+  --gp-ink-2: #9d958a;        /* เทากลาง — คำอธิบาย */
+  --gp-ink-3: #726c62;        /* เทาเข้ม — ป้ายกำกับจิ๋ว */
+  --gp-line: #362d20;         /* เส้นแบ่งโครงสร้าง */
+
+  --gp-num: calc(var(--vk-u) * 5.1);      /* ตัวเลขมูลค่า — ตั้งต้นที่ % */
+  --gp-mark: calc(var(--vk-u) * 10.5);    /* กล่องลายน้ำมอโนแกรม (คงที่ทุกใบ) */
+  --gp-inset: calc(var(--vk-u) * 0.46);   /* ระยะกรอบในจากขอบใบ */
+
+  background: var(--gp-plate);
+  color: var(--gp-ink);
+  border: var(--vk-hairline) solid var(--gp-gold-soft);
+  border-radius: calc(var(--vk-u) * 0.14);   /* เกือบคม — ขอบแผ่นโลหะ */
+  font-family: 'Google Sans', 'Noto Sans Thai', sans-serif;
+  overflow: hidden;
+}
+
+/* ตัวเลขที่มีหลายหลัก (บาท / ราคาพิเศษ) ต้องเล็กลง ไม่งั้นเบียดช่องข้อความ */
+[data-design='goldplate'] .vk-card[data-kind='amount'],
+[data-design='goldplate'] .vk-card[data-kind='fixed_price'] {
+  --gp-num: calc(var(--vk-u) * 3.5);
+}
+
+/* กรอบในเส้นผม — ร่องเจียรชั้นที่ 2 (ลายเซ็นข้อ ข) */
+[data-design='goldplate'] .vk-card::before {
+  content: '';
+  position: absolute;
+  inset: var(--gp-inset);
+  border: var(--vk-hairline) solid var(--gp-gold-dim);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ดีไซน์นี้ไม่ใช้ภาพสินค้า */
+[data-design='goldplate'] .vk-card__art { display: none; }
+
+/* ══ เนื้อหาหลัก ═══════════════════════════════════════════════════════ */
+
+[data-design='goldplate'] .vk-card__main {
+  position: relative;
+  z-index: 2;
+}
+
+/* ---- หัวใบ: มอโนแกรม · ชื่อแบรนด์ถ่าง · สถานะ ---- */
+
+[data-design='goldplate'] .vk-card__head {
+  flex: none;
+  align-items: center;
+  gap: calc(var(--vk-u) * 0.7);
+  padding-bottom: calc(var(--vk-u) * 0.8);
+  border-bottom: var(--vk-hairline) solid var(--gp-line);
+}
+
+/* ครอบโลโก้ให้เหลือ "เฉพาะมอโนแกรมในกรอบ" (ลายเซ็นข้อ ค)
+   ภาพต้นฉบับ 640×646 · กรอบมอโนแกรมอยู่ x 218–422 · y 8–441
+   จึงย่อทั้งภาพแล้วเลื่อนด้วย margin ลบ ให้เห็นเฉพาะช่วงนั้น */
+[data-design='goldplate'] .vk-card__logo {
+  width: calc(var(--vk-u) * 1.04);
+  height: calc(var(--vk-u) * 2.15);
+  overflow: hidden;
+}
+[data-design='goldplate'] .vk-card__logo img {
+  width: calc(var(--vk-u) * 3.178);
+  height: auto;
+  max-width: none;
+  margin: calc(var(--vk-u) * -0.04) 0 0 calc(var(--vk-u) * -1.082);
+  /* โครง HTML ส่งโลโก้ "ดำ" มาให้เสมอ — บนแผ่นดำต้องกลับขั้วเป็นสว่าง */
+  filter: invert(1) brightness(0.86);
+}
+
+[data-design='goldplate'] .vk-card__brandname {
+  font-size: calc(var(--vk-u) * 0.72);
+  font-weight: var(--vk-weight-medium);
+  letter-spacing: 0.3em;
+  color: var(--gp-ink-2);
+  margin-right: auto;
+}
+
+[data-design='goldplate'] .vk-card__pill {
+  flex: none;
+  padding: calc(var(--vk-u) * 0.22) calc(var(--vk-u) * 0.6);
+  border: var(--vk-hairline) solid var(--gp-line);
+  font-size: calc(var(--vk-u) * 0.66);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.25;
+  letter-spacing: 0.03em;
+  color: var(--gp-ink-3);
+}
+[data-design='goldplate'] .vk-card__pill[data-tone='ok'] {
+  border-color: var(--gp-gold-dim);
+  color: var(--gp-gold);
+}
+
+/* ---- ตัวเนื้อ: ช่องตัวเลข | เส้นผม | ช่องข้อความ ---- */
+
+[data-design='goldplate'] .vk-card__hero {
+  position: relative;
+  flex: 1;
+  display: grid;
+  align-content: center;
+}
+
+[data-design='goldplate'] .vk-card__kicker {
+  grid-area: 1 / 1;
+  align-self: end;
+  font-size: calc(var(--vk-u) * 0.68);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  color: var(--gp-ink-3);
+}
+
+[data-design='goldplate'] .vk-card__value {
+  position: relative;
+  align-items: baseline;
+  gap: calc(var(--vk-u) * 0.24);
+}
+
+[data-design='goldplate'] .vk-card__num {
+  position: relative;
+  font-size: var(--gp-num);
+  font-weight: var(--vk-weight-regular);   /* บาง + ใหญ่ = แพง */
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--gp-gold);
+}
+
+/* ลายน้ำมอโนแกรมตัวมหึมา — ขนาดและตำแหน่ง **คงที่ทุกใบ** ไม่ผูกกับความยาว
+   ของตัวเลข จึงทำหน้าที่เหมือน "ตราที่ปั๊มอยู่บนแผ่น" แล้วค่อยสลักเลขทับ
+   ไม่ใช่เอฟเฟกต์ที่วิ่งตามตัวหนังสือ (ลายเซ็นข้อ ก)
+   clip-path ตัดภาพโลโก้ให้เหลือ **เฉพาะตัว SP ข้างใน** ไม่เอากรอบสี่เหลี่ยม
+   (กรอบขยายใหญ่แล้วอ่านเป็น "กล่องหลง" ไม่ใช่ลายน้ำ)
+   ส่วนที่เหลือกินพื้นที่ 22% ของกว้าง / 52% ของสูง ศูนย์กลางจึงอยู่ที่
+   49% และ 34% ของกล่อง — ตัวเลข translate สองตัวมาจากตรงนั้น */
+[data-design='goldplate'] .vk-card__value::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: calc(var(--vk-u) * 4.4);
+  width: var(--gp-mark);
+  height: calc(var(--gp-mark) * 1.0094);
+  transform: translate(-49%, -34%);
+  background: url('../../../assets/brand/spe-white.png') no-repeat center / 100% 100%;
+  clip-path: inset(8% 40% 40% 38%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* ค่าที่เป็น "คำ" เช่น ส่งฟรี — ต้องเล็กลง และคลายบรรทัดกันวรรณยุกต์ชน */
+[data-design='goldplate'] .vk-card__num[data-text='true'] {
+  font-size: calc(var(--vk-u) * 2.2);
+  line-height: 1.22;
+  letter-spacing: 0.005em;
+}
+
+[data-design='goldplate'] .vk-card__lead,
+[data-design='goldplate'] .vk-card__unit {
+  align-self: flex-start;
+  font-size: calc(var(--gp-num) * 0.28);
+  font-weight: var(--vk-weight-regular);
+  line-height: 1;
+  padding-top: calc(var(--gp-num) * 0.17);
+  letter-spacing: 0.02em;
+  color: var(--gp-gold-soft);
+}
+
+/* ---- ข้อความฝั่งขวา (ทรงยาว) / ใต้เส้น (ทรงกระทัดรัด) ---- */
+
+[data-design='goldplate'] .vk-card__title {
+  font-size: calc(var(--vk-u) * 1.16);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.28;
+  letter-spacing: 0.004em;
+  color: var(--gp-ink);
+  overflow-wrap: anywhere;
+}
+
+[data-design='goldplate'] .vk-card__cond {
+  font-size: calc(var(--vk-u) * 0.78);
+  line-height: 1.5;
+  color: var(--gp-ink-2);
+  overflow-wrap: anywhere;
+}
+
+[data-design='goldplate'] .vk-card__note {
+  font-size: calc(var(--vk-u) * 0.74);
+  line-height: 1.45;
+  color: var(--gp-ink-3);
+  overflow-wrap: anywhere;
+}
+
+/* ---- ป้ายกำกับพิเศษ — อยู่ในสายเนื้อหา ไม่ลอย จึงล้นไม่ได้ ---- */
+
+[data-design='goldplate'] .vk-card__badge {
+  position: static;
+  flex: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--vk-u) * 0.5);
+  max-width: 100%;
+  font-size: calc(var(--vk-u) * 0.62);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.3;
+  letter-spacing: 0.19em;
+  color: var(--gp-ink-3);
+  overflow-wrap: anywhere;
+}
+[data-design='goldplate'] .vk-card__badge::before {
+  content: '';
+  flex: none;
+  width: calc(var(--vk-u) * 1.3);
+  height: var(--vk-hairline);
+  background: var(--gp-gold-soft);
+}
+
+/* ══ ก้าน (QR + รหัส) ══════════════════════════════════════════════════ */
+
+[data-design='goldplate'] .vk-card__stub {
+  position: relative;
+  z-index: 2;
+  background: var(--gp-plate-2);
+}
+
+/* เส้นแบ่งเป็น "เส้นผมคู่" แบบร่องเจียร — ไม่ใช่เส้นประคูปองโหล */
+[data-design='goldplate'] .vk-card__stub::before,
+[data-design='goldplate'] .vk-card__stub::after {
+  content: '';
+  position: absolute;
+  background: var(--gp-line);
+  pointer-events: none;
+}
+
+[data-design='goldplate'] .vk-card__qr {
+  color: var(--gp-ink-2);
+  opacity: 0.82;
+}
+
+[data-design='goldplate'] .vk-card__stub-body {
+  gap: 0;
+}
+
+[data-design='goldplate'] .vk-card__label {
+  font-size: calc(var(--vk-u) * 0.6);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: var(--gp-ink-3);
+}
+
+[data-design='goldplate'] .vk-card__code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: calc(var(--vk-u) * 0.9);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  color: var(--gp-ink);
+}
+
+[data-design='goldplate'] .vk-card__date {
+  font-size: calc(var(--vk-u) * 0.82);
+  font-weight: var(--vk-weight-medium);
+  line-height: 1.4;
+  color: var(--gp-ink-2);
+}
+[data-design='goldplate'] .vk-card__date.is-urgent { color: var(--gp-gold); }
+
+/* ══ ทรงยาว (ticket) ═══════════════════════════════════════════════════
+   ช่องตัวเลขกว้างคงที่ → เส้นผมตั้งอยู่ตำแหน่งเดิมทุกใบ (ลายเซ็นข้อ ข) */
+
+[data-design='goldplate'][data-shape='ticket'] .vk-card {
+  --gp-col: calc(var(--vk-u) * 11.9);
+  min-height: calc(var(--vk-u) * 16);
+}
+
+[data-design='goldplate'][data-shape='ticket'] .vk-card__main {
+  gap: calc(var(--vk-u) * 1.05);
+  padding: calc(var(--vk-u) * 1.85) calc(var(--vk-u) * 2.15);
+}
+
+[data-design='goldplate'][data-shape='ticket'] .vk-card__hero {
+  grid-template-columns: var(--gp-col) minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: calc(var(--vk-u) * 2);
+  row-gap: calc(var(--vk-u) * 0.4);
+}
+/* เส้นผมตั้ง — ลากจากใต้เส้นหัวใบยาวลงถึงก้นเนื้อหา ผ่านข้างป้ายกำกับ
+   วางบน .vk-card__main ไม่ใช่ .vk-card__hero เพราะ hero สั้นกว่าช่วงเนื้อหา
+   ระยะบน = padding-top 1.85u + ความสูงหัวใบ (โลโก้ 2.15u + 0.8u + เส้น) + gap 1.05u
+   หัวใบสูงคงที่เพราะโลโก้ล็อกความสูงไว้ และ pill เตี้ยกว่าเสมอ */
+[data-design='goldplate'][data-shape='ticket'] .vk-card__main::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--vk-u) * 5.85);
+  bottom: calc(var(--vk-u) * 1.85);
+  left: calc(var(--vk-u) * 2.15 + var(--gp-col) + var(--vk-u));
+  width: var(--vk-hairline);
+  background: var(--gp-line);
+}
+
+[data-design='goldplate'][data-shape='ticket'] .vk-card__value {
+  grid-area: 2 / 1 / 4 / 2;
+  align-self: start;
+  padding-top: calc(var(--vk-u) * 0.15);
+}
+[data-design='goldplate'][data-shape='ticket'] .vk-card__title { grid-area: 1 / 2; align-self: end; }
+[data-design='goldplate'][data-shape='ticket'] .vk-card__cond {
+  grid-area: 2 / 2;
+  align-self: start;
+  padding-top: calc(var(--vk-u) * 0.48);
+  border-top: var(--vk-hairline) solid var(--gp-line);
+}
+[data-design='goldplate'][data-shape='ticket'] .vk-card__note { grid-area: 3 / 2; align-self: start; }
+
+[data-design='goldplate'][data-shape='ticket'] .vk-card__stub {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--vk-u) * 1);
+  width: calc(var(--vk-u) * 9);
+  padding: calc(var(--vk-u) * 1.7) calc(var(--vk-u) * 0.9);
+}
+[data-design='goldplate'][data-shape='ticket'] .vk-card__stub::before {
+  inset-block: 0;
+  left: 0;
+  width: var(--vk-hairline);
+}
+[data-design='goldplate'][data-shape='ticket'] .vk-card__stub::after {
+  inset-block: calc(var(--gp-inset) + var(--vk-u) * 0.8);
+  left: calc(var(--vk-u) * 0.3);
+  width: var(--vk-hairline);
+  background: var(--gp-gold-dim);
+}
+[data-design='goldplate'][data-shape='ticket'] .vk-card__qr { width: calc(var(--vk-u) * 4.3); }
+[data-design='goldplate'][data-shape='ticket'] .vk-card__stub-body {
+  justify-items: center;
+  text-align: center;
+}
+
+/* ══ ทรงกระทัดรัด (compact) ════════════════════════════════════════════
+   ภาษาเดียวกันเป๊ะ แค่หมุนแกน: เส้นผม "ตั้ง" กลายเป็นเส้นผม "นอน"
+   ที่แบ่งช่องตัวเลขออกจากช่องข้อความ                                    */
+
+[data-design='goldplate'][data-shape='compact'] .vk-card__main {
+  gap: calc(var(--vk-u) * 0.85);
+  padding: calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.7);
+}
+
+[data-design='goldplate'][data-shape='compact'] .vk-card__hero {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(5, auto);
+  row-gap: calc(var(--vk-u) * 0.3);
+  align-content: start;
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card__kicker { grid-area: 1 / 1; }
+[data-design='goldplate'][data-shape='compact'] .vk-card__value {
+  grid-area: 2 / 1;
+  padding-bottom: calc(var(--vk-u) * 0.58);
+  margin-bottom: calc(var(--vk-u) * 0.18);
+  border-bottom: var(--vk-hairline) solid var(--gp-line);
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card__value::before {
+  --gp-mark: calc(var(--vk-u) * 9.6);
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card__title { grid-area: 3 / 1; }
+[data-design='goldplate'][data-shape='compact'] .vk-card__cond { grid-area: 4 / 1; }
+[data-design='goldplate'][data-shape='compact'] .vk-card__note { grid-area: 5 / 1; }
+
+[data-design='goldplate'][data-shape='compact'] .vk-card__stub {
+  align-items: center;
+  gap: calc(var(--vk-u) * 1);
+  padding: calc(var(--vk-u) * 0.85) calc(var(--vk-u) * 1.7);
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card__stub::before {
+  inset-inline: 0;
+  top: 0;
+  height: var(--vk-hairline);
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card__stub::after {
+  inset-inline: calc(var(--gp-inset) + var(--vk-u) * 0.8);
+  top: calc(var(--vk-u) * 0.3);
+  height: var(--vk-hairline);
+  background: var(--gp-gold-dim);
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card__qr { width: calc(var(--vk-u) * 3.5); }
+[data-design='goldplate'][data-shape='compact'] .vk-card__stub-body {
+  flex: 1;
+  justify-items: start;
+}
+
+/* ══ ใบที่ใช้แล้ว / หมดอายุ ═══════════════════════════════════════════
+   ไม่ใช้ grayscale ของ base เพราะแผ่นดำจะกลายเป็นโคลนขุ่น
+   เปลี่ยนวิธี: ถอด "ทอง" ออกจากจานสีทั้งชุด เหลือเหล็กเปล่า ๆ
+   แล้วสลักเส้นผมทับตัวเลข 1 เส้น = ใบนี้ถูกใช้ไปแล้ว                    */
+
+[data-design='goldplate'] .vk-card[data-status='redeemed'],
+[data-design='goldplate'] .vk-card[data-status='expired'],
+[data-design='goldplate'] .vk-card[data-status='void'] {
+  filter: none;
+  opacity: 1;
+  --gp-plate: #131211;
+  --gp-plate-2: #181716;
+  --gp-gold: #837d73;
+  --gp-gold-soft: #514d46;
+  --gp-gold-dim: #36332f;
+  --gp-ink: #948f87;
+  --gp-ink-2: #706c65;
+  --gp-ink-3: #57534d;
+  --gp-line: #2b2926;
+}
+
+[data-design='goldplate'] .vk-card[data-status='redeemed'] .vk-card__num::after,
+[data-design='goldplate'] .vk-card[data-status='expired'] .vk-card__num::after,
+[data-design='goldplate'] .vk-card[data-status='void'] .vk-card__num::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-u) * -0.3);
+  right: calc(var(--vk-u) * -0.3);
+  top: 52%;
+  height: var(--vk-hairline);
+  background: var(--gp-ink-2);
+}

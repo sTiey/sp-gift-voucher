@@ -1,1 +1,485 @@
-/* limeticket — ยังไม่ได้ออกแบบ */
+/* ============================================================================
+   limeticket — "ตั๋วเขียว"
+   ----------------------------------------------------------------------------
+   กลิ่น: ตั๋วเข้างาน / บัตรผ่านพิพิธภัณฑ์ ที่พิมพ์ด้วยเครื่องพิมพ์จริง
+     · กระดาษครีมอมเทา  · ก้อนสีเขียวมะนาวก้อนเดียวใหญ่ ๆ (ที่อยู่ของตัวเลข)
+     · ก้านฉีกดำสนิทด้านขวา มีเลขซีเรียลหมุน 90° + รอยปรุเป็นวงกลมเรียงถี่
+     · ป้ายกำกับ/รหัส/วันที่ ใช้ตัวพิมพ์ดีด (IBM Plex Mono) เรียงเป็นแถบข้อมูล
+     · ภาพงานเหล็กจริง = ช่องเล็ก ๆ ชิดมุม ไม่ใช่พื้นหลัง
+
+   ลายเซ็นที่ต้องคงไว้ทั้ง 2 ทรง: ก้านดำ + ตัวหนังสือหมุน + ก้อนเขียว
+   ทุกขนาดผูกกับ var(--vk-u) — ห้าม px ดิบ ยกเว้นเส้น 1px
+   ========================================================================== */
+
+[data-design='limeticket'] {
+  --lt-paper: #e9e6dc;          /* กระดาษครีมอมเทา */
+  --lt-paper-in: #dfdbcd;       /* แถบข้อมูล เข้มกว่านิดเดียว */
+  --lt-ink: #16150f;            /* หมึกดำอมอุ่น */
+  --lt-stalk: #080806;          /* ก้านฉีก ดำสนิท */
+  --lt-lime: #c8f000;           /* ก้อนสีหลัก */
+  --lt-mute: #6c6a5c;
+  --lt-line: rgba(22, 21, 15, 0.28);
+  --lt-edge: rgba(22, 21, 15, 0.42);
+
+  --lt-mono: 'IBM Plex Mono', 'Noto Sans Thai', ui-monospace, monospace;
+  --lt-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
+}
+
+/* ใบนี้เป็น container query container → ความกว้าง "ธรรมชาติ" ของมันเป็น 0
+   ทำให้กล่องที่วัดจากเนื้อหา (เช่นหน้าตัวอย่าง) บีบใบจนแบน — บอกความกว้างตั้งต้นไว้ */
+[data-design='limeticket'][data-shape='ticket'] { contain-intrinsic-inline-size: 45rem; }
+[data-design='limeticket'][data-shape='compact'] { contain-intrinsic-inline-size: 23.75rem; }
+
+/* ── ตัวใบ ─────────────────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card {
+  /* tokens.css ตั้ง --vk-u: 1rem ทับไว้ที่ .vk-card → รับค่าที่ยืดตามความกว้างคืนมา */
+  --vk-u: inherit;
+  background: var(--lt-paper);
+  color: var(--lt-ink);
+  font-family: var(--lt-sans);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px var(--lt-edge);
+}
+
+/* ก้านฉีกถูกยกออกมาเป็นช่องของกริดเอง → ปลอกเดิมไม่ต้องมีกล่อง */
+[data-design='limeticket'] .vk-card__stub { display: contents; }
+
+/* ── ทรงยาว: เนื้อหา | แถบข้อมูล | ก้านดำ ─────────────────────────────── */
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card {
+  min-height: calc(var(--vk-u) * 16.6);
+  grid-template-columns:
+    minmax(0, 1fr) calc(var(--vk-u) * 9.2) calc(var(--vk-u) * 3.4);
+  grid-template-rows: calc(var(--vk-u) * 5) minmax(0, 1fr) auto;
+  grid-template-areas:
+    'main art   stalk'
+    'main info  stalk'
+    'main qr    stalk';
+}
+
+/* ── ทรงกระทัดรัด: เนื้อหาบน · แถบข้อมูลล่าง · ก้านดำยังอยู่ขวา ────────── */
+
+[data-design='limeticket'][data-shape='compact'] .vk-card {
+  /* ใบเนื้อหาน้อย (ไม่มีเงื่อนไข/ไม่มีคำขอบคุณ) ต้องไม่หดจนป้ายไปชนหัวข้อ */
+  min-height: calc(var(--vk-u) * 23.4);
+  grid-template-columns:
+    calc(var(--vk-u) * 4.8) minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
+  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 5.8);
+  grid-template-areas:
+    'main main main stalk'
+    'art  info qr   stalk';
+}
+
+[data-design='limeticket'] .vk-card__main { grid-area: main; }
+[data-design='limeticket'] .vk-card__art { grid-area: art; }
+[data-design='limeticket'] .vk-card__stub-body { grid-area: info; }
+[data-design='limeticket'] .vk-card__qr { grid-area: qr; }
+[data-design='limeticket'] .vk-card__serial { grid-area: stalk; }
+
+/* ── ก้านฉีกดำ + ตัวหนังสือหมุน 90° + รอยปรุ ──────────────────────────── */
+
+[data-design='limeticket'] .vk-card__serial {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--lt-stalk);
+  color: var(--lt-paper);
+  font-family: var(--lt-mono);
+  font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.76);
+  letter-spacing: 0.34em;
+  line-height: 1;
+  writing-mode: vertical-rl;
+  /* เขียนแนวตั้ง → ต้องสั่งด้วยด้านจริง · min-width:0 กันก้านดันจนล้นขอบใบ */
+  min-width: 0;
+  padding: calc(var(--vk-u) * 2.2) 0 calc(var(--vk-u) * 2.2) calc(var(--vk-u) * 0.62);
+}
+
+/* รอยปรุ: วงกลมเล็กเรียงถี่เป็นแนวเดียว ตรงรอยต่อกระดาษ-ก้าน
+   ⚠️ ก้านเขียนตัวหนังสือแนวตั้ง → แกน inline/block สลับกับที่ตาเห็น
+      ในนี้ต้องสั่งด้วยด้านจริง (top/left) เท่านั้น ไม่งั้นแถบหด */
+[data-design='limeticket'] .vk-card__serial::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(var(--vk-u) * 0.62);
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    var(--lt-paper) 0 38%,
+    transparent 40%
+  );
+  background-size: 100% calc(var(--vk-u) * 0.66);
+}
+
+/* จุดเขียวเม็ดเดียวบนก้าน — ตัวเชื่อมสีให้ก้านไม่หลุดจากใบ */
+[data-design='limeticket'] .vk-card__serial::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-u) * 1.55);
+  bottom: calc(var(--vk-u) * 1.1);
+  width: calc(var(--vk-u) * 0.8);
+  height: calc(var(--vk-u) * 0.8);
+  background: var(--lt-lime);
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__serial::after {
+  left: calc(var(--vk-u) * 1.32);
+}
+
+/* ── เนื้อหาหลัก ───────────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__hero { display: contents; }
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card__main {
+  display: grid;
+  grid-template-columns: calc(var(--vk-u) * 13) minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto 1fr;
+  grid-template-areas:
+    'value head'
+    'value kicker'
+    'value title'
+    'value cond'
+    'value note';
+  column-gap: calc(var(--vk-u) * 1.4);
+  row-gap: calc(var(--vk-u) * 0.4);
+  padding: calc(var(--vk-u) * 1.3) calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.3) 0;
+  border-right: 1px solid var(--lt-line);
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto auto 1fr;
+  grid-template-areas: 'head' 'value' 'kicker' 'title' 'cond' 'note';
+  row-gap: calc(var(--vk-u) * 0.32);
+  padding: calc(var(--vk-u) * 1.1) calc(var(--vk-u) * 1.2);
+  border-bottom: 1px solid var(--lt-line);
+}
+
+[data-design='limeticket'] .vk-card__head { grid-area: head; min-width: 0; }
+[data-design='limeticket'] .vk-card__kicker { grid-area: kicker; }
+[data-design='limeticket'] .vk-card__value { grid-area: value; }
+[data-design='limeticket'] .vk-card__title { grid-area: title; }
+[data-design='limeticket'] .vk-card__cond { grid-area: cond; }
+[data-design='limeticket'] .vk-card__note { grid-area: note; }
+
+/* ── หัวใบ ─────────────────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__head {
+  gap: calc(var(--vk-u) * 0.6);
+  padding-bottom: calc(var(--vk-u) * 0.55);
+  border-bottom: 1px solid var(--lt-line);
+}
+
+/* โลโก้ไฟล์เดียวมีทั้งมอโนแกรมและคำว่า SP EMPIRE — ตัดเอาเฉพาะมอโนแกรม
+   แล้วปล่อยให้ชื่อแบรนด์เป็นตัวพิมพ์ดีดข้าง ๆ (ไม่งั้นชื่อซ้อนกันสองที) */
+[data-design='limeticket'] .vk-card__logo {
+  position: relative;
+  overflow: hidden;
+  width: calc(var(--vk-u) * 1.08);
+  height: calc(var(--vk-u) * 2.2);
+  mix-blend-mode: multiply;
+}
+
+[data-design='limeticket'] .vk-card__logo img {
+  position: absolute;
+  inset-block-start: calc(var(--vk-u) * -0.04);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: none;
+  height: calc(var(--vk-u) * 3.29);
+}
+
+[data-design='limeticket'] .vk-card__brandname {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--lt-mono);
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.6);
+  letter-spacing: 0.28em;
+  white-space: nowrap;
+  color: var(--lt-mute);
+}
+
+[data-design='limeticket'] .vk-card__pill {
+  margin-inline-start: auto;
+  flex: none;
+  background: var(--lt-ink);
+  color: var(--lt-lime);
+  font-family: var(--lt-mono);
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.62);
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  padding: calc(var(--vk-u) * 0.24) calc(var(--vk-u) * 0.55);
+}
+
+[data-design='limeticket'] .vk-card__pill[data-tone='dead'] {
+  background: none;
+  color: var(--lt-mute);
+  box-shadow: inset 0 0 0 1px var(--lt-line);
+}
+
+/* ── ก้อนเขียว + ตัวเลข ────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: center;
+  justify-content: center;
+  gap: calc(var(--vk-u) * 0.22);
+  background: var(--lt-lime);
+  color: var(--lt-ink);
+  padding: calc(var(--vk-u) * 0.9);
+}
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card__value {
+  margin-block: calc(var(--vk-u) * -1.3);
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__value {
+  margin-inline: calc(var(--vk-u) * -1.2);
+  min-height: calc(var(--vk-u) * 4.9);
+}
+
+[data-design='limeticket'] .vk-card__num {
+  font-weight: 400;
+  font-size: calc(var(--vk-u) * 3.8);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+[data-design='limeticket'] .vk-card[data-kind='percent'] .vk-card__num {
+  font-size: calc(var(--vk-u) * 6.2);
+}
+
+[data-design='limeticket'] .vk-card__num[data-text='true'] {
+  font-size: calc(var(--vk-u) * 3);
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+[data-design='limeticket'] .vk-card__lead,
+[data-design='limeticket'] .vk-card__unit {
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 1.7);
+  line-height: 1;
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__num {
+  font-size: calc(var(--vk-u) * 4.6);
+}
+[data-design='limeticket'][data-shape='compact'] .vk-card[data-kind='percent'] .vk-card__num {
+  font-size: calc(var(--vk-u) * 6.6);
+}
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-text='true'] {
+  font-size: calc(var(--vk-u) * 3.4);
+}
+
+/* ── ตัวหนังสือในใบ ────────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__kicker {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--vk-u) * 0.45);
+  font-family: var(--lt-mono);
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.72);
+  letter-spacing: 0.07em;
+  line-height: 1.3;
+  color: var(--lt-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-design='limeticket'] .vk-card__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 1.26);
+  line-height: 1.28;
+  letter-spacing: -0.005em;
+}
+
+[data-design='limeticket'] .vk-card__cond {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-family: var(--lt-mono);
+  font-size: calc(var(--vk-u) * 0.78);
+  line-height: 1.35;
+  color: var(--lt-mute);
+}
+
+/* เม็ดเขียวหน้าบรรทัดกำกับ — ลายเดียวกับเม็ดบนก้านดำ */
+[data-design='limeticket'] .vk-card__kicker::before {
+  content: '';
+  flex: none;
+  width: calc(var(--vk-u) * 0.5);
+  height: calc(var(--vk-u) * 0.5);
+  background: var(--lt-lime);
+}
+
+[data-design='limeticket'] .vk-card__note {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  align-self: end;
+  padding-top: calc(var(--vk-u) * 0.5);
+  border-top: 1px solid var(--lt-line);
+  font-size: calc(var(--vk-u) * 0.78);
+  line-height: 1.3;
+  color: var(--lt-mute);
+}
+
+/* ── ป้ายจำนวน/กลุ่ม ───────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__badge {
+  background: var(--lt-ink);
+  color: var(--lt-paper);
+  font-family: var(--lt-mono);
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.62);
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  padding: calc(var(--vk-u) * 0.22) calc(var(--vk-u) * 0.5);
+  white-space: nowrap;
+}
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card__badge {
+  inset: auto auto calc(var(--vk-u) * 1.1) calc(var(--vk-u) * 1.1);
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__badge {
+  inset: auto calc(var(--vk-u) * 1.2) calc(var(--vk-u) * 1.15) auto;
+}
+
+/* กันคำอธิบายวิ่งไปชนป้าย */
+[data-design='limeticket'][data-shape='compact'] .vk-card__note {
+  padding-inline-end: calc(var(--vk-u) * 5.6);
+}
+
+/* ── ภาพงานเหล็กจริง — ช่องเล็กชิดมุม ─────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__art {
+  filter: grayscale(0.2) contrast(1.05);
+}
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card__art {
+  border-bottom: 1px solid var(--lt-line);
+}
+
+/* เล็งกรอบให้ตกที่ตัวงานเหล็ก ไม่ใช่ผนังเปล่า (ช่องเล็กมาก ต้องซูมเข้าไปหาลาย) */
+[data-design='limeticket'][data-shape='ticket'] .vk-card__art img {
+  object-position: 54% 46%;
+  transform: scale(3);
+  transform-origin: 54% 47%;
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__art img {
+  object-position: 47% 46%;
+  transform: scale(1.25);
+  transform-origin: 48% 48%;
+}
+
+/* ── แถบข้อมูล (ตัวพิมพ์ดีด) ───────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__stub-body {
+  align-content: center;
+  row-gap: calc(var(--vk-u) * 0.12);
+}
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card__stub-body {
+  padding: calc(var(--vk-u) * 0.9) calc(var(--vk-u) * 0.85);
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__stub-body {
+  padding: calc(var(--vk-u) * 0.5) calc(var(--vk-u) * 0.9);
+}
+
+[data-design='limeticket'] .vk-card__label {
+  font-family: var(--lt-mono);
+  font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.6);
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  color: var(--lt-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-design='limeticket'] .vk-card__label ~ .vk-card__label {
+  margin-top: calc(var(--vk-u) * 0.45);
+  padding-top: calc(var(--vk-u) * 0.42);
+  border-top: 1px solid var(--lt-line);
+}
+
+/* รหัสยาวสุดในระบบคือ 14 ตัว (SHIP-4C7B-8XJR) — ต้องพอดีช่องโดยไม่โดนตัดท้าย */
+[data-design='limeticket'] .vk-card__code {
+  font-family: var(--lt-mono);
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.84);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-design='limeticket'] .vk-card__date {
+  font-family: var(--lt-mono);
+  font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.84);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-design='limeticket'] .vk-card__date.is-urgent { color: var(--lt-ink); }
+
+/* ── QR ────────────────────────────────────────────────────────────────── */
+
+[data-design='limeticket'] .vk-card__qr { color: var(--lt-ink); }
+
+[data-design='limeticket'][data-shape='ticket'] .vk-card__qr {
+  width: calc(var(--vk-u) * 3.8);
+  margin: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 1);
+}
+
+[data-design='limeticket'][data-shape='compact'] .vk-card__qr {
+  width: calc(var(--vk-u) * 3.4);
+  align-self: center;
+  margin-inline-end: calc(var(--vk-u) * 1);
+}
+
+/* ── ใบที่ใช้แล้ว/หมดอายุ — ไม่ใช้ฟิลเตอร์เทาแบบเหมารวม ────────────────── */
+
+[data-design='limeticket'] .vk-card[data-status='redeemed'],
+[data-design='limeticket'] .vk-card[data-status='expired'],
+[data-design='limeticket'] .vk-card[data-status='void'] {
+  filter: none;
+  opacity: 1;
+  --lt-lime: #c6c4b8;
+  --lt-ink: #4d4b43;
+  --lt-stalk: #4d4b43;
+  --lt-paper: #e2dfd6;
+  --lt-mute: #86847a;
+}
+
+[data-design='limeticket'] .vk-card[data-status='redeemed'] .vk-card__art,
+[data-design='limeticket'] .vk-card[data-status='expired'] .vk-card__art,
+[data-design='limeticket'] .vk-card[data-status='void'] .vk-card__art {
+  filter: grayscale(1) contrast(0.9) opacity(0.7);
+}

@@ -9,10 +9,8 @@
 <link rel="stylesheet" href="../src/tokens/skin-steel.css">
 <link rel="stylesheet" href="../src/styles/base.css">
 <link rel="stylesheet" href="../src/styles/card-base.css">
-<link rel="stylesheet" href="../src/styles/designs/seal.css">
 <link rel="stylesheet" href="../src/styles/designs/ironwindow.css">
 <link rel="stylesheet" href="../src/styles/designs/goldplate.css">
-<link rel="stylesheet" href="../src/styles/designs/poster.css">
 <link rel="stylesheet" href="../src/styles/designs/limeticket.css">
 <style>
   /* หน้านี้ใช้ดูดีไซน์เดียวโดด ๆ ตอนกำลังทำงาน — พื้นกลาง ๆ ไม่แย่งซีน */
@@ -34,7 +32,7 @@ import { cardHtml, DESIGNS } from '../src/ui/voucher-design.js';
 import { createVoucher } from '../src/index.js';
 
 const q = new URLSearchParams(location.search);
-const design = q.get('d') || 'seal';
+const design = q.get('d') || 'ironwindow';
 const only = q.get('shape');            // ระบุทรงเดียวได้ เช่น ?shape=ticket
 const which = q.get('v') || 'percent';  // เปลี่ยนตัวอย่างคูปองได้
 
@@ -77,7 +75,7 @@ const SAMPLES = {
   },
 };
 
-const art = { seal: 'balcony', ironwindow: 'stair', goldplate: 'gate', poster: 'fence', limeticket: 'window' };
+const art = { ironwindow: 'stair', goldplate: 'gate', limeticket: 'balcony' };
 const v = createVoucher(SAMPLES[which] || SAMPLES.percent);
 const shapes = only ? [only] : ['ticket', 'compact'];
 

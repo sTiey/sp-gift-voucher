@@ -27,14 +27,10 @@ import { voucherUrl } from '../core/codes.js';
 
 /** ดีไซน์ที่มีให้เลือก — เพิ่มแบบใหม่ = เติมที่นี่ + เขียนไฟล์ CSS 1 ไฟล์ */
 export const DESIGNS = [
-  { id: 'seal', name: 'ตราประทับ', family: 'brand', photo: false,
-    blurb: 'กระดาษงาช้าง หมึกดำ เส้นทองเส้นเดียว · ตัวมีเชิงเข้าชุดกับโลโก้' },
   { id: 'ironwindow', name: 'ช่องเหล็ก', family: 'brand', photo: true,
     blurb: 'ภาพงานเหล็กจริงเต็มพื้น แล้ววางแผ่นดำทับ · ขายด้วยของจริง' },
   { id: 'goldplate', name: 'แผ่นทอง', family: 'brand', photo: false,
     blurb: 'ดำสนิท ตัดเส้นทองบาง ๆ · กลิ่นบัตรสมาชิกระดับสูง' },
-  { id: 'poster', name: 'โปสเตอร์', family: 'bold', photo: false,
-    blurb: 'ขาว-ดำล้วน ตัวเลขใหญ่เต็มใบจนล้นขอบ · กล้าที่สุดในชุด' },
   { id: 'limeticket', name: 'ตั๋วเขียว', family: 'bold', photo: true,
     blurb: 'กระดาษครีม + แถบเขียวสด + ตัวพิมพ์ดีด · กลิ่นตั๋วเข้างาน' },
 ];
@@ -86,7 +82,7 @@ function expiryLine(v, now) {
  * @param {{design?:string, shape?:'ticket'|'compact', art?:string, qr?:boolean, now?:number}} opt
  */
 export function cardHtml(v, opt = {}) {
-  const design = opt.design || 'seal';
+  const design = opt.design || 'ironwindow';
   const shape = opt.shape || 'compact';
   const now = opt.now ?? Date.now();
   const status = deriveStatus(v, now);
