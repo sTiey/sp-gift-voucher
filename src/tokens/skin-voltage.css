@@ -6,7 +6,7 @@
    ========================================================================== */
 
 [data-vk-skin='voltage'] {
-  --vk-font-sans: 'Anuphan', 'Noto Sans Thai', 'Leelawadee UI', -apple-system,
+  --vk-font-sans: 'Google Sans', 'Noto Sans Thai', -apple-system,
     BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --vk-font-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', ui-monospace,
     monospace;
