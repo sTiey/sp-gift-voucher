@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>device frame</title>
+<style>
+  /* กรอบจำลองขนาดหน้าจอมือถือ สำหรับใช้ตอนแคปหน้าจอเท่านั้น
+     เพราะหน้าต่างเบราว์เซอร์บน Windows ย่อให้แคบกว่า ~500px ไม่ได้
+     iframe มี viewport ของตัวเอง → media query กับ 100dvh ข้างในทำงานถูกต้อง */
+  html, body { margin: 0; background: #111; }
+  iframe { display: block; border: 0; background: #111; }
+</style>
+</head>
+<body>
+<script>
+  const q = new URLSearchParams(location.search);
+  const f = document.createElement('iframe');
+  f.src = q.get('u') || '/demo/index.html';
+  f.style.width = (q.get('w') || 390) + 'px';
+  f.style.height = (q.get('h') || 844) + 'px';
+  document.body.append(f);
+</script>
+</body>
+</html>

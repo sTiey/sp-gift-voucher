@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="th" data-vk-skin="steel" data-vk-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ตรวจคูปอง · หน้าร้าน</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/tokens/skin-ink.css">
+<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/voucher.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="app__bar">
+    <div class="app__bar-inner">
+      <a class="app__back" href="index.html" aria-label="ย้อนกลับ">←</a>
+      <div>
+        <div class="app__title" id="ttl"></div>
+        <div class="app__sub" id="sub"></div>
+      </div>
+      <div class="vk-spacer"></div>
+      <div id="themeSlot"></div>
+    </div>
+  </div>
+
+  <div class="app__wrap">
+    <div class="panel">
+      <div class="rows">
+        <div class="field">
+          <label class="field__label" for="codeIn" id="lblCode"></label>
+          <input class="input input--code" id="codeIn" autocomplete="off"
+                 inputmode="text" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="field__label" for="totalIn" id="lblTotal"></label>
+          <input class="input" id="totalIn" type="number" inputmode="numeric" value="24000" min="0">
+        </div>
+        <button class="btn btn--primary" id="checkBtn" type="button"></button>
+      </div>
+    </div>
+
+    <div id="out"></div>
+  </div>
+</div>
+
+<script type="module">
+import { getService, mountThemeToggle, toast } from './app.js';
+import {
+  formatCode, evaluate, primaryReason, verifyLiveCode, voucherCardHtml,
+  t, money, num,
+} from '../src/index.js';
+
+const $ = (s) => document.querySelector(s);
+mountThemeToggle($('#themeSlot'));
+
+$('#ttl').textContent = t('staff.title');
+$('#sub').textContent = t('staff.subtitle');
+$('#lblCode').textContent = t('card.codeLabel');
+$('#lblTotal').textContent = t('staff.orderTotalLabel');
+$('#codeIn').placeholder = t('staff.codePlaceholder');
+$('#checkBtn').textContent = t('staff.check');
+
+const svc = await getService();
+
+/* ใส่ขีดให้อัตโนมัติระหว่างพิมพ์ — พนักงานพิมพ์รัวจะได้ไม่ต้องกดขีดเอง */
+$('#codeIn').addEventListener('input', (e) => {
+  const el = e.target;
+  const atEnd = el.selectionStart === el.value.length;
+  const next = formatCode(el.value);
+  if (next !== el.value) {
+    el.value = next;
+    if (atEnd) el.setSelectionRange(next.length, next.length);
+  }
+});
+$('#codeIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') check(); });
+$('#checkBtn').addEventListener('click', check);
+
+let current = null;
+
+async function check() {
+  const code = $('#codeIn').value.trim();
+  const orderTotal = Number($('#totalIn').value || 0);
+  if (!code) return;
+
+  const res = await svc.check(code, {
+    orderTotal,
+    channel: 'store',
+    branch: 'สาขาบางนา',
+    segments: ['public', 'partner', 'vip', 'returning', 'new'], // เคาน์เตอร์เห็นลูกค้าตัวจริง
+  });
+  current = res.voucher || null;
+
+  if (!res.ok) {
+    $('#out').innerHTML = `<div class="verdict" data-tone="bad" style="margin-block-start:var(--vk-space-4)">
+        <div class="verdict__head">${t('staff.resultInvalid')}</div>
+        <div class="verdict__body">${t(`reject.${primaryReason(res.reasons)}`)}</div>
+      </div>
+      ${res.voucher ? `<div style="margin-block-start:var(--vk-space-4)">${voucherCardHtml(res.voucher, { layout: 'strip' })}</div>` : ''}`;
+    return;
+  }
+
+  const v = res.voucher;
+  $('#out').innerHTML = `
+    <div class="verdict" data-tone="ok" style="margin-block-start:var(--vk-space-4)">
+      <div class="verdict__head">${t('staff.resultValid')}</div>
+      <div class="verdict__body">${v.title || ''}</div>
+    </div>
+
+    <div style="margin-block-start:var(--vk-space-4)">${voucherCardHtml(v, { layout: 'strip' })}</div>
+
+    <div class="panel">
+      <div class="rows">
+        <div class="row"><span class="row__key">${t('staff.orderTotalLabel')}</span><span class="row__val">${money(orderTotal)}</span></div>
+        <div class="row"><span class="row__key">${t('staff.willDiscountPrefix')}</span><span class="row__val">− ${money(res.discount)}</span></div>
+        ${res.freeShipping ? `<div class="row"><span class="row__key">${t('kind.free_shipping')}</span><span class="row__val">✓</span></div>` : ''}
+        ${res.freeItems ? `<div class="row"><span class="row__key">${t('kind.free_item')}</span><span class="row__val">×${num(res.freeItems)}</span></div>` : ''}
+        <div class="row row--total"><span class="row__key">${t('staff.payPrefix')}</span><span class="row__val">${money(res.payable)}</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="field">
+        <label class="field__label" for="liveIn">${t('staff.liveCodePrompt')}</label>
+        <input class="input input--live" id="liveIn" maxlength="4" inputmode="numeric" placeholder="••••">
+        <span class="field__hint">${t('redeem.liveCodeHint')}</span>
+      </div>
+      <button class="btn btn--primary" id="redeemBtn" type="button" style="margin-block-start:var(--vk-space-4)">
+        ${t('staff.markUsed')}
+      </button>
+    </div>`;
+
+  $('#redeemBtn').addEventListener('click', () => doRedeem(orderTotal));
+}
+
+async function doRedeem(orderTotal) {
+  if (!current) return;
+  const given = $('#liveIn').value.trim();
+  // ถ้าพนักงานกรอกรหัสสด ต้องตรงก่อน — ปล่อยว่างได้ในกรณีลูกค้าอ่านรหัสตัวหนังสือให้
+  if (given && !verifyLiveCode(current.id || current.code, given)) {
+    toast(t('staff.liveCodeMismatch'));
+    return;
+  }
+  const res = await svc.redeem(current.code, {
+    orderTotal,
+    channel: 'store',
+    branch: 'สาขาบางนา',
+    staffId: 'staff_demo',
+    segments: ['public', 'partner', 'vip', 'returning', 'new'],
+  });
+  if (!res.ok) {
+    toast(t(`reject.${primaryReason(res.reasons)}`));
+    return;
+  }
+  $('#out').innerHTML = `
+    <div class="verdict" data-tone="ok" style="margin-block-start:var(--vk-space-4)">
+      <div class="verdict__head">${t('redeem.doneTitle')}</div>
+      <div class="verdict__body">${t('staff.willDiscountPrefix')} ${money(res.discount)} · ${t('staff.payPrefix')} ${money(res.payable)}</div>
+    </div>
+    <div style="margin-block-start:var(--vk-space-4)">${voucherCardHtml(res.voucher, { layout: 'strip' })}</div>`;
+  $('#codeIn').value = '';
+  current = null;
+}
+</script>
+</body>
+</html>

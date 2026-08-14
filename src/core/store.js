@@ -197,7 +197,9 @@ export class VoucherService {
     if (context.customerId) {
       v.usage.byCustomer[context.customerId] = (v.usage.byCustomer[context.customerId] || 0) + 1;
     }
-    const limitReached = v.limits.total == null ? true : v.usage.used >= v.limits.total;
+    // ปิดใบก็ต่อเมื่อ "ใช้ต่อไม่ได้จริง ๆ" เท่านั้น
+    // total = null คือโค้ดสาธารณะ ใช้ได้เรื่อย ๆ ห้ามปิดใบหลังคนแรกใช้
+    const limitReached = v.limits.total != null && v.usage.used >= v.limits.total;
     v.state = limitReached ? 'redeemed' : 'issued';
     v.reservedUntil = null;
     v.redeemedAt = new Date().toISOString();

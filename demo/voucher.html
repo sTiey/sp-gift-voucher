@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="th" data-vk-skin="steel" data-vk-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>คูปอง</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/tokens/skin-ink.css">
+<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/voucher.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="app__bar">
+    <div class="app__bar-inner">
+      <a class="app__back" href="wallet.html" aria-label="ย้อนกลับ">←</a>
+      <div class="app__title">คูปองของคุณ</div>
+      <div class="vk-spacer"></div>
+      <div id="themeSlot"></div>
+    </div>
+  </div>
+
+  <div class="app__wrap">
+    <div id="cardSlot" style="display:grid;justify-items:center"></div>
+    <div id="actionSlot" style="margin-block-start: var(--vk-space-6)"></div>
+    <div id="detailSlot" style="margin-block-start: var(--vk-space-4)"></div>
+  </div>
+</div>
+
+<script type="module">
+import { getService, DEMO_CUSTOMER, mountThemeToggle, bindHold, toast, copyText, q } from './app.js';
+import {
+  voucherCardHtml, qrSvg, voucherUrl, deriveStatus, evaluate, primaryReason,
+  liveCode, msUntilRotate, LIVE_CODE_PERIOD, t, dateTime, money,
+} from '../src/index.js';
+
+const $ = (s) => document.querySelector(s);
+mountThemeToggle($('#themeSlot'));
+
+const svc = await getService();
+const code = q('c', '');
+const found = await svc.find(code);
+
+if (!found.ok) {
+  $('#cardSlot').innerHTML = `<div class="app__empty">
+      <strong>${t(`reject.${found.reason}`)}</strong>
+      <span>${code || '—'}</span>
+    </div>`;
+} else {
+  render(found.voucher);
+}
+
+let liveTimer = null;
+
+function render(v) {
+  const status = deriveStatus(v);
+  $('#cardSlot').innerHTML = voucherCardHtml(v, { layout: 'slab' });
+
+  /* ---------- ส่วนที่กดได้ ---------- */
+  if (status === 'active') {
+    $('#actionSlot').innerHTML = `
+      <button class="btn hold" id="useBtn" type="button">
+        <span class="hold__fill"></span>
+        <span>${t('card.useNow')}</span>
+        <span class="hold__hint">· ${t('redeem.holdHint')}</span>
+      </button>
+      <p class="field__hint" style="margin-block-start: var(--vk-space-3); text-align:center">
+        ${t('redeem.confirmBody')}
+      </p>`;
+
+    bindHold($('#useBtn'), {
+      ms: 1000,
+      onDone: async () => {
+        const card = $('#cardSlot .vk-card');
+        card.dataset.tearing = 'true'; // ให้ใบฉีกก่อน แล้วค่อยวาดสถานะใหม่
+        const res = await svc.redeem(v.code, {
+          customerId: DEMO_CUSTOMER.id,
+          segments: DEMO_CUSTOMER.segments,
+          orderTotal: v.conditions.minSpend || 0,
+          channel: 'app',
+        });
+        if (!res.ok) {
+          card.dataset.tearing = 'false';
+          toast(t(`reject.${primaryReason(res.reasons)}`));
+          return;
+        }
+        setTimeout(() => render(res.voucher), 620);
+      },
+      onCancel: () => { /* ปล่อยเร็วไป — ไม่ต้องทำอะไร ปุ่มรีเซ็ตเอง */ },
+    });
+  } else if (status === 'redeemed') {
+    $('#actionSlot').innerHTML = `
+      <div class="live">
+        <span class="vk-label">${t('redeem.liveCodeLabel')}</span>
+        <div class="live__code" id="liveCode"></div>
+        <div class="live__ring"><i id="liveRing"></i></div>
+        <span class="live__hint">${t('redeem.liveCodeHint')}</span>
+      </div>
+      <p class="field__hint" style="margin-block-start: var(--vk-space-3); text-align:center">
+        ${t('redeem.doneHint')}${v.redeemedAt ? ` · ${t('redeem.usedAtPrefix')} ${dateTime(v.redeemedAt)}` : ''}
+      </p>`;
+    startLive(v);
+  } else {
+    $('#actionSlot').innerHTML = `
+      <div class="verdict" data-tone="bad">
+        <div class="verdict__head">${t(`status.${status}`)}</div>
+        <div class="verdict__body">${t(`reject.${primaryReason(evaluate(v).reasons) || 'expired'}`)}</div>
+      </div>`;
+  }
+
+  /* ---------- รายละเอียด: QR + รหัส + เงื่อนไข ---------- */
+  const url = voucherUrl(v.code);
+  const qrDark = getComputedStyle(document.documentElement).getPropertyValue('--vk-qr-dark').trim();
+  $('#detailSlot').innerHTML = `
+    <div class="panel">
+      <div class="panel__head">
+        <span class="panel__title">${t('card.showToStaff')}</span>
+      </div>
+      <div class="qr">${qrSvg(url, { dark: qrDark, light: 'none' })}</div>
+      <div style="display:flex;gap:var(--vk-space-2);margin-block-start:var(--vk-space-4)">
+        <button class="btn btn--ghost" id="copyBtn" type="button">${t('common.copy')} ${v.code}</button>
+      </div>
+    </div>
+    ${v.terms?.length ? `<div class="panel">
+      <div class="panel__head"><span class="panel__title">${t('card.detailsToggle')}</span></div>
+      <ul class="terms">${v.terms.map((x) => `<li><span>${x}</span></li>`).join('')}</ul>
+    </div>` : ''}
+    <div class="panel">
+      <div class="rows">
+        ${v.conditions.minSpend ? `<div class="row"><span class="row__key">${t('card.minSpendPrefix')}</span><span class="row__val">${money(v.conditions.minSpend)}</span></div>` : ''}
+        ${v.conditions.maxDiscount ? `<div class="row"><span class="row__key">${t('card.maxDiscountPrefix')}</span><span class="row__val">${money(v.conditions.maxDiscount)}</span></div>` : ''}
+        <div class="row"><span class="row__key">${t('card.forSegmentPrefix')}</span><span class="row__val">${(v.audience.segments || []).map((s) => t(`segment.${s}`)).join(' · ')}</span></div>
+        <div class="row"><span class="row__key">${t('card.codeLabel')}</span><span class="row__val" style="font-family:var(--vk-font-mono)">${v.code}</span></div>
+      </div>
+    </div>`;
+
+  $('#copyBtn')?.addEventListener('click', async () => {
+    await copyText(v.code);
+    toast(t('common.copied'));
+  });
+}
+
+/** รหัสยืนยันสด — เปลี่ยนเองทุก 30 วินาที ให้พนักงานเทียบ */
+function startLive(v) {
+  clearInterval(liveTimer);
+  const box = $('#liveCode');
+  const ring = $('#liveRing');
+  if (!box) return;
+  const tick = () => {
+    const c = liveCode(v.id || v.code);
+    box.innerHTML = [...c].map((d) => `<span>${d}</span>`).join('');
+    const left = msUntilRotate();
+    ring.style.transition = 'none';
+    ring.style.width = `${(left / LIVE_CODE_PERIOD) * 100}%`;
+    requestAnimationFrame(() => {
+      ring.style.transition = `width ${left}ms linear`;
+      ring.style.width = '0%';
+    });
+  };
+  tick();
+  liveTimer = setInterval(tick, 1000);
+}
+</script>
+</body>
+</html>

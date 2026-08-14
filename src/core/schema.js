@@ -79,10 +79,17 @@ export function voucherDefaults() {
       customerName: null,
     },
 
-    /* --- อายุ + โควตา --- */
+    /* --- อายุ + โควตา ---
+       total = ใช้ได้กี่ครั้ง "รวมทุกคน"
+         1     = คูปองส่วนตัวใบเดียวจบ (ค่าเริ่มต้น — ปลอดภัยที่สุด)
+         30    = แจก 30 สิทธิ์ ใครมาก่อนได้ก่อน
+         null  = โค้ดสาธารณะ ใช้ได้ไม่จำกัดครั้ง (เช่น SONGKRAN10)
+                 ⚠️ ต้องคู่กับ perPerson + ส่ง customerId มาด้วยเสมอ
+                    ไม่งั้นคนเดียวใช้ซ้ำได้ไม่จำกัด
+       perPerson = คนหนึ่งใช้ได้กี่ครั้ง (นับจาก usage.byCustomer) */
     validFrom: null, // ISO string หรือ null = ใช้ได้ทันที
     validUntil: null, // ISO string หรือ null = ไม่มีวันหมด
-    limits: { perPerson: 1, total: null },
+    limits: { perPerson: 1, total: 1 },
     usage: { used: 0, byCustomer: {} },
 
     /* --- สถานะ --- */

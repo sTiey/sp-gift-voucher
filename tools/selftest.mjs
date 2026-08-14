@@ -126,6 +126,11 @@ eq('formatCode ใส่ขีดให้ถูกแม้ prefix กับ bo
 eq('ซ่อมตัวที่คนพิมพ์ผิดบ่อย O→0 I→1 L→1 U→V',
   normalizeCode('spe-oilu-234v'), 'SPE-011V-234V');
 eq('ไม่ไปแตะ prefix ตอนซ่อม', normalizeCode('LOU-1234-5678').slice(0, 3), 'LOU');
+// เคสจริงที่พลาดมาแล้ว: พนักงานพิมพ์ติดกันไม่มีขีด แล้ว I ใน prefix โดนซ่อมเป็น 1
+eq('พิมพ์ติดกันไม่มีขีด prefix ต้องไม่โดนซ่อม',
+  normalizeCode('ship4c7b8xjr'), 'SHIP-4C7B-8XJR');
+eq('พิมพ์ติดกันแล้วต้องหาคูปองเจอเหมือนกัน',
+  parseCode('ship4c7b8xjr').code, parseCode('SHIP-4C7B-8XJR').code);
 
 /* ══════════════════════════ 3 · สถานะตามเวลา ══════════════════════════ */
 
@@ -266,6 +271,22 @@ eq('จำกัดหมวดสินค้า: ลด 10% เฉพาะย
   eq('ครบ 2 สิทธิ์แล้วต้องหยุด', end.reasons[0], 'already_redeemed');
 }
 
+/* --- โค้ดสาธารณะ (total = null) ต้องใช้ได้เรื่อย ๆ ไม่ตายหลังคนแรกใช้ --- */
+{
+  const svc = new VoucherService(new MemoryStore());
+  const [v] = await svc.issue(
+    { kind: 'percent', value: 10, limits: { perPerson: 1, total: null } },
+    { count: 1, prefix: 'PUB' }
+  );
+  await svc.redeem(v.code, { orderTotal: 1000, customerId: 'a' });
+  const other = await svc.check(v.code, { orderTotal: 1000, customerId: 'b' });
+  ok('คนที่สองยังใช้โค้ดสาธารณะได้', other.ok, JSON.stringify(other.reasons));
+  const again = await svc.check(v.code, { orderTotal: 1000, customerId: 'a' });
+  eq('แต่คนเดิมใช้ซ้ำไม่ได้', again.reasons[0], 'limit_per_person');
+  const anon = await svc.check(v.code, { orderTotal: 1000 });
+  ok('ไม่ส่งไอดีลูกค้ามา = กันไม่ได้ (ต้องรู้ข้อจำกัดนี้)', anon.ok);
+}
+
 /* ══════════════════════════ 6 · รหัสยืนยันสด ══════════════════════════ */
 
 {
@@ -288,6 +309,32 @@ ok('ส่วนลดเกิน 100% ต้องถูกจับ', validat
 ok('วันเริ่มหลังวันหมดต้องถูกจับ', validateVoucher(createVoucher({ ...base, validFrom: iso(9), validUntil: iso(1) })).length > 0);
 ok('kind แปลก ๆ ต้องถูกจับ', validateVoucher(createVoucher({ ...base, kind: 'magic' })).length > 0);
 ok('skin ที่ไม่มีอยู่ต้องถูกจับ', validateVoucher(createVoucher({ ...base, design: { skin: 'gold' } })).length > 0);
+
+/* ══════════════════════════ 8 · ข้อมูลตัวอย่างในโปรเจกต์ ═════════════════
+   ไฟล์ตัวอย่างถูกพิมพ์ด้วยมือ → รหัสมักไม่ผ่านตัวตรวจทานโดยที่ไม่มีใครรู้
+   อาการเวลาพลาด: หน้ารายการยังโชว์คูปองสวยงามครบทุกใบ แต่พอกดเข้าไปดูใบเดียว
+   หรือเอาไปตรวจที่หน้าร้าน จะขึ้นว่า "รหัสไม่ถูกต้อง" ทุกใบ                */
+
+{
+  const { readFileSync } = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  const dir = fileURLToPath(new URL('../data/', import.meta.url));
+  const samples = JSON.parse(readFileSync(dir + 'vouchers.sample.json', 'utf8'));
+
+  ok('มีข้อมูลตัวอย่างให้เดโมใช้', samples.length > 0);
+  const badCode = samples.filter((v) => !parseCode(v.code).ok).map((v) => v.code);
+  eq('ทุกรหัสในไฟล์ตัวอย่างต้องผ่านตัวตรวจทาน', badCode, []);
+  const dupes = samples.length - new Set(samples.map((v) => v.code)).size;
+  eq('ไม่มีรหัสซ้ำในไฟล์ตัวอย่าง', dupes, 0);
+
+  const badShape = samples.flatMap((v) => validateVoucher(createVoucher(v)));
+  eq('ทุกใบในไฟล์ตัวอย่างผ่านการตรวจโครง', badShape, []);
+
+  // ทุกชนิดสิทธิ์ควรมีตัวอย่างอย่างน้อย 1 ใบ ไม่งั้นดีไซน์บางแบบไม่เคยถูกเห็น
+  const kinds = new Set(samples.map((v) => v.kind));
+  eq('ตัวอย่างครอบคลุมชนิดสิทธิ์ครบทุกแบบ',
+    ['percent', 'amount', 'fixed_price', 'free_item', 'free_shipping'].filter((k) => !kinds.has(k)), []);
+}
 
 /* ══════════════════════════ สรุป ══════════════════════════════════════ */
 

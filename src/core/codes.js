@@ -104,17 +104,37 @@ export function normalizePrefix(p) {
 }
 
 /**
+ * แยก "อักษรนำหน้า" ออกจาก "ตัวรหัส"
+ * - ถ้ามีขีด: ก้อนแรกคือ prefix ที่เหลือคือ body   (ชัดเจน ไม่ต้องเดา)
+ * - ถ้าไม่มีขีด: ตัดท้าย BODY_LENGTH ตัวเป็น body  (เพราะตัวรหัสยาวคงที่)
+ *   ⚠️ ห้ามใช้ regex เดาว่า "ตัวอักษรข้างหน้าคือ prefix" — ชุดตัวอักษรมีทั้งเลข
+ *      และตัวอักษร มันจะเดาแบ่งผิดแล้วไปค้นหาคูปองไม่เจอทั้งที่รหัสถูก
+ */
+function splitPrefixBody(raw) {
+  if (!raw) return null;
+  const dash = raw.indexOf('-');
+  if (dash > 0) {
+    return { prefix: raw.slice(0, dash), body: raw.slice(dash + 1).replace(/-/g, '') };
+  }
+  if (raw.length <= BODY_LENGTH) return null;
+  return { prefix: raw.slice(0, raw.length - BODY_LENGTH), body: raw.slice(-BODY_LENGTH) };
+}
+
+/**
  * ทำความสะอาดสิ่งที่ผู้ใช้พิมพ์เข้ามา ก่อนส่งให้ parseCode
  * - ตัดช่องว่าง / ขีดล่าง  - แปลงตัวเล็กเป็นตัวใหญ่
  * - ซ่อมตัวที่คนพิมพ์ผิดบ่อย (O→0, I/L→1, U→V) ซึ่งซ่อมได้อย่างไม่กำกวม
  *   เพราะตัวเหล่านั้นไม่มีอยู่ในชุดตัวอักษรตั้งแต่แรก
- * หมายเหตุ: ไม่แตะส่วน prefix เพราะ prefix เป็นตัวอักษรล้วนที่แคมเปญตั้งเอง
+ *
+ * ⚠️ ต้องแยก prefix ออกก่อนแล้วค่อยซ่อม "เฉพาะตัวรหัส"
+ *    prefix เป็นคำที่แคมเปญตั้งเอง มี I/O/L ได้ตามปกติ
+ *    (เคยพลาดมาแล้ว: พิมพ์ ship4c7b8xjr ติดกันไม่มีขีด แล้วกลายเป็น SH1P- → หาไม่เจอ)
  */
 export function normalizeCode(input) {
   const s = String(input || '').toUpperCase().replace(/[\s_]/g, '');
-  const dash = s.indexOf('-');
-  if (dash < 0) return s.replace(/[OILU]/g, (c) => REPAIR[c]);
-  return s.slice(0, dash) + s.slice(dash).replace(/[OILU]/g, (c) => REPAIR[c]);
+  const split = splitPrefixBody(s);
+  if (!split) return s;
+  return joinCode(split.prefix, split.body.replace(/[OILU]/g, (c) => REPAIR[c]));
 }
 
 /**
@@ -136,23 +156,6 @@ export function parseCode(input) {
   if (expect !== body[body.length - 1]) return { ok: false, reason: 'bad_code' };
 
   return { ok: true, prefix, body, code: joinCode(prefix, body) };
-}
-
-/**
- * แยก "อักษรนำหน้า" ออกจาก "ตัวรหัส"
- * - ถ้ามีขีด: ก้อนแรกคือ prefix ที่เหลือคือ body   (ชัดเจน ไม่ต้องเดา)
- * - ถ้าไม่มีขีด: ตัดท้าย BODY_LENGTH ตัวเป็น body  (เพราะตัวรหัสยาวคงที่)
- *   ⚠️ ห้ามใช้ regex เดาว่า "ตัวอักษรข้างหน้าคือ prefix" — ชุดตัวอักษรมีทั้งเลข
- *      และตัวอักษร มันจะเดาแบ่งผิดแล้วไปค้นหาคูปองไม่เจอทั้งที่รหัสถูก
- */
-function splitPrefixBody(raw) {
-  if (!raw) return null;
-  const dash = raw.indexOf('-');
-  if (dash > 0) {
-    return { prefix: raw.slice(0, dash), body: raw.slice(dash + 1).replace(/-/g, '') };
-  }
-  if (raw.length <= BODY_LENGTH) return null;
-  return { prefix: raw.slice(0, raw.length - BODY_LENGTH), body: raw.slice(-BODY_LENGTH) };
 }
 
 /** ประกอบรหัสให้อยู่ในรูปมาตรฐาน PREFIX-XXXX-XXXX */

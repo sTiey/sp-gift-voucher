@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="th" data-vk-skin="steel" data-vk-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>กระเป๋าคูปอง</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/tokens/skin-ink.css">
+<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/voucher.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="app__bar">
+    <div class="app__bar-inner">
+      <a class="app__back" href="index.html" aria-label="ย้อนกลับ">←</a>
+      <div>
+        <div class="app__title" id="title">กระเป๋าคูปอง</div>
+        <div class="app__sub" id="sub"></div>
+      </div>
+      <div class="vk-spacer"></div>
+      <div id="themeSlot"></div>
+    </div>
+  </div>
+
+  <div class="app__wrap">
+    <div class="app__tabs" id="tabs"></div>
+    <div class="app__list" id="list"></div>
+  </div>
+</div>
+
+<script type="module">
+import { getService, DEMO_CUSTOMER, mountThemeToggle } from './app.js';
+import { voucherCardHtml, sortForWallet, deriveStatus, t, CLOSED_STATUSES } from '../src/index.js';
+
+const $ = (s) => document.querySelector(s);
+mountThemeToggle($('#themeSlot'));
+
+const svc = await getService();
+const mine = await svc.walletOf(DEMO_CUSTOMER.id, DEMO_CUSTOMER.segments);
+
+$('#sub').textContent = `${t('wallet.greetingPrefix')} ${DEMO_CUSTOMER.name}`;
+
+/* กลุ่มของแท็บ — ผูกกับสถานะที่คำนวณสด ไม่ใช่ field ในฐานข้อมูล */
+const GROUPS = [
+  { key: 'usable', label: t('wallet.filterUsable'), match: (s) => s === 'active' || s === 'reserved' },
+  { key: 'upcoming', label: t('wallet.filterUpcoming'), match: (s) => s === 'scheduled' },
+  { key: 'closed', label: t('wallet.filterUsed'), match: (s) => CLOSED_STATUSES.has(s) },
+];
+
+let active = 'usable';
+
+function paint() {
+  const group = GROUPS.find((g) => g.key === active);
+  const items = sortForWallet(mine.filter((v) => group.match(deriveStatus(v))));
+
+  $('#tabs').innerHTML = GROUPS.map((g) => {
+    const n = mine.filter((v) => g.match(deriveStatus(v))).length;
+    return `<button class="app__tab" type="button" data-key="${g.key}"
+      aria-pressed="${g.key === active}">${g.label} ${n}</button>`;
+  }).join('');
+
+  $('#list').innerHTML = items.length
+    ? items.map((v) => voucherCardHtml(v, { layout: 'strip', clickable: true })).join('')
+    : `<div class="app__empty">
+         <strong>${active === 'closed' ? t('wallet.emptyUsed') : t('wallet.emptyUsable')}</strong>
+         ${active === 'closed' ? '' : `<span>${t('wallet.emptyUsableHint')}</span>`}
+       </div>`;
+
+  $('#title').textContent = `${t('wallet.title')} · ${items.length} ${t('wallet.countSuffix')}`;
+}
+
+$('#tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('.app__tab');
+  if (!b) return;
+  active = b.dataset.key;
+  paint();
+});
+
+/* กดใบไหน → เปิดคูปองใบนั้น */
+$('#list').addEventListener('click', (e) => {
+  const card = e.target.closest('.vk-card');
+  if (!card) return;
+  location.href = `voucher.html?c=${encodeURIComponent(card.dataset.code)}`;
+});
+
+paint();
+</script>
+</body>
+</html>
