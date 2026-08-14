@@ -5,6 +5,7 @@
 import {
   createVoucher, voucherCardHtml, qrSvg, voucherUrl, deriveStatus, t,
 } from '../src/index.js';
+import { resetDemo } from './app.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -113,6 +114,9 @@ wireSeg('#modeSeg', 'data-vk-mode');
 
 paintTokens();
 paintQr();
+
+/* ล้างข้อมูลที่เล่นไว้ กลับไปเป็นชุดตัวอย่างเริ่มต้น */
+$('#resetBtn').addEventListener('click', resetDemo);
 
 /* กันคำแปลหาย: ถ้าลืมใส่คำใน strings จะเห็นเป็นคีย์ดิบบนจอทันที */
 console.info('[showcase] ตัวอย่าง', vouchers.length, 'ใบ ·', t('wallet.title'));

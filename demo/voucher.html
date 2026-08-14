@@ -46,6 +46,10 @@ const svc = await getService();
 const code = q('c', '');
 const found = await svc.find(code);
 
+/* ต้องประกาศก่อนเรียก render() — ไม่งั้น startLive() จะอ้างถึงตัวแปรที่ยังไม่เกิด
+   (อาการ: แผงรหัสยืนยันสดขึ้นกรอบมาแต่ไม่มีตัวเลข และส่วน QR ข้างล่างหายทั้งก้อน) */
+let liveTimer = null;
+
 if (!found.ok) {
   $('#cardSlot').innerHTML = `<div class="app__empty">
       <strong>${t(`reject.${found.reason}`)}</strong>
@@ -54,8 +58,6 @@ if (!found.ok) {
 } else {
   render(found.voucher);
 }
-
-let liveTimer = null;
 
 function render(v) {
   const status = deriveStatus(v);
