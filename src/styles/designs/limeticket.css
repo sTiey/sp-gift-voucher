@@ -55,13 +55,25 @@
    ใต้ภาพแบ่งเป็น รหัส/วันที่ ซ้าย · QR ขวา */
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card {
-  min-height: calc(var(--vk-u) * 16.6);
+  /* ล็อกสัดส่วนตั๋วไว้ตรง ๆ 2.6:1 — ไม่ปล่อยให้ความสูงวิ่งตามเนื้อหา
+     เคยพลาด: พอขยายตัวเลขให้ใหญ่ขึ้น ใบยืดจาก 2.64:1 เหลือ 1.73:1
+     กลายเป็นการ์ดป้อม ๆ ไม่ใช่ตั๋วอีกต่อไป โดยไม่มีอะไรฟ้อง */
+  aspect-ratio: 2.6 / 1;
+  /* 4 แถบตั้งเรียงกัน อ่านซ้ายไปขวา: มูลค่า → เรื่อง → ของจริง → ก้านฉีก
+     ภาพกินความสูงเต็มคอลัมน์ (ไม่ใช่ช่องเล็กมุมบน) → เห็นราวเหล็กทั้งชุด
+     แถบข้อมูล+QR ยกมาอยู่ใต้เนื้อหา กลายเป็นแถบเดียวยาว อ่านรวดเดียวจบ */
+  /* ⚠️ ก้อนสี (.vk-card__value) อยู่ "ข้างใน" .vk-card__main ตามโครง HTML กลาง
+     จึงเป็นลูกของกริด __main ไม่ใช่ของกริดใบ — ห้ามประกาศ area 'value' ที่นี่
+     (เคยพลาด: ประกาศแล้วก้อนสีหลุดไปลอยกลางใบ เหลือที่ว่างโบ๋ครึ่งซ้าย) */
   grid-template-columns:
-    minmax(0, 1fr) calc(var(--vk-u) * 8.8) calc(var(--vk-u) * 4.6) calc(var(--vk-u) * 3.4);
-  grid-template-rows: calc(var(--vk-u) * 8) minmax(0, 1fr);
+    minmax(0, 1fr)            /* เนื้อหา = ก้อนสี + เรื่อง */
+    auto                      /* QR ท้ายแถบข้อมูล */
+    calc(var(--vk-u) * 7.9)   /* ภาพสินค้า เต็มความสูง */
+    calc(var(--vk-u) * 3.4);  /* ก้านฉีกดำ */
+  grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
-    'main art  art  stalk'
-    'main info qr   stalk';
+    'main main art stalk'
+    'info qr   art stalk';
 }
 
 /* ── ทรงกระทัดรัด: เนื้อหาบน · แถบข้อมูลล่าง · ก้านดำยังอยู่ขวา ────────── */
@@ -70,8 +82,8 @@
   /* ใบเนื้อหาน้อย (ไม่มีเงื่อนไข/ไม่มีคำขอบคุณ) ต้องไม่หดจนป้ายไปชนหัวข้อ */
   min-height: calc(var(--vk-u) * 23.4);
   grid-template-columns:
-    calc(var(--vk-u) * 7.4) minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
-  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 5.9);
+    calc(var(--vk-u) * 7.8) minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
+  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 6.6);
   grid-template-areas:
     'main main main stalk'
     'art  info qr   stalk';
@@ -145,7 +157,9 @@
    → ใบเนื้อหาน้อย/มาก ก็ยังสมดุลกับก้อนเขียว ไม่เหลือรูโบ๋ข้างล่าง */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__main {
   display: grid;
-  grid-template-columns: calc(var(--vk-u) * 12.5) minmax(0, 1fr);
+  grid-template-columns: calc(var(--vk-u) * 11.4) minmax(0, 1fr);
+  /* 1fr หัว-ท้าย = กลุ่มข้อความลอยกลางคอลัมน์เสมอ
+     ใบเนื้อหาน้อย (ไม่มีเงื่อนไข/คำขอบคุณ) ก็ไม่เหลือรูโบ๋ข้างล่าง */
   grid-template-rows: auto 1fr auto auto auto auto 1fr;
   grid-template-areas:
     'value head'
@@ -155,10 +169,11 @@
     'value cond'
     'value note'
     'value ....';
-  column-gap: calc(var(--vk-u) * 1.35);
+  column-gap: calc(var(--vk-u) * 1.4);
   row-gap: calc(var(--vk-u) * 0.42);
   padding: calc(var(--vk-u) * 1.3) calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.3) 0;
-  border-right: 1px solid var(--lt-line);
+  min-height: 0;   /* ให้หดได้เมื่อใบถูกล็อกสัดส่วน ไม่งั้นดันใบให้สูงเกิน */
+  overflow: hidden;
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__main {
@@ -278,7 +293,9 @@
 }
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card__value {
-  margin-block: calc(var(--vk-u) * -1.3);
+  /* ดันให้ก้อนสีชนขอบบน-ล่างของใบ (หัก padding ของ __main ออก)
+     ไม่ต้องสั่งความสูง — กริดยืดให้เต็มคอลัมน์อยู่แล้ว */
+  margin: calc(var(--vk-u) * -1.3) 0;
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__value {
@@ -292,18 +309,37 @@
    margin ติดลบ 0.22em ≈ 30% ของความสูงตัวเลข */
 [data-design='limeticket'] .vk-card__num {
   font-weight: 400;
-  font-size: calc(var(--vk-u) * 4.2);
+  font-size: calc(var(--vk-u) * 4.6);
   line-height: 0.72;
   letter-spacing: -0.03em;
   margin-bottom: -0.22em;
 }
 
-[data-design='limeticket'] .vk-card[data-kind='percent'] .vk-card__num {
+/* ── ขนาดตัวเลขปรับตามจำนวนหลักเอง ────────────────────────────────────────
+   ก้อนสีทรงยาวกว้าง 11.4u — ถ้าตั้งขนาดเดียวตายตัว "15" จะพอดีแต่ "1,500"
+   จะล้นออกข้างแล้วโดนตัดซ้าย-ขวา ซึ่งดูเหมือนพลาด ไม่ใช่ความตั้งใจ
+   ท่าที่ตั้งใจคือให้จมเฉพาะ "ก้น" ใต้แถบดำเท่านั้น ด้านข้างต้องพอดีเสมอ
+   (ตัววาดส่ง data-len = จำนวนตัวอักษรของค่ามาให้ CSS ใช้)              */
+[data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='1'],
+[data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='2'] {
   font-size: calc(var(--vk-u) * 8.6);
 }
+[data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='3'] {
+  font-size: calc(var(--vk-u) * 6.2);
+}
+[data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='4'] {
+  font-size: calc(var(--vk-u) * 5.1);
+}
+[data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='5'] {
+  font-size: calc(var(--vk-u) * 4.2);
+}
+[data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='6'] {
+  font-size: calc(var(--vk-u) * 3.6);
+}
 
-/* ค่าที่เป็นคำ — ยกพ้นแถบดำ ต้องอ่านครบทุกตัว ห้ามจม */
-[data-design='limeticket'] .vk-card__num[data-text='true'] {
+/* ค่าที่เป็นคำ — ยกพ้นแถบดำ ต้องอ่านครบทุกตัว ห้ามจม
+   ต้องประกาศหลังกฎ data-len และระบุ data-len ด้วยเพื่อให้ชนะน้ำหนัก selector */
+[data-design='limeticket'] .vk-card__num[data-text='true'][data-len] {
   font-size: calc(var(--vk-u) * 3);
   line-height: 1.18;
   letter-spacing: 0;
@@ -311,30 +347,43 @@
 }
 
 /* ฿ / % — ตัวเล็ก ลอยแยกไปมุมบนขวาของก้อนเขียว ไม่กินความกว้างของตัวเลข */
+/* ⚠️ เคยย้ายมาไว้ล่างใกล้ตัวเลข แล้วมันไปซ้อนใต้ตัวเลขจนอ่านไม่ออก
+   เครื่องหมายต้องอยู่ในที่ว่างของตัวเอง ไม่แย่งที่กับเลข */
 [data-design='limeticket'] .vk-card__lead,
 [data-design='limeticket'] .vk-card__unit {
   position: absolute;
-  top: calc(var(--vk-u) * 1.1);
-  right: calc(var(--vk-u) * 0.95);
+  right: calc(var(--vk-u) * 0.9);
+  top: calc(var(--vk-u) * 1.05);
   font-family: var(--lt-mono);
   font-weight: 500;
-  font-size: calc(var(--vk-u) * 1.15);
+  font-size: calc(var(--vk-u) * 1.35);
   letter-spacing: 0.02em;
   line-height: 1;
 }
 
-[data-design='limeticket'][data-shape='compact'] .vk-card__num {
+/* ทรงกระทัดรัด ก้อนสีกว้างเกือบเต็มใบ จึงใหญ่ได้กว่าทรงยาวในทุกจำนวนหลัก */
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='1'],
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='2'] {
+  font-size: calc(var(--vk-u) * 6.6);
+}
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='3'] {
+  font-size: calc(var(--vk-u) * 5.8);
+}
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='4'] {
+  font-size: calc(var(--vk-u) * 5.2);
+}
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='5'] {
   font-size: calc(var(--vk-u) * 4.6);
 }
-[data-design='limeticket'][data-shape='compact'] .vk-card[data-kind='percent'] .vk-card__num {
-  font-size: calc(var(--vk-u) * 6.4);
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='6'] {
+  font-size: calc(var(--vk-u) * 4);
 }
-[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-text='true'] {
+[data-design='limeticket'][data-shape='compact'] .vk-card__num[data-text='true'][data-len] {
   font-size: calc(var(--vk-u) * 3.2);
 }
 [data-design='limeticket'][data-shape='compact'] .vk-card__lead,
 [data-design='limeticket'][data-shape='compact'] .vk-card__unit {
-  top: calc(var(--vk-u) * 0.85);
+  top: calc(var(--vk-u) * 0.8);
 }
 
 /* ── ตัวหนังสือในใบ ────────────────────────────────────────────────────── */
@@ -433,20 +482,20 @@
 }
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card__art {
-  border-bottom: 1px solid var(--lt-line);
+  border-inline-start: 1px solid var(--lt-line);
 }
 
-/* เล็งกรอบให้ตกที่ตัวงานเหล็ก ไม่ใช่ผนังเปล่า (ช่องเล็กมาก ต้องซูมเข้าไปหาลาย) */
+/* ⚠️ เคยตั้ง scale(3) แล้วภาพกลายเป็นการซูมเข้าไปที่เสาท่อนเดียว
+   มองไม่ออกว่าเป็นสินค้าอะไร — ภาพสินค้าต้องเห็น "ทั้งชิ้น" ถึงจะทำหน้าที่ขายได้
+   ตอนนี้ช่องภาพสูงเต็มคอลัมน์แล้ว จึงไม่ต้องซูมช่วยอีก */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__art img {
-  object-position: 54% 46%;
-  transform: scale(3);
-  transform-origin: 54% 47%;
+  object-position: 52% 50%;
+  transform: scale(1.06);
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__art img {
-  object-position: 47% 46%;
-  transform: scale(1.25);
-  transform-origin: 48% 48%;
+  object-position: 50% 48%;
+  transform: scale(1.04);
 }
 
 /* ── แถบข้อมูล (ตัวพิมพ์ดีด) ───────────────────────────────────────────── */
@@ -457,7 +506,22 @@
 }
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card__stub-body {
-  padding: calc(var(--vk-u) * 0.9) calc(var(--vk-u) * 0.85);
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: baseline;
+  column-gap: calc(var(--vk-u) * 1.1);
+  padding: calc(var(--vk-u) * 0.7) calc(var(--vk-u) * 1.4);
+  border-top: 1px solid var(--lt-line);
+}
+
+/* แถบข้อมูลเรียงแนวนอน → เส้นคั่นระหว่างข้อมูลต้องเป็นเส้นตั้ง ไม่ใช่เส้นนอน */
+[data-design='limeticket'][data-shape='ticket'] .vk-card__label ~ .vk-card__label {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  margin-inline-start: calc(var(--vk-u) * 0.5);
+  padding-inline-start: calc(var(--vk-u) * 1.1);
+  border-inline-start: 1px solid var(--lt-line);
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__stub-body {
@@ -483,23 +547,23 @@
 }
 
 /* รหัสยาวสุดในระบบคือ 14 ตัว (SHIP-4C7B-8XJR) — ต้องพอดีช่องโดยไม่โดนตัดท้าย */
+/* ⚠️ รหัสคูปองห้ามถูกตัดท้ายเด็ดขาด — พนักงานต้องอ่านครบทุกตัวถึงจะพิมพ์ตามได้
+   รหัสยาวสุดในระบบคือ 14 ตัว (SHIP-4C7B-8XJR) ขนาดนี้พอดีช่องแคบสุดแล้ว */
 [data-design='limeticket'] .vk-card__code {
   font-family: var(--lt-mono);
   font-weight: 500;
-  font-size: calc(var(--vk-u) * 0.84);
-  letter-spacing: 0.02em;
+  font-size: calc(var(--vk-u) * 0.78);
+  letter-spacing: 0;
   line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 [data-design='limeticket'] .vk-card__date {
   font-family: var(--lt-mono);
   font-weight: 400;
-  font-size: calc(var(--vk-u) * 0.84);
+  font-size: calc(var(--vk-u) * 0.8);
   line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 [data-design='limeticket'] .vk-card__date.is-urgent { color: var(--lt-ink); }
@@ -509,8 +573,11 @@
 [data-design='limeticket'] .vk-card__qr { color: var(--lt-ink); }
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card__qr {
-  width: calc(var(--vk-u) * 3.8);
-  margin: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 1);
+  width: calc(var(--vk-u) * 3.2);
+  align-self: center;
+  margin-inline-end: calc(var(--vk-u) * 1.2);
+  padding-block: calc(var(--vk-u) * 0.45);
+  border-top: 1px solid var(--lt-line);
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__qr {
@@ -537,4 +604,35 @@
 [data-design='limeticket'] .vk-card[data-status='expired'] .vk-card__art,
 [data-design='limeticket'] .vk-card[data-status='void'] .vk-card__art {
   filter: grayscale(1) contrast(0.9) opacity(0.7);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   เวอร์ชันสีทอง — สลับด้วย data-accent="gold" บน .vk-voucher
+   โครงสร้าง ระยะ ฟอนต์ เหมือนเวอร์ชันเขียวทุกอย่าง เปลี่ยนแค่ชุดสี
+   ทองที่ใช้คือทองเหลืองสว่างของแบรนด์ ไม่ใช่ทองเงาแบบ metallic
+   ══════════════════════════════════════════════════════════════════════════ */
+
+[data-design='limeticket'][data-accent='gold'] {
+  --lt-paper: #f2ede3;          /* กระดาษงาช้าง อุ่นกว่าเวอร์ชันเขียว */
+  --lt-paper-in: #e8e1d3;
+  --lt-ink: #1f1b14;            /* ดำเหล็กของแบรนด์ */
+  --lt-stalk: #14110c;
+  --lt-lime: #c9a961;           /* ทองเหลืองสว่าง — ก้อนสีหลัก */
+  --lt-mute: #7a6f5c;
+  --lt-line: rgba(31, 27, 20, 0.26);
+  --lt-edge: rgba(31, 27, 20, 0.4);
+}
+
+/* ทองเข้มกว่าเขียวมาก → ป้ายสถานะบนพื้นดำต้องใช้ทองสว่างขึ้นถึงจะอ่านออก */
+[data-design='limeticket'][data-accent='gold'] .vk-card__pill { color: #d9bd7d; }
+
+[data-design='limeticket'][data-accent='gold'] .vk-card[data-status='redeemed'],
+[data-design='limeticket'][data-accent='gold'] .vk-card[data-status='expired'],
+[data-design='limeticket'][data-accent='gold'] .vk-card[data-status='void'] {
+  --lt-lime: #c3bcae;
+  --lt-ink: #55503f;
+  --lt-stalk: #55503f;
+  --lt-paper: #ebe6dc;
+  --lt-mute: #8b8578;
 }

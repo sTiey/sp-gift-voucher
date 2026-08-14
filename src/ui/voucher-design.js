@@ -79,7 +79,7 @@ function expiryLine(v, now) {
 /**
  * วาดคูปอง 1 ใบ
  * @param {object} v คูปองตาม schema
- * @param {{design?:string, shape?:'ticket'|'compact', art?:string, qr?:boolean, now?:number}} opt
+ * @param {{design?:string, shape?:'ticket'|'compact', accent?:string, art?:string, qr?:boolean, now?:number}} opt
  */
 export function cardHtml(v, opt = {}) {
   const design = opt.design || 'ironwindow';
@@ -88,6 +88,7 @@ export function cardHtml(v, opt = {}) {
   const status = deriveStatus(v, now);
   const parts = valueParts(v);
   const exp = expiryLine(v, now);
+  // ค่าเป็นคำ (เช่น "ส่งฟรี") ไม่ใช่ตัวเลข → ดีไซน์ต้องย่อขนาดและห้ามให้ถูกบัง
   const isText = !/^[\d,.×]/.test(parts.main);
 
   const artSlug = opt.art || 'balcony';
@@ -98,7 +99,9 @@ export function cardHtml(v, opt = {}) {
       dark: 'currentColor', light: 'none', quiet: 1,
     })}</div>`;
 
-  return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}">
+  const accent = opt.accent ? ` data-accent="${esc(opt.accent)}"` : '';
+
+  return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${accent}>
   <article class="vk-card" data-status="${esc(status)}" data-kind="${esc(v.kind)}" data-code="${esc(v.code)}">
 
     <figure class="vk-card__art">
@@ -119,7 +122,7 @@ export function cardHtml(v, opt = {}) {
         <p class="vk-card__kicker">${esc(kickerLine(v))}</p>
         <p class="vk-card__value">
           ${parts.lead ? `<span class="vk-card__lead">${esc(parts.lead)}</span>` : ''}
-          <span class="vk-card__num"${isText ? ' data-text="true"' : ''}>${esc(parts.main)}</span>
+          <span class="vk-card__num" data-len="${parts.main.length}"${isText ? ' data-text="true"' : ''}>${esc(parts.main)}</span>
           ${parts.unit ? `<span class="vk-card__unit">${esc(parts.unit)}</span>` : ''}
         </p>
         <h3 class="vk-card__title">${esc(v.title || '')}</h3>
