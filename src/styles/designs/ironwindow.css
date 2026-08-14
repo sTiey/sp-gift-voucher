@@ -77,16 +77,26 @@
   filter: saturate(0.94) contrast(1.05);
 }
 
-/* ── หัวใบ: โลโก้ขาว — เส้นผม — ป้ายสถานะ ────────────────────────────────── */
+/* ── หัวใบ: โลโก้บนแผ่นงาช้าง — เส้นผม — ป้ายสถานะ ───────────────────────── */
 
 [data-design='ironwindow'] .vk-card__head {
   align-items: center;
   gap: calc(var(--vk-u) * 0.85);
 }
 
+/* โลโก้เคยเป็นตัวขาวลอยบนแผ่นดำ → จมหาย  เปลี่ยนเป็น "ป้ายทองเหลืองติดบนเหล็ก":
+   แผ่นงาช้างทึบ + เส้นทองรอบ  ใช้ไฟล์โลโก้ดำตรง ๆ ไม่ต้องพลิกสี → คมและมีน้ำหนัก
+   และล้อกับแผ่นงาช้างใต้ QR ที่ปลายอีกด้าน */
+[data-design='ironwindow'] .vk-card__logo {
+  height: auto;
+  padding: calc(var(--vk-u) * 0.42) calc(var(--vk-u) * 0.5);
+  border: 1px solid var(--iw-gold-hi);
+  background: var(--iw-ivory);
+}
+
 [data-design='ironwindow'] .vk-card__logo img {
-  /* โลโก้ไฟล์ดำ → พลิกเป็นขาวบนแผ่นดำ (สลับ src ด้วย CSS ไม่ได้) */
-  filter: invert(1) brightness(2);
+  height: calc(var(--vk-u) * 3);
+  filter: none;
 }
 
 /* ชื่อแบรนด์ซ้ำกับตัวหนังสือในโลโก้ → เปลี่ยนบทบาทเป็น "เส้นผม" คั่นหัวใบแทน */
@@ -118,12 +128,17 @@
 
 /* ── เนื้อหาหลักบนแผ่นดำ ─────────────────────────────────────────────────── */
 
+/* เนื้อหาเรียงลงล่างเป็นคอลัมน์เดียว · ที่ว่างเหลือเท่าไหร่ยกให้ "อากาศเหนือ
+   ตัวเลข" ทั้งหมด (kicker กิน margin-bottom: auto) → ไม่เหลือรูโหว่กลางใบ */
 [data-design='ironwindow'] .vk-card__hero {
-  display: grid;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   gap: 0;
 }
 
 [data-design='ironwindow'] .vk-card__kicker {
+  margin-bottom: auto;
   color: var(--iw-gold-hi);
   font-size: calc(var(--vk-u) * 0.62);
   font-weight: 500;
@@ -133,37 +148,49 @@
 
 [data-design='ironwindow'] .vk-card__value {
   align-items: baseline;
-  gap: calc(var(--vk-u) * 0.2);
-  margin-top: calc(var(--vk-u) * 0.32);
-  margin-bottom: calc(var(--vk-u) * 0.5);
+  gap: calc(var(--vk-u) * 0.34);
+  margin-top: calc(var(--vk-u) * 0.5);
+  margin-bottom: 0;
   color: var(--iw-ivory);
 }
 
-/* ตัวเลขใหญ่ + บาง = แพง · หนา = ตะโกน */
+/* ── ตัวเลข = พระเอกที่ "จมใต้แถบเหล็ก" ─────────────────────────────────────
+   ตัวเลขใหญ่จนก้นตัวเลขมุดหายเข้าไปใต้แถบหัวข้อ (ดูบล็อก .vk-card__title)
+   กลไก: margin-bottom ติดลบบนตัวเลข → กล่องบรรทัดหดสั้นกว่าตัวหนังสือจริง
+   แถบที่ตามมาจึงเลื่อนขึ้นมาทับก้นตัวเลขราว 30% ของความสูง
+   ทำที่ตัวเลขเอง (ไม่ใช่ที่แถบ) เพื่อให้ปิดสวิตช์เฉพาะค่าที่เป็นคำได้        */
 [data-design='ironwindow'] .vk-card__num {
-  font-size: calc(var(--vk-u) * 3.5);
+  font-size: calc(var(--vk-u) * 7.4);
   font-weight: 400;
-  line-height: 0.86;
-  letter-spacing: -0.025em;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  margin-bottom: calc(var(--vk-u) * -1.3);
 }
 
-/* ค่าเป็นคำ (เช่น "ส่งฟรี") — ต้องย่อลงมาก ไม่งั้นล้นใบ */
+/* ค่าเป็นคำ (เช่น "ส่งฟรี") — ย่อลงมาก และ **ห้ามถูกบัง** ต้องอ่านครบทุกตัว */
 [data-design='ironwindow'] .vk-card__num[data-text='true'] {
-  font-size: calc(var(--vk-u) * 1.95);
-  line-height: 1.2;
+  font-size: calc(var(--vk-u) * 2.55);
+  line-height: 1.16;
   letter-spacing: 0;
+  margin-bottom: calc(var(--vk-u) * 0.34);
 }
 
-[data-design='ironwindow'] .vk-card__lead {
+/* ฿ และ % — เล็กลงมากและยกแยกไปอยู่แนวหัวตัวเลข ไม่วิ่งตามความใหญ่
+   % ถูกผลักไปสุดขอบขวาของแผ่นดำ (margin-left: auto) → กินที่ว่างที่เคยโหวง
+   ข้างขวาตัวเลขสั้น ๆ อย่าง "15" และขึงเป็นเส้นสายตาข้ามใบ                  */
+[data-design='ironwindow'] .vk-card__lead,
+[data-design='ironwindow'] .vk-card__unit {
+  align-self: flex-start;
+  margin-top: calc(var(--vk-u) * 0.55);
   color: var(--iw-gold-hi);
-  font-size: calc(var(--vk-u) * 1.3);
-  font-weight: 400;
+  font-size: calc(var(--vk-u) * 1.05);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
 }
 
 [data-design='ironwindow'] .vk-card__unit {
-  color: var(--iw-gold-hi);
-  font-size: calc(var(--vk-u) * 1.4);
-  font-weight: 400;
+  margin-left: auto;
 }
 
 /* หัวข้อ/เงื่อนไข/หมายเหตุ ตัดจำนวนบรรทัดไว้ — กันข้อความยาวผิดคาดดันใบให้ยืด
@@ -177,8 +204,19 @@
   overflow-wrap: anywhere;
 }
 
+/* แถบเหล็กพาดขวางใบ: ทึบตันเต็มความกว้างแผ่นดำ + เส้นทองคมบนขอบบน
+   = ตัวที่ "บัง" ก้นตัวเลข  ต้องทึบจริง (พื้นเดียวกับใบ) และวางทับด้วย
+   position: relative เพื่อให้ทับตัวเลขที่เป็นกล่องธรรมดา                    */
 [data-design='ironwindow'] .vk-card__title {
   -webkit-line-clamp: 2;
+  position: relative;
+  z-index: 1;
+  margin-right: calc(var(--iw-pr) * -1);
+  margin-left: calc(var(--iw-pl) * -1);
+  padding: calc(var(--vk-u) * 0.62) var(--iw-pr) calc(var(--vk-u) * 0.5)
+    var(--iw-pl);
+  border-top: 1px solid var(--iw-gold-hi);
+  background: var(--iw-ink);
   color: var(--iw-ivory);
   font-size: calc(var(--vk-u) * 0.98);
   font-weight: 500;
@@ -187,7 +225,7 @@
 
 [data-design='ironwindow'] .vk-card__cond {
   -webkit-line-clamp: 2;
-  margin-top: calc(var(--vk-u) * 0.3);
+  margin-top: calc(var(--vk-u) * 0.42);
   color: var(--iw-mute);
   font-size: calc(var(--vk-u) * 0.74);
   line-height: 1.42;
@@ -270,8 +308,10 @@
    ภาพซ้าย 33% | แผ่นดำกลาง | ก้านรหัสขวา                                    */
 
 [data-design='ironwindow'][data-shape='ticket'] .vk-card {
-  --iw-split: 38%;
-  grid-template-columns: var(--iw-split) minmax(0, 1fr) calc(var(--vk-u) * 11);
+  --iw-split: 25%;
+  --iw-pl: calc(var(--vk-u) * 1.35);
+  --iw-pr: calc(var(--vk-u) * 1.4);
+  grid-template-columns: var(--iw-split) minmax(0, 1fr) calc(var(--vk-u) * 9.2);
   min-height: calc(var(--vk-u) * 17.4);
 }
 
@@ -280,10 +320,10 @@
 }
 
 [data-design='ironwindow'][data-shape='ticket'] .vk-card__main {
-  justify-content: space-between;
-  gap: calc(var(--vk-u) * 0.9);
-  padding: calc(var(--vk-u) * 1.55) calc(var(--vk-u) * 1.8)
-    calc(var(--vk-u) * 1.85) calc(var(--vk-u) * 1.5);
+  justify-content: flex-start;
+  gap: calc(var(--vk-u) * 0.7);
+  padding: calc(var(--vk-u) * 1.35) var(--iw-pr) calc(var(--vk-u) * 1.5)
+    var(--iw-pl);
   /* ชั้น 1: ลูกกรง — เส้นตั้ง 1px สูงเต็มแผ่น เว้นจังหวะกว้าง = ช่องเหล็ก
      ชั้น 2: เส้นทองเส้นที่สอง (จาง) เดินขนานรอยต่อ = ร่องฝังทองบนเสาเหล็ก */
   background-image:
@@ -299,11 +339,11 @@
       transparent calc(var(--vk-u) * 0.46 + 1px)
     );
   background-repeat: repeat, no-repeat;
-  background-position: calc(var(--vk-u) * 1.55) top, left top;
+  background-position: calc(var(--vk-u) * 1.35) top, left top;
 }
 
-[data-design='ironwindow'][data-shape='ticket'] .vk-card__logo {
-  height: calc(var(--vk-u) * 3.4);
+[data-design='ironwindow'][data-shape='ticket'] .vk-card__logo img {
+  height: calc(var(--vk-u) * 3.1);
 }
 
 [data-design='ironwindow'][data-shape='ticket'] .vk-card__hero::before {
@@ -319,8 +359,8 @@
   flex-direction: column;
   justify-content: center;
   gap: calc(var(--vk-u) * 0.9);
-  padding: calc(var(--vk-u) * 1.5) calc(var(--vk-u) * 2.1)
-    calc(var(--vk-u) * 1.5) calc(var(--vk-u) * 1.35);
+  padding: calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.4)
+    calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.15);
   border-left: 1px solid var(--iw-gold-faint);
 }
 
@@ -350,7 +390,9 @@
    ภาพบน | แผ่นดำล่าง | ก้านรหัสปิดท้าย                                       */
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card {
-  --iw-split: calc(var(--vk-u) * 8.2);
+  --iw-split: calc(var(--vk-u) * 6.3);
+  --iw-pl: calc(var(--vk-u) * 1.3);
+  --iw-pr: calc(var(--vk-u) * 1.3);
 }
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card__art {
@@ -359,9 +401,9 @@
 }
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card__main {
-  gap: calc(var(--vk-u) * 0.65);
-  padding: calc(var(--vk-u) * 0.95) calc(var(--vk-u) * 1.35)
-    calc(var(--vk-u) * 0.95);
+  gap: calc(var(--vk-u) * 0.55);
+  padding: calc(var(--vk-u) * 0.9) var(--iw-pr) calc(var(--vk-u) * 0.9)
+    var(--iw-pl);
   /* ลูกกรงยังเป็นเส้นตั้งเหมือนทรงยาว · เส้นร่องทองหันเป็นแนวนอนตามรอยต่อ */
   background-image:
     repeating-linear-gradient(
@@ -376,24 +418,26 @@
       transparent calc(var(--vk-u) * 0.46 + 1px)
     );
   background-repeat: repeat, no-repeat;
-  background-position: calc(var(--vk-u) * 1.4) top, left top;
+  background-position: calc(var(--vk-u) * 1.3) top, left top;
 }
 
-[data-design='ironwindow'][data-shape='compact'] .vk-card__logo {
-  height: calc(var(--vk-u) * 2.9);
+[data-design='ironwindow'][data-shape='compact'] .vk-card__logo img {
+  height: calc(var(--vk-u) * 2.5);
 }
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card__num {
-  font-size: calc(var(--vk-u) * 3);
+  font-size: calc(var(--vk-u) * 6.1);
+  margin-bottom: calc(var(--vk-u) * -1.05);
 }
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card__num[data-text='true'] {
-  font-size: calc(var(--vk-u) * 1.8);
+  font-size: calc(var(--vk-u) * 2.35);
+  margin-bottom: calc(var(--vk-u) * 0.3);
 }
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card__value {
-  margin-top: calc(var(--vk-u) * 0.26);
-  margin-bottom: calc(var(--vk-u) * 0.4);
+  margin-top: calc(var(--vk-u) * 0.4);
+  margin-bottom: 0;
 }
 
 [data-design='ironwindow'][data-shape='compact'] .vk-card__note {

@@ -5,9 +5,14 @@
      · กระดาษครีมอมเทา  · ก้อนสีเขียวมะนาวก้อนเดียวใหญ่ ๆ (ที่อยู่ของตัวเลข)
      · ก้านฉีกดำสนิทด้านขวา มีเลขซีเรียลหมุน 90° + รอยปรุเป็นวงกลมเรียงถี่
      · ป้ายกำกับ/รหัส/วันที่ ใช้ตัวพิมพ์ดีด (IBM Plex Mono) เรียงเป็นแถบข้อมูล
-     · ภาพงานเหล็กจริง = ช่องเล็ก ๆ ชิดมุม ไม่ใช่พื้นหลัง
+     · ภาพงานเหล็กจริง = บล็อกใหญ่ชิดมุม เห็นราวทั้งชุด (ไม่ซูมจนดูไม่ออก)
 
-   ลายเซ็นที่ต้องคงไว้ทั้ง 2 ทรง: ก้านดำ + ตัวหนังสือหมุน + ก้อนเขียว
+   ท่าเด็ด: ตัวเลขใหญ่จน "ก้นจม" หายเข้าไปใต้แถบดำที่ปลายก้อนเขียว
+     · ก้นตัวเลขหายราว 30% ของความสูงตัว — ยังอ่านออก แต่ได้มิติ
+     · ฿ กับ % ตัวเล็ก ลอยแยกไปมุมบนของก้อนเขียว ไม่ใหญ่ตามเลข
+     · ค่าที่เป็นคำ (ส่งฟรี) ยกขึ้นเหนือแถบ ห้ามโดนบัง
+
+   ลายเซ็นที่ต้องคงไว้ทั้ง 2 ทรง: ก้านดำ + ตัวหนังสือหมุน + ก้อนเขียว + แถบดำใต้เลข
    ทุกขนาดผูกกับ var(--vk-u) — ห้าม px ดิบ ยกเว้นเส้น 1px
    ========================================================================== */
 
@@ -45,17 +50,18 @@
 /* ก้านฉีกถูกยกออกมาเป็นช่องของกริดเอง → ปลอกเดิมไม่ต้องมีกล่อง */
 [data-design='limeticket'] .vk-card__stub { display: contents; }
 
-/* ── ทรงยาว: เนื้อหา | แถบข้อมูล | ก้านดำ ─────────────────────────────── */
+/* ── ทรงยาว: เนื้อหา | ภาพ+แถบข้อมูล | ก้านดำ ─────────────────────────
+   ภาพกินสองช่องบนสุด (กว้าง 13.4u × สูง 8u) → เห็นราวเหล็กทั้งชุด
+   ใต้ภาพแบ่งเป็น รหัส/วันที่ ซ้าย · QR ขวา */
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card {
   min-height: calc(var(--vk-u) * 16.6);
   grid-template-columns:
-    minmax(0, 1fr) calc(var(--vk-u) * 9.2) calc(var(--vk-u) * 3.4);
-  grid-template-rows: calc(var(--vk-u) * 5) minmax(0, 1fr) auto;
+    minmax(0, 1fr) calc(var(--vk-u) * 8.8) calc(var(--vk-u) * 4.6) calc(var(--vk-u) * 3.4);
+  grid-template-rows: calc(var(--vk-u) * 8) minmax(0, 1fr);
   grid-template-areas:
-    'main art   stalk'
-    'main info  stalk'
-    'main qr    stalk';
+    'main art  art  stalk'
+    'main info qr   stalk';
 }
 
 /* ── ทรงกระทัดรัด: เนื้อหาบน · แถบข้อมูลล่าง · ก้านดำยังอยู่ขวา ────────── */
@@ -64,8 +70,8 @@
   /* ใบเนื้อหาน้อย (ไม่มีเงื่อนไข/ไม่มีคำขอบคุณ) ต้องไม่หดจนป้ายไปชนหัวข้อ */
   min-height: calc(var(--vk-u) * 23.4);
   grid-template-columns:
-    calc(var(--vk-u) * 4.8) minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
-  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 5.8);
+    calc(var(--vk-u) * 7.4) minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
+  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 5.9);
   grid-template-areas:
     'main main main stalk'
     'art  info qr   stalk';
@@ -135,18 +141,22 @@
 
 [data-design='limeticket'] .vk-card__hero { display: contents; }
 
+/* หัวใบเกาะขอบบน · กลุ่มข้อความลอยกลางคอลัมน์ด้วยช่องว่าง 1fr หัว-ท้าย
+   → ใบเนื้อหาน้อย/มาก ก็ยังสมดุลกับก้อนเขียว ไม่เหลือรูโบ๋ข้างล่าง */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__main {
   display: grid;
-  grid-template-columns: calc(var(--vk-u) * 13) minmax(0, 1fr);
-  grid-template-rows: auto auto auto auto 1fr;
+  grid-template-columns: calc(var(--vk-u) * 12.5) minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto auto auto auto 1fr;
   grid-template-areas:
     'value head'
+    'value ....'
     'value kicker'
     'value title'
     'value cond'
-    'value note';
-  column-gap: calc(var(--vk-u) * 1.4);
-  row-gap: calc(var(--vk-u) * 0.4);
+    'value note'
+    'value ....';
+  column-gap: calc(var(--vk-u) * 1.35);
+  row-gap: calc(var(--vk-u) * 0.42);
   padding: calc(var(--vk-u) * 1.3) calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.3) 0;
   border-right: 1px solid var(--lt-line);
 }
@@ -228,16 +238,43 @@
 
 /* ── ก้อนเขียว + ตัวเลข ────────────────────────────────────────────────── */
 
+/* ตัวเลขนั่งชิดก้นก้อน แล้วมี padding ล่าง = ความสูงแถบดำพอดี
+   → เลื่อนตัวเลขลง (margin ติดลบ) เท่าไหร่ = จมใต้แถบเท่านั้น */
 [data-design='limeticket'] .vk-card__value {
+  --lt-bar: 2.6;               /* ความสูงแถบดำ (หน่วย u) */
+  --lt-dot: 0.68;              /* เม็ดเขียวบนแถบ */
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  align-content: center;
+  align-items: flex-end;
   justify-content: center;
-  gap: calc(var(--vk-u) * 0.22);
+  gap: calc(var(--vk-u) * 0.3);
+  overflow: hidden;
   background: var(--lt-lime);
   color: var(--lt-ink);
-  padding: calc(var(--vk-u) * 0.9);
+  padding:
+    calc(var(--vk-u) * 1.15) calc(var(--vk-u) * 0.7) calc(var(--vk-u) * var(--lt-bar));
+}
+
+/* แถบดำทึบปิดปลายก้อนเขียว — ตัวที่ "กิน" ก้นตัวเลข */
+[data-design='limeticket'] .vk-card__value::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  height: calc(var(--vk-u) * var(--lt-bar));
+  background: var(--lt-stalk);
+}
+
+/* เม็ดเขียวบนแถบดำ — ลายเดียวกับเม็ดบนก้านฉีก */
+[data-design='limeticket'] .vk-card__value::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  right: calc(var(--vk-u) * 0.95);
+  bottom: calc(var(--vk-u) * (var(--lt-bar) - var(--lt-dot)) / 2);
+  width: calc(var(--vk-u) * var(--lt-dot));
+  height: calc(var(--vk-u) * var(--lt-dot));
+  background: var(--lt-lime);
 }
 
 [data-design='limeticket'][data-shape='ticket'] .vk-card__value {
@@ -245,31 +282,44 @@
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__value {
+  --lt-bar: 2.25;
   margin-inline: calc(var(--vk-u) * -1.2);
-  min-height: calc(var(--vk-u) * 4.9);
+  min-height: calc(var(--vk-u) * 7.2);
+  padding-top: calc(var(--vk-u) * 0.95);
 }
 
+/* line-height 0.72 = กล่องตัวเลขจบพอดีเส้นฐาน → คุมระยะจมได้เป๊ะ
+   margin ติดลบ 0.22em ≈ 30% ของความสูงตัวเลข */
 [data-design='limeticket'] .vk-card__num {
   font-weight: 400;
-  font-size: calc(var(--vk-u) * 3.8);
-  line-height: 0.9;
-  letter-spacing: -0.02em;
+  font-size: calc(var(--vk-u) * 4.2);
+  line-height: 0.72;
+  letter-spacing: -0.03em;
+  margin-bottom: -0.22em;
 }
 
 [data-design='limeticket'] .vk-card[data-kind='percent'] .vk-card__num {
-  font-size: calc(var(--vk-u) * 6.2);
+  font-size: calc(var(--vk-u) * 8.6);
 }
 
+/* ค่าที่เป็นคำ — ยกพ้นแถบดำ ต้องอ่านครบทุกตัว ห้ามจม */
 [data-design='limeticket'] .vk-card__num[data-text='true'] {
   font-size: calc(var(--vk-u) * 3);
-  line-height: 1.15;
+  line-height: 1.18;
   letter-spacing: 0;
+  margin-bottom: calc(var(--vk-u) * 0.55);
 }
 
+/* ฿ / % — ตัวเล็ก ลอยแยกไปมุมบนขวาของก้อนเขียว ไม่กินความกว้างของตัวเลข */
 [data-design='limeticket'] .vk-card__lead,
 [data-design='limeticket'] .vk-card__unit {
+  position: absolute;
+  top: calc(var(--vk-u) * 1.1);
+  right: calc(var(--vk-u) * 0.95);
+  font-family: var(--lt-mono);
   font-weight: 500;
-  font-size: calc(var(--vk-u) * 1.7);
+  font-size: calc(var(--vk-u) * 1.15);
+  letter-spacing: 0.02em;
   line-height: 1;
 }
 
@@ -277,10 +327,14 @@
   font-size: calc(var(--vk-u) * 4.6);
 }
 [data-design='limeticket'][data-shape='compact'] .vk-card[data-kind='percent'] .vk-card__num {
-  font-size: calc(var(--vk-u) * 6.6);
+  font-size: calc(var(--vk-u) * 6.4);
 }
 [data-design='limeticket'][data-shape='compact'] .vk-card__num[data-text='true'] {
-  font-size: calc(var(--vk-u) * 3.4);
+  font-size: calc(var(--vk-u) * 3.2);
+}
+[data-design='limeticket'][data-shape='compact'] .vk-card__lead,
+[data-design='limeticket'][data-shape='compact'] .vk-card__unit {
+  top: calc(var(--vk-u) * 0.85);
 }
 
 /* ── ตัวหนังสือในใบ ────────────────────────────────────────────────────── */
@@ -358,8 +412,9 @@
   white-space: nowrap;
 }
 
+/* ทรงยาว: ป้ายเป็นชิปดำมุมบนซ้ายของก้อนเขียว — ไม่ไปแย่งที่กับตัวเลขที่จมแถบ */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__badge {
-  inset: auto auto calc(var(--vk-u) * 1.1) calc(var(--vk-u) * 1.1);
+  inset: calc(var(--vk-u) * 1.02) auto auto calc(var(--vk-u) * 0.95);
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__badge {

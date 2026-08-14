@@ -16,8 +16,20 @@
    ค) โลโก้ในหัวใบถูก **ครอบเหลือแค่มอโนแกรม** แล้วเขียน SP EMPIRE
       ด้วยตัวพิมพ์ใหญ่ถ่างกว้างข้าง ๆ — ไม่ใช้โลโก้เต็มก้อนแบบสำเร็จรูป
 
+   ง) **ตัวเลขจมใต้แผ่นซ้อน** — ตัวเลขใหญ่จนก้นตัวเลขหายเข้าไปใต้แผ่นโลหะอีกชิ้น
+      ที่วางเหลื่อมทับด้านล่าง (ทรงยาว = แถบฐาน · ทรงกระทัดรัด = แผ่นข้อความ)
+      ขอบบนของแผ่นซ้อนคือ "รอยตัด" — เห็นเลขไม่ครบแต่ยังอ่านออก = มั่นใจ ไม่กลัวคนอ่านไม่ออก
+
    ⛔ ห้าม metallic gradient / เงาฟุ้ง / เส้นประ+รูวงกลม / มุมมนใหญ่
    ========================================================================== */
+
+/* card-base ตั้ง container-type: inline-size ที่ .vk-voucher → ตัวมันเองไม่มี
+   "ความกว้างตามเนื้อหา" อีกต่อไป  พออยู่ในกล่องที่ย่อตามเนื้อหา (หน้าตัวอย่าง /
+   รายการคูปอง) ใบจะแฟบเหลือเท่าข้อความข้างเคียง — เคยพังจริงมาแล้ว: ทรงยาว
+   เรนเดอร์ออกมาเป็นแท่งสูง 1000px กว้าง 180px
+   → ต้องบอกความกว้างสำรองไว้ให้ระบบ container ใช้คิด */
+[data-design='goldplate'][data-shape='ticket']  { contain-intrinsic-inline-size: 45rem; }
+[data-design='goldplate'][data-shape='compact'] { contain-intrinsic-inline-size: 23.75rem; }
 
 [data-design='goldplate'] .vk-card {
   /* tokens.css ตั้ง --vk-u: 1rem ทับไว้ที่ .vk-card ทำให้ค่าที่ card-base
@@ -36,9 +48,15 @@
   --gp-ink-3: #726c62;        /* เทาเข้ม — ป้ายกำกับจิ๋ว */
   --gp-line: #362d20;         /* เส้นแบ่งโครงสร้าง */
 
-  --gp-num: calc(var(--vk-u) * 5.1);      /* ตัวเลขมูลค่า — ตั้งต้นที่ % */
+  --gp-num: calc(var(--vk-u) * 7.6);      /* ตัวเลขมูลค่า — ตั้งต้นที่ % */
   --gp-mark: calc(var(--vk-u) * 10.5);    /* กล่องลายน้ำมอโนแกรม (คงที่ทุกใบ) */
   --gp-inset: calc(var(--vk-u) * 0.46);   /* ระยะกรอบในจากขอบใบ */
+
+  /* ระยะที่ก้นตัวเลข "จม" ลงไปใต้แผ่นซ้อน — คิดเป็นสัดส่วนของขนาดตัวเลขเอง
+     ตัวเลขในกล่องสูง 0.9em นั่งอยู่ช่วง 0.10em–0.82em จากขอบบนกล่อง
+     จมลึก S จึงบังก้นตัวเลขไป (S − 0.08) / 0.72 ของความสูงตัวเลข
+     0.30em ≈ บัง 30% — อยู่กลางกรอบที่ยอมได้ (25–35%) ยังอ่านออกทุกหลัก */
+  --gp-sink: calc(var(--gp-num) * 0.3);
 
   background: var(--gp-plate);
   color: var(--gp-ink);
@@ -51,7 +69,7 @@
 /* ตัวเลขที่มีหลายหลัก (บาท / ราคาพิเศษ) ต้องเล็กลง ไม่งั้นเบียดช่องข้อความ */
 [data-design='goldplate'] .vk-card[data-kind='amount'],
 [data-design='goldplate'] .vk-card[data-kind='fixed_price'] {
-  --gp-num: calc(var(--vk-u) * 3.5);
+  --gp-num: calc(var(--vk-u) * 4.3);
 }
 
 /* กรอบในเส้นผม — ร่องเจียรชั้นที่ 2 (ลายเซ็นข้อ ข) */
@@ -149,13 +167,20 @@
   gap: calc(var(--vk-u) * 0.24);
 }
 
+/* ตัวเลขมูลค่า — กล่องของมันสั้นกว่าตัวจริง (margin ติดลบ) ก้นตัวเลขจึงยื่นพ้น
+   กล่องลงไปข้างล่าง  แล้วมี "แผ่นซ้อน" ทึบมาปิดตรงนั้นพอดี = ตัวเลขจมหายไป
+   ครึ่งท่อน  ทำที่ตัวเลขเอง ไม่ใช่ที่กล่องนอก → ทุกทรงใช้กลไกเดียวกัน และ
+   ระยะจมผูกกับขนาดตัวเลข ไม่ว่าใบไหนก็บังเป็นสัดส่วนเท่ากันเสมอ */
 [data-design='goldplate'] .vk-card__num {
   position: relative;
+  z-index: 1;
+  margin-bottom: calc(var(--gp-sink) * -1);
   font-size: var(--gp-num);
   font-weight: var(--vk-weight-regular);   /* บาง + ใหญ่ = แพง */
   line-height: 0.9;
   letter-spacing: -0.03em;
   color: var(--gp-gold);
+  white-space: nowrap;
 }
 
 /* ลายน้ำมอโนแกรมตัวมหึมา — ขนาดและตำแหน่ง **คงที่ทุกใบ** ไม่ผูกกับความยาว
@@ -180,8 +205,10 @@
   pointer-events: none;
 }
 
-/* ค่าที่เป็น "คำ" เช่น ส่งฟรี — ต้องเล็กลง และคลายบรรทัดกันวรรณยุกต์ชน */
+/* ค่าที่เป็น "คำ" เช่น ส่งฟรี — ต้องเล็กลง คลายบรรทัดกันวรรณยุกต์ชน
+   และ **ห้ามจม** ต้องอ่านครบทุกตัว → ยกกล่องขึ้นให้พ้นขอบแผ่นซ้อน */
 [data-design='goldplate'] .vk-card__num[data-text='true'] {
+  margin-bottom: calc(var(--vk-u) * 0.5);
   font-size: calc(var(--vk-u) * 2.2);
   line-height: 1.22;
   letter-spacing: 0.005em;
@@ -206,21 +233,27 @@
   line-height: 1.28;
   letter-spacing: 0.004em;
   color: var(--gp-ink);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
+/* บรรทัดเงื่อนไขมี 2 ท่อนคั่นด้วย · — ปล่อยไว้เฉย ๆ จะได้ "฿2,000" ตกไป
+   อยู่บรรทัดล่างตัวเดียวโดด ๆ  balance สั่งให้เกลี่ยความยาวสองบรรทัดเท่ากัน
+   จึงตัดตรงจุดคั่นแทน · break-word (ไม่ใช่ anywhere) กันไม่ให้หั่นกลางคำไทย */
 [data-design='goldplate'] .vk-card__cond {
   font-size: calc(var(--vk-u) * 0.78);
   line-height: 1.5;
   color: var(--gp-ink-2);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 [data-design='goldplate'] .vk-card__note {
   font-size: calc(var(--vk-u) * 0.74);
   line-height: 1.45;
   color: var(--gp-ink-3);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 /* ---- ป้ายกำกับพิเศษ — อยู่ในสายเนื้อหา ไม่ลอย จึงล้นไม่ได้ ---- */
@@ -303,19 +336,37 @@
    ช่องตัวเลขกว้างคงที่ → เส้นผมตั้งอยู่ตำแหน่งเดิมทุกใบ (ลายเซ็นข้อ ข) */
 
 [data-design='goldplate'][data-shape='ticket'] .vk-card {
-  --gp-col: calc(var(--vk-u) * 11.9);
+  --gp-col: calc(var(--vk-u) * 13.6);       /* ช่องตัวเลข — กว้างคงที่ทุกใบ */
+  --gp-gap: calc(var(--vk-u) * 1.5);        /* ช่องว่างคร่อมเส้นผมตั้ง */
+  --gp-rail: calc(var(--vk-u) * 3.3);       /* แถบฐาน — แผ่นซ้อนที่บังก้นเลข */
   min-height: calc(var(--vk-u) * 16);
 }
 
+/* ก้นใบเว้นไว้ให้แถบฐานเต็ม ๆ → ขอบล่างของช่องเนื้อหา = ขอบบนของแถบพอดี
+   ตัวเลขที่ align ชิดล่างจึงจมลงไปใต้แถบเป็นระยะเท่ากันทุกใบ */
 [data-design='goldplate'][data-shape='ticket'] .vk-card__main {
   gap: calc(var(--vk-u) * 1.05);
-  padding: calc(var(--vk-u) * 1.85) calc(var(--vk-u) * 2.15);
+  padding: calc(var(--vk-u) * 1.85) calc(var(--vk-u) * 2.15) var(--gp-rail);
+}
+
+/* แถบฐาน — แผ่นโลหะอีกชิ้นวางเหลื่อมทับก้นใบ ขอบบนเป็นเส้นทองเส้นผม
+   = "รอยตัด" ที่ตัวเลขหายเข้าไป · เป็นที่นั่งของป้ายกำกับด้วย */
+[data-design='goldplate'][data-shape='ticket'] .vk-card__main::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--gp-rail);
+  background: var(--gp-plate-2);
+  border-top: var(--vk-hairline) solid var(--gp-gold-dim);
 }
 
 [data-design='goldplate'][data-shape='ticket'] .vk-card__hero {
   grid-template-columns: var(--gp-col) minmax(0, 1fr);
-  grid-template-rows: auto auto auto;
-  column-gap: calc(var(--vk-u) * 2);
+  grid-template-rows: auto auto minmax(0, 1fr);   /* แถวท้ายกินที่เหลือ → ก้นช่องตัวเลข = ขอบแถบ */
+  align-content: normal;
+  column-gap: var(--gp-gap);
   row-gap: calc(var(--vk-u) * 0.4);
 }
 /* เส้นผมตั้ง — ลากจากใต้เส้นหัวใบยาวลงถึงก้นเนื้อหา ผ่านข้างป้ายกำกับ
@@ -326,16 +377,16 @@
   content: '';
   position: absolute;
   top: calc(var(--vk-u) * 5.85);
-  bottom: calc(var(--vk-u) * 1.85);
-  left: calc(var(--vk-u) * 2.15 + var(--gp-col) + var(--vk-u));
+  bottom: var(--gp-rail);
+  left: calc(var(--vk-u) * 2.15 + var(--gp-col) + var(--gp-gap) / 2);
   width: var(--vk-hairline);
   background: var(--gp-line);
 }
 
+/* ตัวเลขนั่งชิดก้นช่องเนื้อหา = ชิดขอบบนแถบฐาน แล้วจมต่อลงไปอีก 30% */
 [data-design='goldplate'][data-shape='ticket'] .vk-card__value {
   grid-area: 2 / 1 / 4 / 2;
-  align-self: start;
-  padding-top: calc(var(--vk-u) * 0.15);
+  align-self: end;
 }
 [data-design='goldplate'][data-shape='ticket'] .vk-card__title { grid-area: 1 / 2; align-self: end; }
 [data-design='goldplate'][data-shape='ticket'] .vk-card__cond {
@@ -345,6 +396,15 @@
   border-top: var(--vk-hairline) solid var(--gp-line);
 }
 [data-design='goldplate'][data-shape='ticket'] .vk-card__note { grid-area: 3 / 2; align-self: start; }
+
+/* ป้ายกำกับย้ายไปนั่งบนแถบฐาน — ถอดออกจากสายเนื้อหา ก้นช่องเนื้อหาจึงคงที่
+   ไม่ว่าใบนั้นจะมีป้ายหรือไม่ ตัวเลขก็จมเท่ากันเสมอ */
+[data-design='goldplate'][data-shape='ticket'] .vk-card__badge {
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--vk-u) * 2.15);
+  bottom: calc((var(--gp-rail) - var(--vk-u) * 0.81) / 2);
+}
 
 [data-design='goldplate'][data-shape='ticket'] .vk-card__stub {
   flex-direction: column;
@@ -375,30 +435,65 @@
    ภาษาเดียวกันเป๊ะ แค่หมุนแกน: เส้นผม "ตั้ง" กลายเป็นเส้นผม "นอน"
    ที่แบ่งช่องตัวเลขออกจากช่องข้อความ                                    */
 
+[data-design='goldplate'][data-shape='compact'] .vk-card {
+  --gp-num: calc(var(--vk-u) * 6.4);      /* ใบเล็ก — ลดลงนิด แต่ยังท่วมใบ */
+}
+[data-design='goldplate'][data-shape='compact'] .vk-card[data-kind='amount'],
+[data-design='goldplate'][data-shape='compact'] .vk-card[data-kind='fixed_price'] {
+  --gp-num: calc(var(--vk-u) * 4.1);
+}
+
 [data-design='goldplate'][data-shape='compact'] .vk-card__main {
-  gap: calc(var(--vk-u) * 0.85);
-  padding: calc(var(--vk-u) * 1.4) calc(var(--vk-u) * 1.7);
+  gap: calc(var(--vk-u) * 0.8);
+  padding: calc(var(--vk-u) * 1.2) calc(var(--vk-u) * 1.7);
 }
 
 [data-design='goldplate'][data-shape='compact'] .vk-card__hero {
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(5, auto);
-  row-gap: calc(var(--vk-u) * 0.3);
+  grid-template-rows: repeat(4, auto);
+  row-gap: calc(var(--vk-u) * 0.26);
   align-content: start;
 }
 [data-design='goldplate'][data-shape='compact'] .vk-card__kicker { grid-area: 1 / 1; }
 [data-design='goldplate'][data-shape='compact'] .vk-card__value {
   grid-area: 2 / 1;
-  padding-bottom: calc(var(--vk-u) * 0.58);
-  margin-bottom: calc(var(--vk-u) * 0.18);
-  border-bottom: var(--vk-hairline) solid var(--gp-line);
+  margin-bottom: calc(var(--vk-u) * 0.86);
 }
 [data-design='goldplate'][data-shape='compact'] .vk-card__value::before {
   --gp-mark: calc(var(--vk-u) * 9.6);
 }
+
+/* แผ่นซ้อน — โลหะอีกชิ้นเต็มความกว้างใบ วางเหลื่อมทับก้นตัวเลข
+   ขอบบนเป็นเส้นทองเส้นผม = รอยตัด · ข้างในเป็นที่อยู่ของหัวข้อ+เงื่อนไข
+   (สูงเกินพอแล้วให้ overflow ของใบตัดทิ้ง — ไม่ต้องคำนวณความสูงจริง) */
+[data-design='goldplate'][data-shape='compact'] .vk-card__value::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: 100%;
+  left: calc(var(--vk-u) * -1.7);
+  right: calc(var(--vk-u) * -1.7);
+  height: calc(var(--vk-u) * 40);
+  background: var(--gp-plate-2);
+  border-top: var(--vk-hairline) solid var(--gp-gold-dim);
+}
+
+/* ข้อความต้องลอยอยู่ "บน" แผ่นซ้อน — position ทำให้วาดทีหลังตามลำดับ DOM */
+[data-design='goldplate'][data-shape='compact'] .vk-card__title,
+[data-design='goldplate'][data-shape='compact'] .vk-card__cond {
+  position: relative;
+  z-index: 3;
+}
 [data-design='goldplate'][data-shape='compact'] .vk-card__title { grid-area: 3 / 1; }
 [data-design='goldplate'][data-shape='compact'] .vk-card__cond { grid-area: 4 / 1; }
-[data-design='goldplate'][data-shape='compact'] .vk-card__note { grid-area: 5 / 1; }
+/* ใบเล็กตัดคำขอบคุณทิ้ง — พื้นที่มีจำกัด เก็บไว้เฉพาะสิ่งที่ต้องรู้ */
+[data-design='goldplate'][data-shape='compact'] .vk-card__note { display: none; }
+
+/* ป้ายกำกับก็อยู่บนแผ่นซ้อน ไม่ใช่ใต้มัน */
+[data-design='goldplate'][data-shape='compact'] .vk-card__badge {
+  position: relative;
+  z-index: 3;
+}
 
 [data-design='goldplate'][data-shape='compact'] .vk-card__stub {
   align-items: center;
