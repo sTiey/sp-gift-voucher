@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="th" data-vk-skin="steel" data-vk-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ชุดทดสอบสถานการณ์จริง</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/tokens/skin-ink.css">
+<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/voucher.css">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="scenarios.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="app__bar app__bar--wide">
+    <div class="app__bar-inner">
+      <a class="app__back" href="index.html" aria-label="ย้อนกลับ">←</a>
+      <div>
+        <div class="app__title">ชุดทดสอบสถานการณ์จริง</div>
+        <div class="app__sub">ทุกอย่างที่เกิดขึ้นได้หน้าร้าน · กดทดสอบดูได้ทีละอัน</div>
+      </div>
+      <div class="vk-spacer"></div>
+      <button class="btn btn--primary btn--auto" id="runAll" style="min-height:38px">ทดสอบทั้งหมด</button>
+      <div id="themeSlot"></div>
+    </div>
+  </div>
+
+  <div class="app__wrap app__wrap--wide">
+
+    <!-- สรุปผล -->
+    <div class="sum" id="summary">
+      <div class="sum__big" id="sumBig">—</div>
+      <div class="sum__meta">
+        <div class="sum__row"><span>สถานการณ์ทั้งหมด</span><b id="sumTotal">—</b></div>
+        <div class="sum__row"><span>ผ่าน</span><b id="sumPass" class="is-ok">—</b></div>
+        <div class="sum__row"><span>ไม่ผ่าน</span><b id="sumFail" class="is-bad">—</b></div>
+        <div class="sum__row"><span>ใช้เวลา</span><b id="sumTime">—</b></div>
+      </div>
+      <div class="sum__cov" id="cov"></div>
+    </div>
+
+    <!-- ตัวกรอง -->
+    <div class="app__tabs" id="groupTabs"></div>
+
+    <!-- รายการสถานการณ์ -->
+    <div class="scn-list" id="list"></div>
+  </div>
+</div>
+
+<script type="module">
+import { mountThemeToggle } from './app.js';
+import { SCENARIOS, GROUPS, runScenario, coverage } from '../tests/scenarios.js';
+
+const $ = (s) => document.querySelector(s);
+mountThemeToggle($('#themeSlot'));
+
+let filter = 'ทั้งหมด';
+const state = new Map();   // id -> ผลการทดสอบล่าสุด
+
+/* ---- ตัวกรองตามกลุ่ม ---- */
+function paintTabs() {
+  $('#groupTabs').innerHTML = ['ทั้งหมด', ...GROUPS].map((g) => {
+    const n = g === 'ทั้งหมด' ? SCENARIOS.length : SCENARIOS.filter((s) => s.group === g).length;
+    return `<button class="app__tab" type="button" data-g="${g}" aria-pressed="${g === filter}">${g} ${n}</button>`;
+  }).join('');
+}
+
+/* ---- การ์ด 1 สถานการณ์ ---- */
+function cardHtml(sc) {
+  const r = state.get(sc.id);
+  const mark = !r ? '' : r.pass ? 'ok' : 'bad';
+  const steps = r
+    ? `<ul class="scn__steps">${r.steps.map((s) => `
+        <li data-pass="${s.pass}">
+          <span class="scn__tick">${s.pass ? '✓' : '✕'}</span>
+          <span>${s.label}</span>
+          ${s.detail ? `<em>${s.detail}</em>` : ''}
+        </li>`).join('')}</ul>`
+    : '';
+
+  return `<article class="scn" data-mark="${mark}" data-id="${sc.id}">
+      <div class="scn__head">
+        <span class="scn__group">${sc.group}</span>
+        <h3 class="scn__title">${sc.title}</h3>
+        <span class="scn__state">${!r ? '' : r.pass ? 'ผ่าน' : 'ไม่ผ่าน'}</span>
+        <button class="scn__run" type="button">ทดสอบ</button>
+      </div>
+      <p class="scn__story">${sc.story}</p>
+      <p class="scn__why">${sc.why}</p>
+      ${steps}
+    </article>`;
+}
+
+function paintList() {
+  const items = SCENARIOS.filter((s) => filter === 'ทั้งหมด' || s.group === filter);
+  $('#list').innerHTML = items.map(cardHtml).join('');
+}
+
+function paintSummary(ms) {
+  const done = [...state.values()];
+  if (!done.length) return;
+  const pass = done.filter((r) => r.pass).length;
+  const fail = done.length - pass;
+  $('#sumBig').textContent = fail === 0 ? 'ผ่านหมด' : `ไม่ผ่าน ${fail}`;
+  $('#sumBig').dataset.tone = fail === 0 ? 'ok' : 'bad';
+  $('#sumTotal').textContent = SCENARIOS.length;
+  $('#sumPass').textContent = pass;
+  $('#sumFail').textContent = fail;
+  if (ms != null) $('#sumTime').textContent = `${ms} มิลลิวินาที`;
+}
+
+/* ---- ความครอบคลุม: บอกว่ามีอะไรที่ยังไม่ถูกทดสอบไหม ---- */
+function paintCoverage() {
+  const c = coverage();
+  const line = (label, o) => {
+    const okAll = o.missing.length === 0;
+    return `<span class="cov" data-ok="${okAll}">${label} ${o.total - o.missing.length}/${o.total}${
+      okAll ? '' : ` · ขาด ${o.missing.join(', ')}`}</span>`;
+  };
+  $('#cov').innerHTML =
+    line('ชนิดสิทธิ์', c.kinds) + line('เหตุผลที่ปฏิเสธ', c.reasons) + line('สถานะ', c.statuses);
+}
+
+/* ---- ลงมือทดสอบ ---- */
+async function runOne(id) {
+  const sc = SCENARIOS.find((s) => s.id === id);
+  state.set(id, await runScenario(sc));
+  paintList();
+  paintSummary();
+}
+
+async function runEverything() {
+  const btn = $('#runAll');
+  btn.disabled = true;
+  btn.textContent = 'กำลังทดสอบ…';
+  const t0 = performance.now();
+  for (const sc of SCENARIOS) state.set(sc.id, await runScenario(sc));
+  const ms = Math.round(performance.now() - t0);
+  paintList();
+  paintSummary(ms);
+  btn.disabled = false;
+  btn.textContent = 'ทดสอบทั้งหมดอีกครั้ง';
+}
+
+$('#groupTabs').addEventListener('click', (e) => {
+  const b = e.target.closest('.app__tab');
+  if (!b) return;
+  filter = b.dataset.g;
+  paintTabs();
+  paintList();
+});
+
+$('#list').addEventListener('click', (e) => {
+  const b = e.target.closest('.scn__run');
+  if (!b) return;
+  runOne(b.closest('.scn').dataset.id);
+});
+
+$('#runAll').addEventListener('click', runEverything);
+
+paintTabs();
+paintList();
+paintCoverage();
+runEverything();   // รันให้เลยตอนเปิดหน้า จะได้เห็นผลทันที
+</script>
+</body>
+</html>

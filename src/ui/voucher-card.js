@@ -182,29 +182,42 @@ export function renderVoucher(host, v, opt = {}) {
   return host.querySelector('.vk-card');
 }
 
-/* ══════════════════════ แท็กสำเร็จรูป <gift-voucher> ═══════════════════ */
+/* ══════════════════════ แท็กสำเร็จรูป <gift-voucher> ═══════════════════
+   ⚠️ ต้องสร้างคลาสข้างในฟังก์ชัน ไม่ใช่ประกาศไว้ตรง ๆ ที่ระดับบนของไฟล์
+   เพราะ `extends HTMLElement` จะถูกอ่านทันทีตอน import
+   → ฝั่งเซิร์ฟเวอร์ (Node) ไม่มี HTMLElement = พังตั้งแต่ import ไฟล์นี้
+   ซึ่งลาม ไป src/index.js ทั้งไฟล์ ทำให้เอาไปคิดเลขฝั่งหลังบ้านไม่ได้เลย
+   (เคยพลาดมาแล้ว — เทสต์ไม่เจอเพราะไปเรียก core/ ตรง ๆ ไม่ผ่านประตูหน้าบ้าน) */
 
-export class GiftVoucherElement extends HTMLElement {
-  static observedAttributes = ['layout', 'clickable', 'hide-code'];
+function defineElement() {
+  if (typeof HTMLElement === 'undefined') return null;
 
-  #data = null;
+  class GiftVoucher extends HTMLElement {
+    static observedAttributes = ['layout', 'clickable', 'hide-code'];
 
-  set voucher(v) { this.#data = v; this.#draw(); }
-  get voucher() { return this.#data; }
+    #data = null;
 
-  connectedCallback() { this.#draw(); }
-  attributeChangedCallback() { this.#draw(); }
+    set voucher(v) { this.#data = v; this.#draw(); }
+    get voucher() { return this.#data; }
 
-  #draw() {
-    if (!this.#data) return;
-    this.innerHTML = voucherCardHtml(this.#data, {
-      layout: this.getAttribute('layout') || undefined,
-      clickable: this.hasAttribute('clickable'),
-      hideCode: this.hasAttribute('hide-code'),
-    });
+    connectedCallback() { this.#draw(); }
+    attributeChangedCallback() { this.#draw(); }
+
+    #draw() {
+      if (!this.#data) return;
+      this.innerHTML = voucherCardHtml(this.#data, {
+        layout: this.getAttribute('layout') || undefined,
+        clickable: this.hasAttribute('clickable'),
+        hideCode: this.hasAttribute('hide-code'),
+      });
+    }
   }
+
+  if (typeof customElements !== 'undefined' && !customElements.get('gift-voucher')) {
+    customElements.define('gift-voucher', GiftVoucher);
+  }
+  return GiftVoucher;
 }
 
-if (typeof customElements !== 'undefined' && !customElements.get('gift-voucher')) {
-  customElements.define('gift-voucher', GiftVoucherElement);
-}
+/** คลาสของแท็ก `<gift-voucher>` — เป็น null เมื่อรันฝั่งเซิร์ฟเวอร์ */
+export const GiftVoucherElement = defineElement();

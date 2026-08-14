@@ -17,7 +17,7 @@ export {
 /* ---- รหัสคูปอง ---- */
 export {
   generateCode, generateCodes, parseCode, normalizeCode, formatCode,
-  normalizePrefix, voucherUrl, ALPHABET, BODY_LENGTH,
+  normalizePrefix, voucherUrl, checkChar, ALPHABET, BODY_LENGTH,
 } from './core/codes.js';
 
 /* ---- สถานะตามเวลา ---- */

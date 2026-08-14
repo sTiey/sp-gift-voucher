@@ -336,6 +336,43 @@ ok('skin ที่ไม่มีอยู่ต้องถูกจับ', va
     ['percent', 'amount', 'fixed_price', 'free_item', 'free_shipping'].filter((k) => !kinds.has(k)), []);
 }
 
+/* ══════════════════════════ 9 · สถานการณ์จริง ════════════════════════
+   รายการอยู่ที่ tests/scenarios.js — ไฟล์เดียวกับที่หน้า /demo/scenarios.html ใช้
+   จึงมั่นใจได้ว่า "ที่ไท้กดดูเอง" กับ "ที่เครื่องรัน" คือชุดเดียวกันเป๊ะ         */
+
+{
+  const { runAll, coverage, SCENARIOS } = await import('../tests/scenarios.js');
+  const results = await runAll();
+  const failed = results.filter((r) => !r.pass);
+
+  eq('สถานการณ์จริงผ่านทุกอัน', failed.map((r) => r.id), []);
+  ok('มีสถานการณ์ให้ทดสอบมากพอ', SCENARIOS.length >= 40, `${SCENARIOS.length} อัน`);
+
+  const cov = coverage();
+  eq('ครอบคลุมชนิดสิทธิ์ครบ', cov.kinds.missing, []);
+  eq('ครอบคลุมเหตุผลที่ปฏิเสธครบ', cov.reasons.missing, []);
+  eq('ครอบคลุมสถานะครบ', cov.statuses.missing, []);
+
+  const ids = SCENARIOS.map((s) => s.id);
+  eq('ไอดีสถานการณ์ไม่ซ้ำกัน', ids.length - new Set(ids).size, 0);
+  eq('ทุกสถานการณ์ต้องเล่าเรื่องและบอกเหตุผล',
+    SCENARIOS.filter((s) => !s.story || !s.why).map((s) => s.id), []);
+}
+
+/* ══════════════════════════ 10 · ประตูหน้าบ้านต้องรันฝั่งเซิร์ฟเวอร์ได้ ══
+   src/index.js คือทางเข้าที่เอกสารบอกให้ใช้ ถ้ามันพังบน Node แปลว่า
+   เอาตรรกะไปคิดเลขฝั่งหลังบ้านไม่ได้เลย ซึ่งเป็นข้อสำคัญที่สุดของระบบนี้
+   (เคยพลาดจริง: ไฟล์ UI ประกาศ `extends HTMLElement` ที่ระดับบนสุดของไฟล์) */
+
+{
+  const api = await import('../src/index.js');
+  ok('import src/index.js บน Node ได้โดยไม่พัง', typeof api.evaluate === 'function');
+  ok('ฟังก์ชันวาดการ์ดใช้ฝั่งเซิร์ฟเวอร์ได้ (สำหรับอีเมล/หน้าที่ render จากหลังบ้าน)',
+    api.voucherCardHtml(createVoucher({ code: 'GV-2345-678A', kind: 'percent', value: 10 }))
+      .includes('vk-card'));
+  eq('แท็ก <gift-voucher> เป็น null ตอนไม่มี DOM', api.GiftVoucherElement, null);
+}
+
 /* ══════════════════════════ สรุป ══════════════════════════════════════ */
 
 const line = '─'.repeat(58);
