@@ -1,0 +1,99 @@
+/* ============================================================================
+   SKIN: voltage  —  "บัตรผ่านงานอีเวนต์" (tech / neon-cut)
+   ----------------------------------------------------------------------------
+   คาแรกเตอร์: กรมท่าเกือบดำ + เขียวมะนาวไฟฟ้าหนึ่งสี  ตัวเลขคมจัด
+               ใช้ตอนอยากได้ความรู้สึก "แจกจำนวนจำกัด / ของพิเศษ"
+   ========================================================================== */
+
+[data-vk-skin='voltage'] {
+  --vk-font-sans: 'IBM Plex Sans Thai', 'Noto Sans Thai', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --vk-font-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', ui-monospace,
+    monospace;
+  --vk-font-value: var(--vk-font-mono); /* ตัวเลขเป็น mono = กลิ่นบัตรผ่าน */
+
+  --vk-texture-card: linear-gradient(
+    150deg,
+    rgb(198 255 62 / 7%) 0%,
+    rgb(198 255 62 / 0%) 42%,
+    rgb(0 0 0 / 12%) 100%
+  );
+  --vk-texture-strength: 1;
+  --vk-radius-card: calc(3px * var(--vk-scale));
+  --vk-notch-size: calc(30px * var(--vk-scale));
+  --vk-tracking-tight: -0.045em;
+}
+
+[data-vk-skin='voltage'][data-vk-mode='dark'] {
+  --vk-bg-page: #0d1117;
+  --vk-bg-surface: #141a22;
+  --vk-bg-card: #1b232e;
+  --vk-bg-card-2: #222c39;
+  --vk-bg-inset: #10161d;
+  --vk-bg-hover: #2a3644;
+
+  --vk-ink: #eaf2ff;
+  --vk-ink-muted: #93a2b8;
+  --vk-ink-faint: #61708a;
+  --vk-ink-on-accent: #0d1117;
+
+  --vk-line: rgb(234 242 255 / 12%);
+  --vk-line-strong: rgb(198 255 62 / 42%);
+
+  --vk-accent: #c6ff3e;
+  --vk-accent-soft: rgb(198 255 62 / 14%);
+  --vk-accent-ink: #d7ff7a;
+
+  --vk-ok: #3ddc97;
+  --vk-ok-soft: rgb(61 220 151 / 15%);
+  --vk-warn: #ffc857;
+  --vk-warn-soft: rgb(255 200 87 / 15%);
+  --vk-dead: #6d7b90;
+  --vk-dead-soft: rgb(109 123 144 / 16%);
+
+  --vk-shadow-card: 0 1px 2px rgb(0 0 0 / 50%), 0 16px 40px rgb(0 0 0 / 42%);
+  --vk-shadow-sheet: 0 -8px 60px rgb(0 0 0 / 62%);
+  --vk-sheen: rgb(198 255 62 / 10%);
+  --vk-qr-dark: #0d1117;
+  --vk-qr-light: #eaf2ff;
+}
+
+[data-vk-skin='voltage'][data-vk-mode='light'] {
+  --vk-bg-page: #e9edf2;
+  --vk-bg-surface: #f3f6f9;
+  --vk-bg-card: #ffffff;
+  --vk-bg-card-2: #f6f8fb;
+  --vk-bg-inset: #edf1f5;
+  --vk-bg-hover: #e3e8ef;
+
+  --vk-ink: #101720;
+  --vk-ink-muted: #566274;
+  --vk-ink-faint: #8b95a5;
+  --vk-ink-on-accent: #101720;
+
+  --vk-line: rgb(16 23 32 / 12%);
+  --vk-line-strong: rgb(16 23 32 / 34%);
+
+  --vk-accent: #7bb800;
+  --vk-accent-soft: rgb(123 184 0 / 14%);
+  --vk-accent-ink: #5d8c00;
+
+  --vk-ok: #0f9d6b;
+  --vk-ok-soft: rgb(15 157 107 / 12%);
+  --vk-warn: #9a6c00;
+  --vk-warn-soft: rgb(154 108 0 / 13%);
+  --vk-dead: #7d879a;
+  --vk-dead-soft: rgb(125 135 154 / 14%);
+
+  --vk-shadow-card: 0 1px 1px rgb(16 23 32 / 6%), 0 10px 28px rgb(16 23 32 / 11%);
+  --vk-shadow-sheet: 0 -8px 50px rgb(16 23 32 / 18%);
+  --vk-sheen: rgb(255 255 255 / 72%);
+  --vk-qr-dark: #101720;
+  --vk-qr-light: #ffffff;
+
+  --vk-texture-card: linear-gradient(
+    150deg,
+    rgb(123 184 0 / 6%) 0%,
+    rgb(16 23 32 / 3%) 100%
+  );
+}

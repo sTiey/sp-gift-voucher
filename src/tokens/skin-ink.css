@@ -1,0 +1,90 @@
+/* ============================================================================
+   SKIN: ink  —  "ป้ายหนังสือพิมพ์" (editorial / swiss)
+   ----------------------------------------------------------------------------
+   คาแรกเตอร์: ดำหมึกบนกระดาษกระดูก · เส้นผมบาง · แอ็กเซนต์แดงหมึกจุดเดียว
+               ไม่มีเงา ไม่มีไล่เฉด — ความหรูมาจากที่ว่างกับความคม
+   ใช้กับ: แคมเปญพรีเมียม / บัตรกำนัลมูลค่าสูง / งานพิมพ์-ดิจิทัลคู่กัน
+   ========================================================================== */
+
+[data-vk-skin='ink'] {
+  --vk-font-sans: 'IBM Plex Sans Thai', 'Noto Sans Thai', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --vk-font-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', ui-monospace,
+    monospace;
+  --vk-font-value: var(--vk-font-sans);
+
+  --vk-texture-card: none;
+  --vk-texture-strength: 0;
+
+  /* ธีมนี้จงใจให้ขอบคมกว่าเพื่อนและไม่มีเงา */
+  --vk-radius-card: calc(2px * var(--vk-scale));
+  --vk-notch-size: calc(26px * var(--vk-scale));
+}
+
+[data-vk-skin='ink'][data-vk-mode='light'] {
+  --vk-bg-page: #e8e6e1;
+  --vk-bg-surface: #f2f0eb;
+  --vk-bg-card: #fbfaf7;
+  --vk-bg-card-2: #f4f2ed;
+  --vk-bg-inset: #eeece6;
+  --vk-bg-hover: #e6e3dc;
+
+  --vk-ink: #14140f;
+  --vk-ink-muted: #5b5a52;
+  --vk-ink-faint: #918f85;
+  --vk-ink-on-accent: #fbfaf7;
+
+  --vk-line: rgb(20 20 15 / 20%);
+  --vk-line-strong: rgb(20 20 15 / 62%);
+
+  --vk-accent: #cc2200;
+  --vk-accent-soft: rgb(204 34 0 / 10%);
+  --vk-accent-ink: #a31b00;
+
+  --vk-ok: #17603c;
+  --vk-ok-soft: rgb(23 96 60 / 11%);
+  --vk-warn: #8a6100;
+  --vk-warn-soft: rgb(138 97 0 / 12%);
+  --vk-dead: #8a887f;
+  --vk-dead-soft: rgb(138 136 127 / 13%);
+
+  --vk-shadow-card: none;
+  --vk-shadow-sheet: 0 -8px 46px rgb(20 20 15 / 20%);
+  --vk-sheen: rgb(255 255 255 / 62%);
+  --vk-qr-dark: #14140f;
+  --vk-qr-light: #fbfaf7;
+}
+
+[data-vk-skin='ink'][data-vk-mode='dark'] {
+  --vk-bg-page: #16160f;
+  --vk-bg-surface: #1d1d16;
+  --vk-bg-card: #26261e;
+  --vk-bg-card-2: #2e2e25;
+  --vk-bg-inset: #1a1a13;
+  --vk-bg-hover: #35352b;
+
+  --vk-ink: #f4f2ea;
+  --vk-ink-muted: #a8a599;
+  --vk-ink-faint: #757266;
+  --vk-ink-on-accent: #16160f;
+
+  --vk-line: rgb(244 242 234 / 18%);
+  --vk-line-strong: rgb(244 242 234 / 55%);
+
+  --vk-accent: #ff4626;
+  --vk-accent-soft: rgb(255 70 38 / 15%);
+  --vk-accent-ink: #ff7458;
+
+  --vk-ok: #4dc98a;
+  --vk-ok-soft: rgb(77 201 138 / 14%);
+  --vk-warn: #e8b34a;
+  --vk-warn-soft: rgb(232 179 74 / 14%);
+  --vk-dead: #85826f;
+  --vk-dead-soft: rgb(133 130 111 / 14%);
+
+  --vk-shadow-card: none;
+  --vk-shadow-sheet: 0 -8px 56px rgb(0 0 0 / 62%);
+  --vk-sheen: rgb(255 255 255 / 7%);
+  --vk-qr-dark: #16160f;
+  --vk-qr-light: #f4f2ea;
+}
