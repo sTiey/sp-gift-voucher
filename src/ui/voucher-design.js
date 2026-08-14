@@ -31,8 +31,10 @@ export const DESIGNS = [
     blurb: 'ภาพงานเหล็กจริงเต็มพื้น แล้ววางแผ่นดำทับ · ขายด้วยของจริง' },
   { id: 'goldplate', name: 'แผ่นทอง', family: 'brand', photo: false,
     blurb: 'ดำสนิท ตัดเส้นทองบาง ๆ · กลิ่นบัตรสมาชิกระดับสูง' },
-  { id: 'limeticket', name: 'ตั๋วเขียว', family: 'bold', photo: true,
-    blurb: 'กระดาษครีม + แถบเขียวสด + ตัวพิมพ์ดีด · กลิ่นตั๋วเข้างาน' },
+  /* ไอดี 'limeticket' เป็นชื่อตอนเริ่มร่าง (ตอนนั้นเป็นสีเขียว)
+     ไท้เลือกทองเหลืองเป็นสีจริง 2026-08-14 — เขียวยังเรียกใช้ได้ด้วย accent:'lime' */
+  { id: 'limeticket', name: 'ตั๋ว', family: 'brand', photo: true,
+    blurb: 'กระดาษงาช้าง + ก้อนทองเหลือง + ก้านฉีกดำ · รหัสคูปองอยู่ในแถบดำใต้ตัวเลข' },
 ];
 
 /** ภาพสินค้าที่มีให้ใช้ */
@@ -79,7 +81,7 @@ function expiryLine(v, now) {
 /**
  * วาดคูปอง 1 ใบ
  * @param {object} v คูปองตาม schema
- * @param {{design?:string, shape?:'ticket'|'compact', accent?:string, art?:string, qr?:boolean, now?:number}} opt
+ * @param {{design?:string, shape?:'ticket'|'compact', accent?:string, variant?:string, art?:string, qr?:boolean, now?:number}} opt
  */
 export function cardHtml(v, opt = {}) {
   const design = opt.design || 'ironwindow';
@@ -99,9 +101,11 @@ export function cardHtml(v, opt = {}) {
       dark: 'currentColor', light: 'none', quiet: 1,
     })}</div>`;
 
-  const accent = opt.accent ? ` data-accent="${esc(opt.accent)}"` : '';
+  // ไท้เลือกทองเหลืองเป็นสีจริงของคูปอง (2026-08-14) — เขียวยังเรียกใช้ได้ด้วย accent:'lime'
+  const accent = ` data-accent="${esc(opt.accent || 'gold')}"`;
+  const variant = opt.variant ? ` data-variant="${esc(opt.variant)}"` : '';
 
-  return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${accent}>
+  return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${accent}${variant}>
   <article class="vk-card" data-status="${esc(status)}" data-kind="${esc(v.kind)}" data-code="${esc(v.code)}">
 
     <figure class="vk-card__art">
@@ -120,7 +124,7 @@ export function cardHtml(v, opt = {}) {
 
       <div class="vk-card__hero">
         <p class="vk-card__kicker">${esc(kickerLine(v))}</p>
-        <p class="vk-card__value">
+        <p class="vk-card__value" data-code="${esc(v.code)}">
           ${parts.lead ? `<span class="vk-card__lead">${esc(parts.lead)}</span>` : ''}
           <span class="vk-card__num" data-len="${parts.main.length}"${isText ? ' data-text="true"' : ''}>${esc(parts.main)}</span>
           ${parts.unit ? `<span class="vk-card__unit">${esc(parts.unit)}</span>` : ''}

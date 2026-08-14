@@ -21,7 +21,7 @@
   --lt-paper-in: #dfdbcd;       /* แถบข้อมูล เข้มกว่านิดเดียว */
   --lt-ink: #16150f;            /* หมึกดำอมอุ่น */
   --lt-stalk: #080806;          /* ก้านฉีก ดำสนิท */
-  --lt-lime: #c8f000;           /* ก้อนสีหลัก */
+  --lt-lime: #c8f000;           /* ก้อนสีหลัก (เวอร์ชันเขียว — ใช้เมื่อ accent='lime') */
   --lt-mute: #6c6a5c;
   --lt-line: rgba(22, 21, 15, 0.28);
   --lt-edge: rgba(22, 21, 15, 0.42);
@@ -81,12 +81,14 @@
 [data-design='limeticket'][data-shape='compact'] .vk-card {
   /* ใบเนื้อหาน้อย (ไม่มีเงื่อนไข/ไม่มีคำขอบคุณ) ต้องไม่หดจนป้ายไปชนหัวข้อ */
   min-height: calc(var(--vk-u) * 23.4);
-  grid-template-columns:
-    calc(var(--vk-u) * 7.8) minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
-  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 6.6);
+  /* ⚠️ เดิมภาพเป็นช่องเล็กมุมล่างซ้าย กว้าง 7.8u → เล็กจนดูเป็นเศษ ไม่ได้ขายของ
+     ตอนนี้เป็นแถบเต็มความกว้างคาดใต้เนื้อหา เห็นราวเหล็กทั้งชุด */
+  grid-template-columns: minmax(0, 1fr) auto calc(var(--vk-u) * 2.9);
+  grid-template-rows: minmax(0, 1fr) calc(var(--vk-u) * 5.2) calc(var(--vk-u) * 3.6);
   grid-template-areas:
-    'main main main stalk'
-    'art  info qr   stalk';
+    'main main stalk'
+    'art  art  stalk'
+    'info qr   stalk';
 }
 
 [data-design='limeticket'] .vk-card__main { grid-area: main; }
@@ -255,32 +257,48 @@
 
 /* ตัวเลขนั่งชิดก้นก้อน แล้วมี padding ล่าง = ความสูงแถบดำพอดี
    → เลื่อนตัวเลขลง (margin ติดลบ) เท่าไหร่ = จมใต้แถบเท่านั้น */
+/* ก้อนสี = ที่อยู่ของตัวเลข · ตัวเลขต้องครองเต็มก้อน ไม่ใช่กองอยู่มุมเดียว
+   จัดกลางทั้งแนวตั้งและแนวนอน แล้วค่อยดันลงด้วย margin ให้ก้นจมใต้แถบ */
 [data-design='limeticket'] .vk-card__value {
-  --lt-bar: 2.6;               /* ความสูงแถบดำ (หน่วย u) */
-  --lt-dot: 0.68;              /* เม็ดเขียวบนแถบ */
+  --lt-bar: 2.9;               /* ความสูงแถบข้อมูลดำ (หน่วย u) */
+  --lt-dot: 0.6;               /* เม็ดสีท้ายแถบ */
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   gap: calc(var(--vk-u) * 0.3);
   overflow: hidden;
   background: var(--lt-lime);
   color: var(--lt-ink);
   padding:
-    calc(var(--vk-u) * 1.15) calc(var(--vk-u) * 0.7) calc(var(--vk-u) * var(--lt-bar));
+    calc(var(--vk-u) * 0.9) calc(var(--vk-u) * 0.8) calc(var(--vk-u) * var(--lt-bar));
 }
 
-/* แถบดำทึบปิดปลายก้อนเขียว — ตัวที่ "กิน" ก้นตัวเลข */
+/* ── แถบดำที่ปลายก้อนสี ────────────────────────────────────────────────────
+   ⚠️ เดิมแถบนี้ทำหน้าที่ "บังก้นตัวเลข" อย่างเดียว → ตาอ่านเป็นกล่องดำวางทับ
+      ไม่ใช่ดีไซน์ที่ตั้งใจ (เจ้าของงานทักตรงจุดนี้)
+   ตอนนี้แถบบรรจุ "รหัสคูปอง" จริง ๆ → มันมีเหตุผลที่จะอยู่ตรงนั้น
+   ตัวเลขที่จมลงไปจึงอ่านเป็น "เลขวิ่งลงไปหลังแถบข้อมูล" ทันที
+   รหัสดึงมาจาก attribute data-code ของใบ ไม่ต้องเพิ่ม element ใหม่          */
 [data-design='limeticket'] .vk-card__value::after {
-  content: '';
+  content: attr(data-code);
   position: absolute;
   z-index: 1;
   inset: auto 0 0;
+  display: flex;
+  align-items: center;
   height: calc(var(--vk-u) * var(--lt-bar));
+  padding-inline: calc(var(--vk-u) * 0.95);
   background: var(--lt-stalk);
+  color: var(--lt-lime);
+  font-family: var(--lt-mono);
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.72);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
 }
 
-/* เม็ดเขียวบนแถบดำ — ลายเดียวกับเม็ดบนก้านฉีก */
+/* เม็ดสีท้ายแถบ — ลายเดียวกับเม็ดบนก้านฉีก มัดให้สองส่วนเป็นชุดเดียวกัน */
 [data-design='limeticket'] .vk-card__value::before {
   content: '';
   position: absolute;
@@ -305,14 +323,14 @@
   padding-top: calc(var(--vk-u) * 0.95);
 }
 
-/* line-height 0.72 = กล่องตัวเลขจบพอดีเส้นฐาน → คุมระยะจมได้เป๊ะ
-   margin ติดลบ 0.22em ≈ 30% ของความสูงตัวเลข */
+/* line-height 0.74 = กล่องตัวเลขจบพอดีเส้นฐาน → คุมระยะจมได้เป๊ะ
+   margin ติดลบ 0.2em ≈ ก้นตัวเลขหายใต้แถบราว 1 ใน 4 — ยังอ่านออกสบาย */
 [data-design='limeticket'] .vk-card__num {
   font-weight: 400;
   font-size: calc(var(--vk-u) * 4.6);
-  line-height: 0.72;
+  line-height: 0.74;
   letter-spacing: -0.03em;
-  margin-bottom: -0.22em;
+  margin-bottom: calc(-0.2em - var(--vk-u) * var(--lt-bar) / 2);
 }
 
 /* ── ขนาดตัวเลขปรับตามจำนวนหลักเอง ────────────────────────────────────────
@@ -343,7 +361,7 @@
   font-size: calc(var(--vk-u) * 3);
   line-height: 1.18;
   letter-spacing: 0;
-  margin-bottom: calc(var(--vk-u) * 0.55);
+  margin-bottom: 0;   /* คำต้องอ่านครบ ห้ามดันลงไปจมแถบ */
 }
 
 /* ฿ / % — ตัวเล็ก ลอยแยกไปมุมบนขวาของก้อนเขียว ไม่กินความกว้างของตัวเลข */
@@ -493,12 +511,22 @@
   transform: scale(1.06);
 }
 
-[data-design='limeticket'][data-shape='compact'] .vk-card__art img {
-  object-position: 50% 48%;
-  transform: scale(1.04);
+[data-design='limeticket'][data-shape='compact'] .vk-card__art {
+  border-block: 1px solid var(--lt-line);
 }
 
-/* ── แถบข้อมูล (ตัวพิมพ์ดีด) ───────────────────────────────────────────── */
+[data-design='limeticket'][data-shape='compact'] .vk-card__art img {
+  object-position: 50% 62%;   /* เล็งให้ตกที่ตัวราว ไม่ใช่ผนัง/เพดาน */
+  transform: scale(1.02);
+}
+
+/* ── แถบข้อมูล (ตัวพิมพ์ดีด) ─────────────────────────────────────────────
+   รหัสคูปองย้ายไปอยู่ในแถบดำของก้อนสีแล้ว → ตรงนี้ไม่ต้องโชว์ซ้ำ
+   (โชว์ 2 ที่ = ตาไม่รู้ว่าอันไหนคือของจริง และแย่งความสนใจจากวันหมดอายุ)
+   ซ่อนด้วย CSS ไม่ใช่ลบออกจาก HTML — ดีไซน์อื่นยังใช้ช่องนี้อยู่          */
+[data-design='limeticket'] .vk-card__stub-body .vk-card__label:first-child,
+[data-design='limeticket'] .vk-card__stub-body .vk-card__code { display: none; }
+
 
 [data-design='limeticket'] .vk-card__stub-body {
   align-content: center;
@@ -514,7 +542,10 @@
   border-top: 1px solid var(--lt-line);
 }
 
-/* แถบข้อมูลเรียงแนวนอน → เส้นคั่นระหว่างข้อมูลต้องเป็นเส้นตั้ง ไม่ใช่เส้นนอน */
+/* แถบข้อมูลเรียงแนวนอน → เส้นคั่นระหว่างข้อมูลต้องเป็นเส้นตั้ง ไม่ใช่เส้นนอน
+   ⚠️ ใช้ :not(:first-of-type) ไม่ได้ผลเมื่อของก่อนหน้าถูก display:none
+      เพราะ CSS ยังนับมันเป็นพี่น้องอยู่ → จะเหลือขีดคั่นค้างลอยหน้าสุด
+      จึงต้องปิดเส้นคั่นให้ป้ายที่ตามหลัง "ป้ายที่ถูกซ่อน" เป็นกรณีพิเศษ */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__label ~ .vk-card__label {
   margin-top: 0;
   padding-top: 0;
@@ -524,8 +555,21 @@
   border-inline-start: 1px solid var(--lt-line);
 }
 
+[data-design='limeticket'] .vk-card__stub-body .vk-card__code + .vk-card__label {
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+  border-inline-start: 0;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 [data-design='limeticket'][data-shape='compact'] .vk-card__stub-body {
-  padding: calc(var(--vk-u) * 0.5) calc(var(--vk-u) * 0.9);
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  align-items: baseline;
+  column-gap: calc(var(--vk-u) * 0.7);
+  padding: calc(var(--vk-u) * 0.75) calc(var(--vk-u) * 1.2);
 }
 
 [data-design='limeticket'] .vk-card__label {
@@ -580,10 +624,12 @@
   border-top: 1px solid var(--lt-line);
 }
 
+/* แถวข้อมูลล่างสูงตาม auto → QR ที่ใหญ่กว่าแถวจะดันล้นขึ้นไปทับแถบภาพ
+   ล็อกความสูงแถวไว้แล้วให้ QR พอดีข้างใน */
 [data-design='limeticket'][data-shape='compact'] .vk-card__qr {
-  width: calc(var(--vk-u) * 3.4);
+  width: calc(var(--vk-u) * 2.9);
   align-self: center;
-  margin-inline-end: calc(var(--vk-u) * 1);
+  margin-inline-end: calc(var(--vk-u) * 1.2);
 }
 
 /* ── ใบที่ใช้แล้ว/หมดอายุ — ไม่ใช้ฟิลเตอร์เทาแบบเหมารวม ────────────────── */
