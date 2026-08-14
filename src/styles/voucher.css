@@ -1,0 +1,451 @@
+/* ============================================================================
+   voucher.css — หน้าตาของ "คูปอง 1 ใบ"
+   ----------------------------------------------------------------------------
+   แนวคิดดีไซน์ (ตั้งใจให้ไม่เหมือนคูปองทั่วไปที่เป็นเส้นประ + วงกลมสองข้าง)
+
+     "ชิ้นส่วนโลหะที่ถูกกัดขึ้นรูป"
+       · มุมตัดเฉียง 2 มุมตรงข้าม (ขวาบน + ซ้ายล่าง) → เงาของใบจำได้แม้มองไกล ๆ
+       · รอยต่อกลางใบเป็นเส้นตรงคม + สลับโทน  → ไม่ใช่เส้นประ ไม่ใช่รูวงกลม
+       · แถบสีเน้นเส้นเดียวชิดขอบซ้าย        → ความกล้ามาจากเส้นเดียว ไม่ใช่สีเยอะ
+       · ตัวเลขมูลค่าใหญ่มาก ชิดกันแน่น      → พระเอกของใบคือ "ได้อะไร"
+       · รหัสเป็นตัวพิมพ์กว้างเท่ากัน         → อ่านทีละตัวได้ ไม่สับสน
+
+   โครง HTML (ห้ามตัดชั้นนอกทิ้ง — อ่านเหตุผลข้างล่าง)
+     <div class="vk-voucher" data-layout="slab">     ← กล่องวัดขนาด
+       <article class="vk-card" data-status="active">← ตัวใบ
+         <div class="vk-card__main"> … </div>
+         <div class="vk-card__stub"> … </div>
+       </article>
+     </div>
+
+   ทำไมต้องมี .vk-voucher ครอบอีกชั้น:
+     ใบคูปองต้องรู้ว่า "ช่องที่ตัวเองไปวางอยู่กว้างเท่าไหร่" เพื่อย่อ-ขยายให้พอดี
+     แต่หน่วยวัดของ CSS ที่ตอบเรื่องนี้ (cqw) ใช้วัด "ตัวเอง" ไม่ได้ ต้องวัดจาก
+     กล่องแม่  จึงต้องมีกล่องนอกทำหน้าที่เป็นไม้บรรทัดให้ใบข้างในอ่าน
+   ========================================================================== */
+
+/* ══════════════════════════ กล่องวัดขนาด ═══════════════════════════════ */
+
+.vk-voucher {
+  container-type: inline-size;
+  display: block;
+  width: 100%;
+  max-width: var(--vk-card-width);
+}
+.vk-voucher[data-layout='strip'] { max-width: none; }
+
+/* ⚠️ กล่องที่ตั้ง container-type: inline-size จะ "วัดความกว้างจากตัวเองไม่ได้"
+   ใส่ width: fit-content แล้วมันจะยุบเป็นศูนย์ (ชิปจะซ้อนทับกันจนอ่านไม่ออก)
+   ชิปเล็กใช้ขนาดตายตัวอยู่แล้ว จึงปิดโหมดวัดขนาดทิ้งไปเลย */
+.vk-voucher[data-layout='mini'] {
+  container-type: normal;
+  max-width: none;
+  width: fit-content;
+}
+
+/* ══════════════════════════ ตัวใบ · โครงร่วม ═══════════════════════════ */
+
+.vk-card {
+  position: relative;
+  display: grid;
+  width: 100%;
+  font-family: var(--vk-font-sans);
+  color: var(--vk-ink);
+  isolation: isolate;
+
+  /* หน่วยฐานยืดตามความกว้างของกล่องแม่ — ที่ 360px จะได้ 16px พอดี
+     (ต้องเป็นความยาวล้วน ๆ ทั้ง 3 ค่า ห้ามมีตัวเลขเปล่าปน) */
+  --vk-u: clamp(0.8rem, 4.44cqw, 1.22rem);
+}
+
+.vk-card__main,
+.vk-card__stub {
+  position: relative;
+  background-color: var(--vk-bg-card);
+  background-image: var(--vk-texture-card);
+  transition:
+    transform var(--vk-dur-tear) var(--vk-ease-out),
+    opacity var(--vk-dur-base) var(--vk-ease-out);
+}
+
+/* แถบสีเน้นชิดขอบซ้าย — "เส้นกล้าเส้นเดียว" ของทั้งใบ */
+.vk-card__main::before,
+.vk-card__stub::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--vk-rail-width);
+  background: var(--vk-accent);
+  z-index: var(--vk-z-card-content);
+}
+
+/* แสงกวาดผิว — เลียนแบบแสงสะท้อนบนโลหะ ไม่ใช่ glow ฟุ้ง */
+.vk-card__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: var(--vk-z-card-sheen);
+  pointer-events: none;
+  opacity: var(--vk-texture-strength);
+  background: linear-gradient(100deg, transparent 30%, var(--vk-sheen) 46%, transparent 62%);
+  background-size: 260% 100%;
+  background-position: 130% 0;
+  transition: background-position var(--vk-dur-sheen) var(--vk-ease-in-out);
+}
+.vk-voucher:hover .vk-card__sheen,
+.vk-voucher:focus-within .vk-card__sheen { background-position: -30% 0; }
+
+/* ══════════════════════════ เลย์เอาต์ SLAB (ใบเต็ม) ══════════════════════ */
+
+.vk-voucher[data-layout='slab'] .vk-card { filter: drop-shadow(var(--vk-shadow-card)); }
+
+.vk-voucher[data-layout='slab'] .vk-card__main {
+  padding: var(--vk-card-pad);
+  padding-inline-start: calc(var(--vk-card-pad) + var(--vk-space-2));
+  border-radius: var(--vk-radius-card) var(--vk-radius-card) 0 0;
+
+  /* มุมขวาบนตัดเฉียง */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--vk-notch-size)) 0,
+    100% var(--vk-notch-size),
+    100% 100%,
+    0 100%
+  );
+}
+
+.vk-voucher[data-layout='slab'] .vk-card__stub {
+  padding: var(--vk-space-4) var(--vk-card-pad);
+  padding-inline-start: calc(var(--vk-card-pad) + var(--vk-space-2));
+  background-color: var(--vk-bg-card-2);
+  background-image: none; /* ผิวโลหะทำเฉพาะครึ่งบน ครึ่งล่างแบนสนิทให้ตัดกัน */
+  border-block-start: var(--vk-hairline) solid var(--vk-line);
+  border-radius: 0 0 var(--vk-radius-card) var(--vk-radius-card);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--vk-space-4);
+
+  /* มุมซ้ายล่างตัดเฉียง — ตรงข้ามกับมุมของครึ่งบนพอดี
+     ทำให้เงาของทั้งใบเป็นรูปที่จำได้ ไม่ใช่สี่เหลี่ยมธรรมดา */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    var(--vk-notch-size) 100%,
+    0 calc(100% - var(--vk-notch-size))
+  );
+}
+
+/* ---- แถวบน: แบรนด์ + สถานะ ---- */
+.vk-card__head {
+  position: relative;
+  z-index: var(--vk-z-card-content);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vk-space-3);
+  min-height: calc(var(--vk-u) * 1.5);
+  margin-block-end: var(--vk-space-8);
+}
+
+.vk-card__brand { display: flex; align-items: center; gap: var(--vk-space-2); min-width: 0; }
+
+.vk-card__mark {
+  display: grid;
+  place-items: center;
+  width: calc(var(--vk-u) * 1.375);
+  height: calc(var(--vk-u) * 1.375);
+  border-radius: var(--vk-radius-sm);
+  flex: none;
+  overflow: hidden;
+}
+.vk-card__mark img { width: 100%; height: 100%; object-fit: contain; }
+
+.vk-card__brandname {
+  font-size: var(--vk-text-micro);
+  font-weight: var(--vk-weight-semibold);
+  letter-spacing: var(--vk-tracking-widest);
+  text-transform: uppercase;
+  color: var(--vk-ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- ตัวเลขมูลค่า: พระเอกของใบ ---- */
+.vk-card__hero { position: relative; z-index: var(--vk-z-card-content); }
+
+.vk-card__kicker {
+  font-size: var(--vk-text-nano);
+  font-weight: var(--vk-weight-semibold);
+  letter-spacing: var(--vk-tracking-label);
+  text-transform: uppercase;
+  color: var(--vk-accent);
+  margin-block-end: var(--vk-space-2);
+}
+
+.vk-card__value {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--vk-u) * 0.1);
+  font-family: var(--vk-font-value);
+  font-weight: var(--vk-weight-bold);
+  line-height: var(--vk-leading-tight);
+  letter-spacing: var(--vk-tracking-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--vk-ink);
+}
+
+.vk-card__num { font-size: var(--vk-text-value); }
+
+.vk-card__lead,
+.vk-card__unit {
+  font-size: var(--vk-text-lg);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-ink-muted);
+  letter-spacing: var(--vk-tracking-normal);
+}
+/* สัญลักษณ์เงินลอยขึ้นไปเสมอหัวเลข ไม่ใช่นอนที่เส้นฐาน */
+.vk-card__lead { align-self: flex-start; margin-block-start: calc(var(--vk-u) * 0.55); }
+
+/* ข้อความยาว ๆ ที่เป็น "ค่า" แทนตัวเลข เช่น "ส่งฟรี" — ย่อลงไม่ให้ล้นใบ */
+.vk-card__num[data-text='true'] {
+  font-size: var(--vk-text-xl);
+  line-height: var(--vk-leading-snug);
+}
+
+.vk-card__title {
+  margin-block-start: var(--vk-space-4);
+  font-size: var(--vk-text-md);
+  font-weight: var(--vk-weight-semibold);
+  line-height: var(--vk-leading-snug);
+}
+
+.vk-card__cond {
+  margin-block-start: var(--vk-space-1);
+  font-size: var(--vk-text-sm);
+  color: var(--vk-ink-muted);
+  line-height: var(--vk-leading-snug);
+}
+
+.vk-card__note {
+  margin-block-start: var(--vk-space-3);
+  padding-inline-start: var(--vk-space-3);
+  border-inline-start: var(--vk-hairline) solid var(--vk-line-strong);
+  font-size: var(--vk-text-sm);
+  color: var(--vk-ink-muted);
+}
+
+/* ---- ท่อนล่าง: รหัส + วันหมดอายุ ---- */
+.vk-card__stub > * { position: relative; z-index: var(--vk-z-card-content); min-width: 0; }
+
+.vk-card__code {
+  display: block;
+  margin-block-start: calc(var(--vk-u) * 0.15);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-base);
+  font-weight: var(--vk-weight-medium);
+  letter-spacing: var(--vk-tracking-wide);
+  color: var(--vk-ink);
+  white-space: nowrap;
+}
+
+.vk-card__meta { text-align: end; flex: none; }
+
+.vk-card__date {
+  display: block;
+  margin-block-start: calc(var(--vk-u) * 0.15);
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-semibold);
+  white-space: nowrap;
+}
+.vk-card__date.is-urgent { color: var(--vk-accent); }
+
+/* ---- ป้ายสถานะ ---- */
+.vk-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--vk-u) * 0.15) calc(var(--vk-u) * 0.5);
+  border: var(--vk-hairline) solid currentcolor;
+  border-radius: var(--vk-radius-pill);
+  font-size: var(--vk-text-nano);
+  font-weight: var(--vk-weight-semibold);
+  letter-spacing: var(--vk-tracking-wide);
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--vk-ink-muted);
+}
+.vk-pill[data-tone='ok'] { color: var(--vk-ok); background: var(--vk-ok-soft); }
+.vk-pill[data-tone='warn'] { color: var(--vk-warn); background: var(--vk-warn-soft); }
+.vk-pill[data-tone='dead'] { color: var(--vk-dead); background: var(--vk-dead-soft); }
+.vk-pill[data-tone='accent'] { color: var(--vk-accent); background: var(--vk-accent-soft); }
+
+/* ป้ายพิเศษ เช่น "PARTNER" — วางชิดแถบสีซ้าย เหมือนสติกเกอร์ที่แปะทับ */
+.vk-card__badge {
+  position: absolute;
+  z-index: var(--vk-z-card-content);
+  inset-block-start: 0;
+  inset-inline-start: var(--vk-rail-width);
+  padding: calc(var(--vk-u) * 0.2) var(--vk-space-2);
+  background: var(--vk-accent);
+  color: var(--vk-ink-on-accent);
+  font-size: var(--vk-text-nano);
+  font-weight: var(--vk-weight-bold);
+  letter-spacing: var(--vk-tracking-label);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+/* มีป้ายแล้วต้องดันแถวแบรนด์ลงมา ไม่ให้ทับกัน */
+.vk-card__main:has(.vk-card__badge) .vk-card__head { margin-block-start: var(--vk-space-3); }
+
+/* ══════════════════════════ สถานะที่ไม่ใช่ "ใช้ได้" ═══════════════════════ */
+
+.vk-card[data-status='redeemed'],
+.vk-card[data-status='expired'],
+.vk-card[data-status='void'] { opacity: 0.7; }
+
+.vk-card[data-status='redeemed'] .vk-card__main,
+.vk-card[data-status='redeemed'] .vk-card__stub,
+.vk-card[data-status='expired'] .vk-card__main,
+.vk-card[data-status='expired'] .vk-card__stub,
+.vk-card[data-status='void'] .vk-card__main,
+.vk-card[data-status='void'] .vk-card__stub { filter: saturate(0.12); }
+
+.vk-card[data-status='redeemed'] .vk-card__main::before,
+.vk-card[data-status='expired'] .vk-card__main::before,
+.vk-card[data-status='void'] .vk-card__main::before,
+.vk-card[data-status='redeemed'] .vk-card__stub::before,
+.vk-card[data-status='expired'] .vk-card__stub::before,
+.vk-card[data-status='void'] .vk-card__stub::before { background: var(--vk-dead); }
+
+.vk-card[data-status='redeemed'] .vk-card__kicker,
+.vk-card[data-status='expired'] .vk-card__kicker,
+.vk-card[data-status='void'] .vk-card__kicker { color: var(--vk-ink-faint); }
+
+.vk-card[data-status='redeemed'] .vk-card__badge,
+.vk-card[data-status='expired'] .vk-card__badge,
+.vk-card[data-status='void'] .vk-card__badge { background: var(--vk-dead); }
+
+/* ยังไม่ถึงวันเริ่มใช้ — ไม่จาง แต่บอกให้รู้ว่ายังแตะไม่ได้ */
+.vk-card[data-status='scheduled'] .vk-card__num { color: var(--vk-ink-muted); }
+
+/* ══════════════════════════ จังหวะ "ฉีก" ตอนใช้สิทธิ์ ════════════════════ */
+
+.vk-card[data-tearing='true'] .vk-card__main {
+  transform: translateY(calc(var(--vk-u) * -0.4)) rotate(-0.5deg);
+}
+.vk-card[data-tearing='true'] .vk-card__stub {
+  transform: translateY(calc(var(--vk-u) * 0.6)) rotate(0.7deg);
+}
+
+/* ══════════════════════════ เลย์เอาต์ STRIP (รายการ) ═════════════════════ */
+
+.vk-voucher[data-layout='strip'] .vk-card { --vk-u: clamp(0.82rem, 2.6cqw, 1rem); }
+
+.vk-voucher[data-layout='strip'] .vk-card__main {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--vk-space-4);
+  min-height: var(--vk-strip-height);
+  padding: var(--vk-space-4);
+  padding-inline-start: calc(var(--vk-space-4) + var(--vk-space-2));
+  border: var(--vk-hairline) solid var(--vk-line);
+  border-radius: var(--vk-radius-card);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--vk-notch-size)) 0,
+    100% var(--vk-notch-size),
+    100% 100%,
+    0 100%
+  );
+}
+
+.vk-voucher[data-layout='strip'] .vk-card__stub { display: none; }
+
+.vk-voucher[data-layout='strip'] .vk-card__value {
+  padding-inline-end: var(--vk-space-4);
+  border-inline-end: var(--vk-hairline) solid var(--vk-line);
+  min-width: calc(var(--vk-u) * 5);
+}
+.vk-voucher[data-layout='strip'] .vk-card__num { font-size: var(--vk-text-value-strip); }
+.vk-voucher[data-layout='strip'] .vk-card__num[data-text='true'] {
+  font-size: var(--vk-text-md);
+  white-space: nowrap; /* "ส่งฟรี" ต้องไม่ตัดเป็น "ส่ง/ฟรี" */
+}
+.vk-voucher[data-layout='strip'] .vk-card__lead,
+.vk-voucher[data-layout='strip'] .vk-card__unit { font-size: var(--vk-text-xs); margin: 0; }
+
+.vk-voucher[data-layout='strip'] .vk-card__body { min-width: 0; }
+.vk-voucher[data-layout='strip'] .vk-card__kicker { margin-block-end: calc(var(--vk-u) * 0.15); }
+.vk-voucher[data-layout='strip'] .vk-card__title {
+  margin-block-start: 0;
+  font-size: var(--vk-text-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vk-voucher[data-layout='strip'] .vk-card__code {
+  font-size: var(--vk-text-xs);
+  color: var(--vk-ink-faint);
+  letter-spacing: var(--vk-tracking-normal);
+}
+.vk-voucher[data-layout='strip'] .vk-card__aside {
+  display: grid;
+  justify-items: end;
+  gap: var(--vk-space-2);
+  position: relative;
+  z-index: var(--vk-z-card-content);
+  padding-inline-start: var(--vk-space-2);
+}
+.vk-voucher[data-layout='strip'] .vk-card__date { font-size: var(--vk-text-xs); font-weight: var(--vk-weight-medium); }
+
+/* ══════════════════════════ เลย์เอาต์ MINI (ชิปในตะกร้า) ═════════════════ */
+
+.vk-voucher[data-layout='mini'] .vk-card { --vk-u: 0.95rem; }
+
+.vk-voucher[data-layout='mini'] .vk-card__main {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-2) var(--vk-space-3);
+  padding-inline-start: var(--vk-space-4);
+  border: var(--vk-hairline) solid var(--vk-line);
+  border-radius: var(--vk-radius-pill);
+}
+.vk-voucher[data-layout='mini'] .vk-card__main::before {
+  border-start-start-radius: var(--vk-radius-pill);
+  border-end-start-radius: var(--vk-radius-pill);
+}
+.vk-voucher[data-layout='mini'] .vk-card__stub { display: none; }
+.vk-voucher[data-layout='mini'] .vk-card__value { gap: 0; }
+.vk-voucher[data-layout='mini'] .vk-card__num { font-size: var(--vk-text-base); }
+.vk-voucher[data-layout='mini'] .vk-card__num[data-text='true'] { font-size: var(--vk-text-sm); }
+.vk-voucher[data-layout='mini'] .vk-card__lead,
+.vk-voucher[data-layout='mini'] .vk-card__unit { font-size: var(--vk-text-xs); margin: 0; }
+.vk-voucher[data-layout='mini'] .vk-card__code {
+  margin: 0;
+  font-size: var(--vk-text-xs);
+  color: var(--vk-ink-muted);
+  letter-spacing: var(--vk-tracking-normal);
+}
+
+/* ══════════════════════════ ใบที่กดได้ ═══════════════════════════════════ */
+
+.vk-card[data-clickable='true'] { cursor: pointer; }
+.vk-card[data-clickable='true'] .vk-card__main,
+.vk-card[data-clickable='true'] .vk-card__stub {
+  transition: transform var(--vk-dur-fast) var(--vk-ease-out);
+}
+.vk-card[data-clickable='true']:active .vk-card__main,
+.vk-card[data-clickable='true']:active .vk-card__stub { transform: scale(0.988); }
+
+/* พื้นที่กดเต็มใบ เพื่อให้คีย์บอร์ดและโปรแกรมอ่านหน้าจอใช้งานได้ */
+.vk-card__hit {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--vk-z-card-content) + 1);
+  border-radius: var(--vk-radius-card);
+}

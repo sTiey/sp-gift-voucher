@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th" data-vk-skin="steel" data-vk-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VoucherKit · ระบบคูปองออนไลน์</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/tokens/skin-ink.css">
+<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/voucher.css">
+<link rel="stylesheet" href="showcase.css">
+</head>
+<body>
+
+<div class="sc-shell">
+
+  <!-- แถบควบคุม: สลับธีม/โหมด/ขนาด ได้สด ๆ -->
+  <div class="sc-bar">
+    <div class="sc-bar__title">VOUCHER<span>KIT</span></div>
+    <div class="vk-spacer"></div>
+
+    <span class="vk-label">ธีม</span>
+    <div class="sc-seg" id="skinSeg">
+      <button type="button" data-skin="steel" aria-pressed="true">เหล็ก</button>
+      <button type="button" data-skin="ink" aria-pressed="false">หมึก</button>
+      <button type="button" data-skin="voltage" aria-pressed="false">ไฟฟ้า</button>
+    </div>
+
+    <span class="vk-label">โหมด</span>
+    <div class="sc-seg" id="modeSeg">
+      <button type="button" data-mode="dark" aria-pressed="true">มืด</button>
+      <button type="button" data-mode="light" aria-pressed="false">สว่าง</button>
+    </div>
+  </div>
+
+  <div class="vk-page">
+
+    <header class="sc-hero">
+      <p class="sc-hero__eyebrow">ระบบคูปอง / ส่วนลดออนไลน์ · v0.1</p>
+      <h1>คูปองที่อยู่<br>ในมือถือ<br>ไม่ใช่ในกระเป๋า</h1>
+      <p>โครงข้อมูล ตรรกะการใช้สิทธิ์ และดีไซน์ ที่แยกออกจากกันตั้งแต่แรก
+         — เอาไปต่อกับเว็บหรือแอปของบริษัทได้ทันที และเปลี่ยนหน้าตาได้โดยไม่ต้องแตะตรรกะ</p>
+    </header>
+
+    <section class="sc-sec">
+      <div class="sc-sec__head">
+        <span class="sc-sec__num">01</span>
+        <h2 class="sc-sec__title">ใบเต็ม</h2>
+        <span class="sc-sec__note">ใช้ตอนเปิดคูปองใบเดียว / หน้าที่ส่งให้ลูกค้าโดยตรง</span>
+      </div>
+      <div class="sc-grid" id="slabGrid"></div>
+    </section>
+
+    <section class="sc-sec">
+      <div class="sc-sec__head">
+        <span class="sc-sec__num">02</span>
+        <h2 class="sc-sec__title">แบบรายการ</h2>
+        <span class="sc-sec__note">ใช้ในกระเป๋าคูปองที่มีหลายใบ</span>
+      </div>
+      <div class="sc-list" id="stripList"></div>
+    </section>
+
+    <section class="sc-sec">
+      <div class="sc-sec__head">
+        <span class="sc-sec__num">03</span>
+        <h2 class="sc-sec__title">แบบชิป</h2>
+        <span class="sc-sec__note">ใช้ในตะกร้าสินค้า / หน้าสรุปคำสั่งซื้อ</span>
+      </div>
+      <div class="sc-chips" id="chipRow"></div>
+    </section>
+
+    <section class="sc-sec">
+      <div class="sc-sec__head">
+        <span class="sc-sec__num">04</span>
+        <h2 class="sc-sec__title">QR และลิงก์</h2>
+        <span class="sc-sec__note">สร้างในเครื่อง ไม่ส่งรหัสลูกค้าออกไปข้างนอก</span>
+      </div>
+      <div class="vk-row" style="gap: var(--vk-space-8); flex-wrap: wrap; align-items: flex-start;">
+        <div class="sc-item">
+          <div class="sc-qr" id="qrBox"></div>
+          <span class="sc-item__cap" id="qrCap"></span>
+        </div>
+        <div class="sc-code" id="apiSample"></div>
+      </div>
+    </section>
+
+    <section class="sc-sec">
+      <div class="sc-sec__head">
+        <span class="sc-sec__num">05</span>
+        <h2 class="sc-sec__title">โทเคนสีของธีมที่เลือกอยู่</h2>
+        <span class="sc-sec__note">เปลี่ยนค่าตรงนี้ = เปลี่ยนทั้งระบบ</span>
+      </div>
+      <div class="sc-tokens" id="tokenGrid"></div>
+    </section>
+
+    <section class="sc-sec">
+      <div class="sc-sec__head">
+        <span class="sc-sec__num">06</span>
+        <h2 class="sc-sec__title">หน้าจอจริงที่ใช้งานได้</h2>
+      </div>
+      <div class="sc-links">
+        <a class="sc-link" href="wallet.html"><span>01</span> กระเป๋าคูปองของลูกค้า</a>
+        <a class="sc-link" href="voucher.html?c=SPE-7K4M-92XQ"><span>02</span> คูปองใบเดียว + ใช้สิทธิ์</a>
+        <a class="sc-link" href="staff.html"><span>03</span> หน้าร้าน · ตรวจและตัดสิทธิ์</a>
+        <a class="sc-link" href="admin.html"><span>04</span> ออกคูปอง</a>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script type="module" src="showcase.js"></script>
+</body>
+</html>

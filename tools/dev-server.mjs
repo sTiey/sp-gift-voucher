@@ -28,7 +28,12 @@ const TYPES = {
 createServer(async (req, res) => {
   try {
     let path = decodeURIComponent(req.url.split('?')[0]);
-    if (path === '/') path = '/demo/index.html';
+    /* ต้อง "ส่งต่อ" ไม่ใช่ "เสิร์ฟทับ" ที่ราก — ไม่งั้นลิงก์แบบสัมพัทธ์ในหน้า
+       (./showcase.css) จะไปหาที่รากแล้ว 404 ทั้งที่ไฟล์มีอยู่ */
+    if (path === '/') {
+      res.writeHead(302, { location: '/demo/index.html' }).end();
+      return;
+    }
     const file = normalize(join(ROOT, path));
     if (!file.startsWith(ROOT)) { res.writeHead(403).end('forbidden'); return; }
 

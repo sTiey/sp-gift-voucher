@@ -1,0 +1,165 @@
+/* ============================================================================
+   showcase.css — สไตล์ของ "หน้ารวมตัวอย่าง" เท่านั้น
+   ไม่ใช่ส่วนหนึ่งของระบบคูปอง  ลบทิ้งได้ไม่กระทบอะไร
+   ========================================================================== */
+
+.sc-shell { min-height: 100dvh; padding-block: var(--vk-space-10) var(--vk-space-16); }
+
+/* ---- แถบควบคุมด้านบน: ติดขอบบนเวลาเลื่อน ---- */
+.sc-bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--vk-z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-3) var(--vk-space-5);
+  margin-block-end: var(--vk-space-12);
+  background: color-mix(in srgb, var(--vk-bg-page) 88%, transparent);
+  backdrop-filter: blur(14px);
+  border-block-end: var(--vk-hairline) solid var(--vk-line);
+}
+
+.sc-bar__title {
+  font-size: var(--vk-text-xs);
+  font-weight: var(--vk-weight-bold);
+  letter-spacing: var(--vk-tracking-widest);
+  text-transform: uppercase;
+}
+.sc-bar__title span { color: var(--vk-accent); }
+
+.sc-seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--vk-bg-inset);
+  border: var(--vk-hairline) solid var(--vk-line);
+  border-radius: var(--vk-radius-sm);
+}
+.sc-seg button {
+  padding: calc(4px) var(--vk-space-3);
+  border-radius: calc(var(--vk-radius-sm) - 1px);
+  font-size: var(--vk-text-xs);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-ink-muted);
+  transition: background var(--vk-dur-fast), color var(--vk-dur-fast);
+  white-space: nowrap;
+}
+.sc-seg button:hover { color: var(--vk-ink); }
+.sc-seg button[aria-pressed='true'] {
+  background: var(--vk-accent);
+  color: var(--vk-ink-on-accent);
+  font-weight: var(--vk-weight-semibold);
+}
+
+/* ---- หัวเรื่องใหญ่แบบโปสเตอร์ ---- */
+.sc-hero { max-width: 30ch; margin-block-end: var(--vk-space-16); }
+.sc-hero__eyebrow {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-xs);
+  letter-spacing: var(--vk-tracking-wide);
+  color: var(--vk-accent);
+  margin-block-end: var(--vk-space-4);
+}
+.sc-hero h1 {
+  font-size: clamp(38px, 7vw, 76px);
+  font-weight: var(--vk-weight-bold);
+  letter-spacing: var(--vk-tracking-tight);
+  line-height: var(--vk-leading-display);
+}
+.sc-hero p {
+  margin-block-start: var(--vk-space-5);
+  max-width: 46ch;
+  color: var(--vk-ink-muted);
+  font-size: var(--vk-text-md);
+}
+
+/* ---- หัวข้อของแต่ละหมวด ---- */
+.sc-sec { margin-block-end: var(--vk-space-16); }
+.sc-sec__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--vk-space-4);
+  padding-block-end: var(--vk-space-3);
+  margin-block-end: var(--vk-space-8);
+  border-block-end: var(--vk-hairline) solid var(--vk-line);
+}
+.sc-sec__num {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-xs);
+  color: var(--vk-accent);
+}
+.sc-sec__title {
+  font-size: var(--vk-text-lg);
+  font-weight: var(--vk-weight-semibold);
+  letter-spacing: var(--vk-tracking-tight);
+}
+.sc-sec__note { color: var(--vk-ink-faint); font-size: var(--vk-text-sm); }
+
+/* ---- ตะแกรงวางการ์ด ---- */
+.sc-grid {
+  display: grid;
+  gap: var(--vk-space-10) var(--vk-space-8);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: start;
+}
+.sc-list { display: grid; gap: var(--vk-space-3); max-width: 720px; }
+.sc-chips { display: flex; flex-wrap: wrap; gap: var(--vk-space-3); }
+
+.sc-item { display: grid; gap: var(--vk-space-3); justify-items: start; }
+.sc-item__cap {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-xs);
+  color: var(--vk-ink-faint);
+}
+
+/* ---- แผงโทเคนสี ---- */
+.sc-tokens { display: grid; gap: var(--vk-space-6); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.sc-swatch { display: grid; gap: var(--vk-space-2); }
+.sc-swatch__chip {
+  height: 58px;
+  border: var(--vk-hairline) solid var(--vk-line);
+  border-radius: var(--vk-radius-sm);
+}
+.sc-swatch__name { font-family: var(--vk-font-mono); font-size: var(--vk-text-xs); }
+.sc-swatch__val { font-family: var(--vk-font-mono); font-size: var(--vk-text-nano); color: var(--vk-ink-faint); }
+
+/* ---- กล่องโค้ดตัวอย่าง ---- */
+.sc-code {
+  padding: var(--vk-space-5);
+  background: var(--vk-bg-inset);
+  border: var(--vk-hairline) solid var(--vk-line);
+  border-radius: var(--vk-radius-card);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-xs);
+  line-height: 1.7;
+  color: var(--vk-ink-muted);
+  overflow-x: auto;
+  white-space: pre;
+}
+.sc-code b { color: var(--vk-accent); font-weight: var(--vk-weight-medium); }
+
+/* ---- QR ตัวอย่าง ---- */
+.sc-qr {
+  width: 168px;
+  padding: var(--vk-space-3);
+  background: var(--vk-qr-light);
+  border-radius: var(--vk-radius-sm);
+}
+.sc-qr svg { width: 100%; height: auto; }
+
+.sc-links { display: flex; flex-wrap: wrap; gap: var(--vk-space-3); }
+.sc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-3) var(--vk-space-5);
+  border: var(--vk-hairline) solid var(--vk-line-strong);
+  border-radius: var(--vk-radius-sm);
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  transition: background var(--vk-dur-fast), border-color var(--vk-dur-fast);
+}
+.sc-link:hover { background: var(--vk-bg-hover); border-color: var(--vk-accent); }
+.sc-link span { color: var(--vk-accent); font-family: var(--vk-font-mono); font-size: var(--vk-text-xs); }

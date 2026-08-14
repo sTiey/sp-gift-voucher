@@ -9,84 +9,111 @@
    สี + ฟอนต์ + พื้นผิว  อยู่ในไฟล์ skin-*.css  (สลับได้ด้วย data-vk-skin)
    ========================================================================== */
 
-:root {
-  /* ---- 1. สเกลกลาง ------------------------------------------------------
-     ทุกอย่างในการ์ดผูกกับ --vk-scale ตัวเดียว  ปรับตัวนี้ = การ์ดโตทั้งใบ
-     (ใช้ตอนวางในหน้าเล็ก/ใหญ่ โดยไม่ต้องแก้ค่าอื่นเลย)                        */
-  --vk-scale: 1;
+/* ══════════════════════════════════════════════════════════════════════════
+   กลุ่ม ก · ค่าที่ "ผูกกับหน่วยฐาน --vk-u"
+   --------------------------------------------------------------------------
+   ทุกระยะและทุกขนาดตัวอักษรในระบบ = จำนวนเท่าของ --vk-u ตัวเดียว
+   ปรับ --vk-u ตัวเดียว = ทั้งใบโตหรือเล็กลงพร้อมกันโดยสัดส่วนไม่เพี้ยน
 
-  /* ---- 2. ระยะห่าง (spacing) — สเกล 4px ------------------------------- */
+   ⚠️ 2 กับดักที่เคยพลาดมาแล้ว อ่านก่อนแก้:
+
+   1) --vk-u ต้องเป็น "ความยาว" (px/rem/cqw) ห้ามเป็นตัวเลขเปล่า
+      เพราะ clamp() ที่ผสมตัวเลขเปล่ากับความยาว = ค่าเสียทั้งก้อน
+      เวลาเสียมันไม่ error ด้วย มันแค่ทำให้ padding/font-size ตกกลับไปใช้
+      ค่าเริ่มต้นของเบราว์เซอร์ → การ์ดแบนหมดทั้งใบแบบเงียบ ๆ
+      (เจอจริงมาแล้ว: ตัวเลขส่วนลดกลายเป็น 15px เท่าตัวหนังสือธรรมดา)
+
+   2) ตัวแปรที่ข้างในมี var() ตัวอื่น จะถูกแทนค่า "ตั้งแต่ตอนประกาศ"
+      ไม่ใช่ไปคำนวณใหม่ที่ลูก  ฉะนั้นบล็อกนี้ต้องประกาศซ้ำทุกจุดที่ตั้ง
+      --vk-u ใหม่  ตอนนี้มี 2 จุด: :root (ทั้งหน้า) กับ .vk-card (แต่ละใบ)
+      เพิ่มจุดใหม่ = เติมชื่อเข้าไปใน selector บรรทัดล่างนี้เท่านั้น
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root,
+.vk-card {
+  --vk-u: 1rem; /* หน่วยฐาน = 16px  (.vk-card เขียนทับด้วยค่าที่ยืดตามความกว้าง) */
+
+  /* ---- ระยะห่าง (spacing) — สเกล 4px ---- */
   --vk-space-0: 0px;
-  --vk-space-1: calc(4px * var(--vk-scale));
-  --vk-space-2: calc(8px * var(--vk-scale));
-  --vk-space-3: calc(12px * var(--vk-scale));
-  --vk-space-4: calc(16px * var(--vk-scale));
-  --vk-space-5: calc(20px * var(--vk-scale));
-  --vk-space-6: calc(24px * var(--vk-scale));
-  --vk-space-8: calc(32px * var(--vk-scale));
-  --vk-space-10: calc(40px * var(--vk-scale));
-  --vk-space-12: calc(48px * var(--vk-scale));
-  --vk-space-16: calc(64px * var(--vk-scale));
+  --vk-space-1: calc(var(--vk-u) * 0.25);
+  --vk-space-2: calc(var(--vk-u) * 0.5);
+  --vk-space-3: calc(var(--vk-u) * 0.75);
+  --vk-space-4: calc(var(--vk-u) * 1);
+  --vk-space-5: calc(var(--vk-u) * 1.25);
+  --vk-space-6: calc(var(--vk-u) * 1.5);
+  --vk-space-8: calc(var(--vk-u) * 2);
+  --vk-space-10: calc(var(--vk-u) * 2.5);
+  --vk-space-12: calc(var(--vk-u) * 3);
+  --vk-space-16: calc(var(--vk-u) * 4);
 
-  /* ---- 3. ขนาดตัวอักษร --------------------------------------------------
-     ค่า -value คือ "ตัวเลขส่วนลด" ซึ่งเป็นพระเอกของการ์ด                     */
-  --vk-text-nano: calc(10px * var(--vk-scale));
-  --vk-text-micro: calc(11px * var(--vk-scale));
-  --vk-text-xs: calc(12px * var(--vk-scale));
-  --vk-text-sm: calc(13px * var(--vk-scale));
-  --vk-text-base: calc(15px * var(--vk-scale));
-  --vk-text-md: calc(17px * var(--vk-scale));
-  --vk-text-lg: calc(21px * var(--vk-scale));
-  --vk-text-xl: calc(28px * var(--vk-scale));
-  --vk-text-value: calc(64px * var(--vk-scale));
-  --vk-text-value-strip: calc(34px * var(--vk-scale));
+  /* ---- ขนาดตัวอักษร — -value คือ "ตัวเลขส่วนลด" ซึ่งเป็นพระเอกของใบ ---- */
+  --vk-text-nano: calc(var(--vk-u) * 0.625);
+  --vk-text-micro: calc(var(--vk-u) * 0.6875);
+  --vk-text-xs: calc(var(--vk-u) * 0.75);
+  --vk-text-sm: calc(var(--vk-u) * 0.8125);
+  --vk-text-base: calc(var(--vk-u) * 0.9375);
+  --vk-text-md: calc(var(--vk-u) * 1.0625);
+  --vk-text-lg: calc(var(--vk-u) * 1.3125);
+  --vk-text-xl: calc(var(--vk-u) * 1.75);
+  --vk-text-value: calc(var(--vk-u) * 3.75);
+  --vk-text-value-strip: calc(var(--vk-u) * 2);
 
-  /* ---- 4. น้ำหนัก + ระยะตัวอักษร --------------------------------------- */
+  /* ---- รูปทรงการ์ด ----
+     signature ของระบบนี้ = มุมตัดเฉียง 2 มุมตรงข้าม (ขวาบนของครึ่งบน +
+     ซ้ายล่างของครึ่งล่าง)  จงใจไม่ใช้เส้นประ + รูวงกลมสองข้าง
+     ซึ่งเป็นหน้าตาคูปองที่ใคร ๆ ก็ทำกัน */
+  --vk-radius-card: calc(var(--vk-u) * 0.375);
+  --vk-radius-sm: calc(var(--vk-u) * 0.25);
+  --vk-radius-pill: 999px;
+  --vk-notch-size: calc(var(--vk-u) * 1.5); /* ความยาวมุมตัดเฉียง */
+  --vk-hairline: 1px;
+
+  /* ---- สัดส่วนการ์ด ---- */
+  --vk-card-width: calc(var(--vk-u) * 22.5);
+  --vk-card-pad: var(--vk-space-6);
+  --vk-strip-height: calc(var(--vk-u) * 6);
+  --vk-rail-width: calc(var(--vk-u) * 0.1875); /* แถบสีเน้นข้างซ้าย */
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   กลุ่ม ข · ค่าที่ "ไม่ผูกกับสเกล" — ประกาศที่ :root พอ
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ---- น้ำหนัก + ระยะตัวอักษร ---- */
   --vk-weight-regular: 400;
   --vk-weight-medium: 500;
   --vk-weight-semibold: 600;
   --vk-weight-bold: 700;
-  --vk-weight-black: 800;
 
-  --vk-tracking-tight: -0.03em;
+  --vk-tracking-tight: -0.035em;
   --vk-tracking-normal: 0em;
   --vk-tracking-wide: 0.06em;
-  --vk-tracking-widest: 0.18em; /* ป้ายสถานะ / คำกำกับตัวเล็ก */
+  /* ⚠️ ตัวอักษรไทยไม่ควรถ่างมาก เพราะรูปคำจะแตกเป็นตัว ๆ อ่านยาก
+     จึงแยก 2 ค่า: label ใช้กับคำไทย · widest ใช้กับตัวพิมพ์ใหญ่อังกฤษเท่านั้น */
+  --vk-tracking-label: 0.09em;
+  --vk-tracking-widest: 0.18em;
 
-  --vk-leading-tight: 0.92;
-  --vk-leading-snug: 1.2;
+  /* ⚠️ ภาษาไทยมีสระบน/ล่างและวรรณยุกต์ซ้อนกันได้ถึง 2 ชั้น
+     ตั้ง line-height ต่ำกว่า ~1.1 กับ "ข้อความไทย" = วรรณยุกต์ชนบรรทัดบน
+     (อังกฤษล้วนหรือตัวเลขล้วนใช้ค่าแน่นกว่านี้ได้ จึงแยกเป็นคนละ token) */
+  --vk-leading-tight: 0.9;    /* ใช้กับ "ตัวเลข" เท่านั้น */
+  --vk-leading-display: 1.16; /* พาดหัวไทยตัวใหญ่ */
+  --vk-leading-snug: 1.3;
   --vk-leading-normal: 1.55;
 
-  /* ---- 5. รูปทรงการ์ด ---------------------------------------------------
-     signature ของระบบนี้: มุมตัดเฉียง 1 มุม (เหมือนชิ้นงานที่ถูกกัดด้วยเครื่อง)
-     + รอยต่อกลางใบที่ "เจาะทะลุจริง" ด้วย mask ไม่ใช่วงกลมทาสีทับ            */
-  --vk-radius-card: calc(6px * var(--vk-scale));
-  --vk-radius-pill: 999px;
-  --vk-radius-sm: calc(4px * var(--vk-scale));
-  --vk-notch-size: calc(22px * var(--vk-scale)); /* ขนาดมุมตัดเฉียง */
-  --vk-punch-size: calc(13px * var(--vk-scale)); /* รูเจาะซ้าย-ขวาตรงรอยต่อ */
-  --vk-seam-dash: calc(5px * var(--vk-scale));
-  --vk-seam-gap: calc(5px * var(--vk-scale));
-  --vk-hairline: 1px;
-
-  /* ---- 6. สัดส่วนการ์ด --------------------------------------------------- */
-  --vk-card-width: calc(360px * var(--vk-scale));
-  --vk-card-pad: var(--vk-space-6);
-  --vk-strip-height: calc(104px * var(--vk-scale));
-  --vk-rail-width: calc(3px * var(--vk-scale)); /* แถบสีข้างซ้าย */
-
-  /* ---- 7. จังหวะ (motion) ------------------------------------------------ */
+  /* ---- จังหวะ (motion) ---- */
   --vk-dur-instant: 90ms;
   --vk-dur-fast: 180ms;
   --vk-dur-base: 300ms;
   --vk-dur-slow: 620ms;
-  --vk-dur-tear: 900ms; /* แอนิเมชันตอน "ฉีก" คูปอง */
+  --vk-dur-tear: 900ms; /* จังหวะ "ฉีก" ตอนใช้สิทธิ์ */
   --vk-dur-sheen: 5200ms; /* แสงกวาดผิวการ์ด */
   --vk-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --vk-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --vk-ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ---- 8. ชั้นซ้อน (z-index) — รวมไว้ที่เดียว กันตีกัน ------------------- */
+  /* ---- ชั้นซ้อน (z-index) — รวมไว้ที่เดียว กันตีกัน ---- */
   --vk-z-base: 0;
   --vk-z-card-sheen: 2;
   --vk-z-card-content: 3;
@@ -95,19 +122,18 @@
   --vk-z-sheet: 90;
   --vk-z-toast: 100;
 
-  /* ---- 9. จุดหักหน้าจอ (breakpoint) — ใช้กับ container query ------------ */
+  /* ---- จุดหักหน้าจอ ---- */
   --vk-bp-sm: 480px;
   --vk-bp-md: 768px;
   --vk-bp-lg: 1080px;
 
-  /* ---- 10. ระยะปลอดภัยขอบจอมือถือ ---------------------------------------
-     กันโดนรอยบาก/แถบล่างของ iOS  (อ่าน docs/05 เรื่องกับดัก fixed บน iOS)   */
+  /* ---- ระยะปลอดภัยขอบจอมือถือ ----
+     กันโดนรอยบาก/แถบล่างของ iOS  (อ่าน docs/05 หัวข้อกับดัก fixed บน iOS) */
   --vk-safe-top: env(safe-area-inset-top, 0px);
   --vk-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --vk-safe-pad-bottom: max(var(--vk-safe-bottom), var(--vk-space-4));
 }
 
-/* ---- 11. เคารพผู้ใช้ที่ปิดแอนิเมชัน ------------------------------------- */
+/* ---- เคารพผู้ใช้ที่ปิดแอนิเมชันในระบบ ---------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --vk-dur-instant: 0ms;

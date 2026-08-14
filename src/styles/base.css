@@ -1,0 +1,83 @@
+/* ============================================================================
+   base.css — รีเซ็ตพื้นฐาน + เปลือกหน้าเว็บ
+   ----------------------------------------------------------------------------
+   เล็กที่สุดเท่าที่พอ  ไม่ใช่ CSS framework  หน้าที่มีแค่:
+   ทำให้ทุกเบราว์เซอร์เริ่มจากจุดเดียวกัน แล้วปล่อยให้ voucher.css ทำงาน
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%; /* กัน iOS ขยายตัวอักษรเองตอนหมุนจอ */
+  color-scheme: dark light;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--vk-bg-page);
+  color: var(--vk-ink);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-text-base);
+  line-height: var(--vk-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ⚠️ กับดักคลาสสิก: ช่องกรอก/ปุ่ม ไม่รับฟอนต์จาก body เอง
+   ไม่เขียนบรรทัดนี้ = เปลี่ยนฟอนต์ทั้งเว็บแล้วเหลือปุ่มกับช่องค้นหาเป็นฟอนต์ OS */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+
+h1, h2, h3, h4, p, figure, blockquote { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+img, svg, video { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+/* เส้นโฟกัสที่มองเห็นชัดสำหรับคนใช้คีย์บอร์ด — ห้ามลบทิ้ง */
+:focus-visible {
+  outline: 2px solid var(--vk-accent);
+  outline-offset: 2px;
+  border-radius: var(--vk-radius-sm);
+}
+
+/* ซ่อนจากตาแต่ยังให้โปรแกรมอ่านหน้าจออ่านเจอ */
+.vk-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- เปลือกหน้าเว็บมาตรฐาน ---------------------------------------------- */
+
+.vk-page {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: var(--vk-space-5);
+}
+
+.vk-stack { display: grid; gap: var(--vk-space-4); }
+.vk-row { display: flex; align-items: center; gap: var(--vk-space-3); }
+.vk-spacer { flex: 1; }
+
+/* ตัวหนังสือกำกับตัวเล็กแบบตัวใหญ่หมด ใช้ซ้ำหลายที่ */
+.vk-label {
+  font-size: var(--vk-text-nano);
+  font-weight: var(--vk-weight-semibold);
+  letter-spacing: var(--vk-tracking-label);
+  text-transform: uppercase;
+  color: var(--vk-ink-faint);
+}
