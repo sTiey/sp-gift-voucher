@@ -1,0 +1,368 @@
+/* ============================================================================
+   foilticket — "ตั๋วฟอยล์ทอง"
+   ----------------------------------------------------------------------------
+   ทำตามภาพอ้างอิงที่ไท้เคาะเอง (2026-08-17) — บัตรกำนัลกระดาษงาช้าง
+   ตัวเลขปั๊มฟอยล์ทองนูน ตัวหนังสือน้ำตาลอุ่นทั้งใบ ของตกแต่งเป็นเส้นบางล้วน
+
+   4 กลไกที่ถอดจากภาพ ใช้เป็นเกณฑ์ตัดสินว่างานถึงหรือยัง:
+     1. **ของมันวาวมีชิ้นเดียวในใบ** ที่เหลือด้านหมด → ตัวเลขไม่ต้องแข่งกับใคร
+     2. **ขนาดกระโดดสุดขั้ว** มีแค่ "ใหญ่มาก" กับ "เล็กมาก" — ห้ามมีของขนาดกลาง
+        (ข้อนี้คือสาเหตุที่ 3 แบบก่อนหน้าดูจืดจนถูกตีกลับ)
+     3. กระดาษว่างเยอะกว่าที่มีของ แต่ไม่โล่ง เพราะตัวเลขหนักพอถ่วงใบไว้
+     4. **น้ำตาลแทนดำ** → ทองกลมกลืนเป็นชุดเดียวกัน ไม่ใช่ทองแปะบนของขาวดำ
+
+   ทรงตั๋วจริง: เส้นประแบ่งก้าน · รอยบากครึ่งวงกลม 4 จุด · ขอบขวาหยักแบบขอบแสตมป์
+   ก้านฉีกกว้าง 30% ของใบ (ไท้เคาะ) — QR + รหัส + วันหมดอายุ อยู่บนก้าน
+   = "ส่วนที่พนักงานฉีกเก็บ" ตรงกับหน้าที่จริงของก้านตั๋ว
+   ========================================================================== */
+
+[data-design='foilticket'] {
+  --ft-paper: #f7f3ea;          /* กระดาษงาช้าง */
+  --ft-paper-2: #f1ece0;        /* ก้านฉีก เข้มกว่านิดเดียวให้เห็นรอยแบ่ง */
+  --ft-ink: #7a5c34;            /* น้ำตาลอุ่น — ตัวหนังสือทั้งใบ ไม่ใช้ดำ */
+  --ft-ink-2: #a08a68;          /* น้ำตาลอ่อน สำหรับบรรทัดรอง */
+  --ft-line: rgba(122, 92, 52, 0.24);
+
+  /* ฟอยล์ทอง — ไล่จากบรอนซ์เข้มในร่อง ไปเกือบขาวตรงสัน แล้วกลับลงเข้มอีก
+     ตำแหน่งไล่เฉดผูกกับ --ft-shift ซึ่งตัวเอียงการ์ดจะเป็นคนขยับ
+     (ยังไม่ต่อ ตอนนี้อยู่นิ่งที่ 50%) */
+  --ft-shift: 50%;
+  /* ⚠️ ความ "เป็นโลหะ" มาจากการมีแถบสว่าง-มืดหลายแถบพาดผ่านตัวอักษรพร้อมกัน
+     ไม่ได้มาจากสีทองสวย ๆ · ถ้ายืดแผ่นฟอยล์กว้างเกิน ในตัวเลขจะเหลือแถบเดียว
+     แล้วมันจะดูเป็น "ตัวหนังสือสีน้ำตาลทอง" เฉย ๆ ไม่ใช่ฟอยล์
+     3 ยอดสว่าง + ร่องเข้มคั่น = อ่านเป็นผิวโลหะทันที */
+  /* ⚠️ 3 รอบที่แล้วเปลี่ยนสีไปเรื่อยแต่ภาพแทบไม่ต่าง เพราะแก้ผิดจุด
+     ความ "เป็นโลหะ" ไม่ได้อยู่ที่โทนสี แต่อยู่ที่ **ขอบระหว่างสว่างกับมืดต้องคม**
+     ไล่เฉดนุ่ม ๆ ที่ตัวอักษรสูง 140px = ไล่กันเป็นสิบพิกเซล ตาอ่านว่า "พ่นสีไล่เฉด"
+     ใช้ลายซ้ำเพื่อคุมความถี่ให้แน่นอน: ร่องเข้มกว้าง → พุ่งขาวเร็ว → ตกกลับเข้ม
+     คาบราว 40px บนตัวเลข = มีแถบพาดผ่านราว 4 แถบ ซึ่งเป็นระยะที่ตาอ่านว่าโลหะ */
+  --ft-foil: repeating-linear-gradient(
+    100deg,
+    #6a4a12 0%,
+    #8f6a26 2%,
+    #d4b167 4.4%,
+    #fffdf2 5.6%,
+    #eed9a0 6.4%,
+    #b48c3c 8.2%,
+    #6a4a12 11%,
+    #6a4a12 12.7%
+  );
+
+  --ft-mono: 'IBM Plex Mono', 'Noto Sans Thai', ui-monospace, monospace;
+  --ft-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
+  /* ตัวเลขมูลค่า — สลับได้ด้วย data-numface="serif" (ยังไม่เคาะว่าจะใช้ตัวไหน) */
+  --ft-num: var(--ft-sans);
+
+  --ft-stub: 30;                /* ก้านฉีก = 30% ของความกว้างใบ */
+  --ft-pad: 1.7;                /* ระยะขอบเนื้อหา */
+  --ft-notch: 0.85;             /* รัศมีรอยบากครึ่งวงกลม */
+  --ft-scallop: 0.4;            /* รัศมีคลื่นขอบขวา */
+}
+
+[data-design='foilticket'][data-numface='serif'] {
+  --ft-num: 'Playfair Display', 'Google Sans', serif;
+}
+
+[data-design='foilticket'][data-shape='ticket'] { contain-intrinsic-inline-size: 45rem; }
+
+/* ── ทรงใบ + รูปทรงตั๋ว ────────────────────────────────────────────────── */
+
+[data-design='foilticket'] .vk-card {
+  --vk-u: inherit;
+  position: relative;
+  background: var(--ft-paper);
+  color: var(--ft-ink);
+  font-family: var(--ft-sans);
+  border-radius: calc(var(--vk-u) * 0.55);
+  box-shadow: none;
+}
+
+/* รูปทรงตั๋ว = เอาวงกลมไปเจาะออกจากสี่เหลี่ยม ทำด้วยหน้ากาก (mask)
+   ⚠️ ต้องใช้ mask-composite: intersect — แต่ละชั้นเจาะคนละรู ถ้าไม่ intersect
+      ชั้นหลังจะทับชั้นหน้าแล้วเหลือรูเดียว · ใส่ -webkit- คู่ไว้เผื่อ Safari เก่า
+   ทุกชั้นต้องกินพื้นที่เต็มใบ (100% 100%) ไม่งั้นส่วนที่ชั้นนั้นไม่ครอบจะหายทั้งแถบ */
+[data-design='foilticket'][data-shape='ticket'] .vk-card {
+  aspect-ratio: 2.6 / 1;
+  --ft-perf: calc(100% - var(--ft-stub) * 1%);
+  -webkit-mask:
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at var(--ft-perf) 0,
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at var(--ft-perf) 100%,
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at 0 50%,
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-scallop)) at 100% 50%,
+      transparent 96%, #000 100%) 0 0 / 100% calc(var(--vk-u) * var(--ft-scallop) * 2.5) repeat-y;
+  mask:
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at var(--ft-perf) 0,
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at var(--ft-perf) 100%,
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at 0 50%,
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-scallop)) at 100% 50%,
+      transparent 96%, #000 100%) 0 0 / 100% calc(var(--vk-u) * var(--ft-scallop) * 2.5) repeat-y;
+
+  /* ⚠️ ต้องอยู่ "หลัง" คำสั่ง mask เสมอ — mask เป็นคำสั่งรวบ มันล้างค่านี้กลับเป็น
+     add ทุกครั้ง · เขียนไว้ข้างบนแล้วรอยบากจะไม่เกิด และไม่มีอะไรฟ้องเลย */
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+
+  grid-template-columns: minmax(0, 1fr) calc(var(--ft-stub) * 1%);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'head stub'
+    'body stub'
+    'cond stub'
+    'note stub';
+}
+
+[data-design='foilticket'] .vk-card__art { display: none; }
+[data-design='foilticket'] .vk-card__stub { display: contents; }
+[data-design='foilticket'] .vk-card__hero { display: contents; }
+[data-design='foilticket'][data-shape='ticket'] .vk-card__main { display: contents; }
+
+/* ── เส้นประแบ่งก้าน ───────────────────────────────────────────────────── */
+
+[data-design='foilticket'][data-shape='ticket'] .vk-card::before {
+  content: '';
+  position: absolute;
+  inset-block: calc(var(--vk-u) * 1.2);
+  inset-inline-start: var(--ft-perf);
+  width: 1px;
+  z-index: 4;
+  background-image: linear-gradient(var(--ft-line) 46%, transparent 0);
+  background-size: 1px calc(var(--vk-u) * 0.5);
+}
+
+/* ── ของตกแต่ง: เส้นวงกลมบาง ๆ — ชิ้นเดียวที่ไม่ใช่ตัวหนังสือ ─────────── */
+
+[data-design='foilticket'][data-shape='ticket'] .vk-card::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: auto auto calc(var(--vk-u) * -4.4) calc(var(--vk-u) * -3.2);
+  width: calc(var(--vk-u) * 11);
+  height: calc(var(--vk-u) * 11);
+  border: 1px solid var(--ft-line);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ── หัวใบ ─────────────────────────────────────────────────────────────── */
+
+[data-design='foilticket'] .vk-card__head {
+  grid-area: head;
+  position: relative; z-index: 2;
+  align-self: start;
+  gap: calc(var(--vk-u) * 0.62);
+  margin: calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad)) 0;
+  min-width: 0;
+}
+[data-design='foilticket'] .vk-card__logo {
+  height: calc(var(--vk-u) * 2);
+  mix-blend-mode: multiply;
+}
+[data-design='foilticket'] .vk-card__brandname {
+  font-family: var(--ft-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.6); letter-spacing: 0.34em;
+  color: var(--ft-ink); white-space: nowrap; overflow: hidden;
+}
+[data-design='foilticket'] .vk-card__pill {
+  margin-inline-start: auto; flex: none;
+  background: none; color: var(--ft-ink-2);
+  box-shadow: inset 0 0 0 1px var(--ft-line);
+  border-radius: 999px;
+  font-family: var(--ft-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.56); letter-spacing: 0.1em;
+  line-height: 1.2;
+  padding: calc(var(--vk-u) * 0.26) calc(var(--vk-u) * 0.66);
+}
+
+/* ── ตัวหนังสือฝั่งซ้าย — เล็กหมด ไม่มีของขนาดกลาง ─────────────────────── */
+
+[data-design='foilticket'] .vk-card__kicker {
+  grid-area: body;
+  position: relative; z-index: 2;
+  align-self: start;
+  margin: calc(var(--vk-u) * 1.15) calc(var(--vk-u) * var(--ft-pad)) 0;
+  display: flex; align-items: center; gap: calc(var(--vk-u) * 0.5);
+  font-family: var(--ft-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.62); letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ft-ink-2);
+  white-space: nowrap; overflow: hidden;
+}
+[data-design='foilticket'] .vk-card__kicker::before {
+  content: ''; flex: none;
+  width: calc(var(--vk-u) * 1.4); height: 1px; background: var(--ft-ink-2);
+}
+
+[data-design='foilticket'] .vk-card__title {
+  grid-area: body;
+  position: relative; z-index: 2;
+  align-self: start;
+  margin: calc(var(--vk-u) * 2.5) calc(var(--vk-u) * var(--ft-pad)) 0;
+  max-width: calc(var(--vk-u) * 15);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  font-weight: 500;
+  font-size: calc(var(--vk-u) * 1.06);
+  line-height: 1.34;
+  letter-spacing: 0;
+  color: var(--ft-ink);
+}
+
+[data-design='foilticket'] .vk-card__cond {
+  grid-area: cond;
+  position: relative; z-index: 2;
+  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * 0.34);
+  max-width: calc(var(--vk-u) * 15);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;
+  font-family: var(--ft-mono);
+  font-size: calc(var(--vk-u) * 0.64);
+  line-height: 1.4; color: var(--ft-ink-2);
+}
+[data-design='foilticket'] .vk-card__note {
+  grid-area: note;
+  position: relative; z-index: 2;
+  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad));
+  max-width: calc(var(--vk-u) * 15);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;
+  font-size: calc(var(--vk-u) * 0.66);
+  line-height: 1.4; color: var(--ft-ink-2);
+}
+[data-design='foilticket'] .vk-card__badge { display: none; }
+
+/* ── ตัวเลขฟอยล์ทอง — พระเอกของใบ ──────────────────────────────────────
+   ⚠️ ต้องเป็นของมันวาว "ชิ้นเดียว" ในใบ อย่าเผลอเอาไล่เฉดทองไปใส่ที่อื่น
+      พอมีของวาวสองที่ ตาจะเลือกไม่ถูกแล้วทั้งใบดูถูกลงทันที (บทเรียนจากภาพอ้างอิง)
+   วางลอยเทียบกับใบ ชิดขวาของฝั่งเนื้อหา ให้ชนแนวเส้นประพอดี                */
+[data-design='foilticket'][data-shape='ticket'] .vk-card__value {
+  position: absolute;
+  z-index: 3;
+  right: calc(var(--ft-stub) * 1% + var(--vk-u) * var(--ft-pad));
+  top: 50%;
+  transform: translateY(-46%);
+  display: block;
+  margin: 0; padding: 0; background: none;
+  pointer-events: none;
+}
+
+[data-design='foilticket'] .vk-card__num {
+  display: block;
+  font-family: var(--ft-num);
+  font-weight: 600;
+  font-size: calc(var(--vk-u) * 8.6);
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+
+  /* ฟอยล์: ทาไล่เฉดทองแล้วฉลุตามรูปตัวอักษร */
+  background-image: var(--ft-foil);
+  background-size: 200% 100%;
+  background-position: var(--ft-shift) 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* เงาใต้ตัวอักษร = ความรู้สึกนูนของการปั๊มฟอยล์ · วาดจากรูปตัวอักษรจริง
+     จึงยังเห็นแม้ตัวหนังสือจะโปร่งใส */
+  /* ⚠️ ห้ามใช้ text-shadow กับตัวอักษรที่ฉลุพื้นหลัง (background-clip:text)
+     เบราว์เซอร์วาด "พื้นหลัง" ก่อน แล้ววาด "เงาตัวอักษร" ทับทีหลัง
+     → เงาจะกลบแผ่นฟอยล์จนหมด เหลือแต่ตัวอักษรสีทึบซีด ๆ และไม่มีอะไรฟ้อง
+     (พิสูจน์แล้วด้วยการวางเทียบ 3 แบบ: ไล่เฉดอย่างเดียวสวย รวมเงาแล้วกลายเป็นเงาล้วน)
+     ใช้ drop-shadow แทน เพราะมันวาดจาก "รูปทรงที่เรนเดอร์เสร็จแล้ว" จึงอยู่ข้างหลังจริง */
+  filter:
+    drop-shadow(0 -1px 0 rgba(255, 251, 236, 0.5))
+    drop-shadow(0 1.5px 0 rgba(104, 76, 28, 0.45))
+    drop-shadow(0 6px 12px rgba(90, 66, 22, 0.22));
+}
+
+[data-design='foilticket'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 7); }
+[data-design='foilticket'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 6.2); }
+[data-design='foilticket'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 5.4); }
+[data-design='foilticket'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 4.6); }
+[data-design='foilticket'] .vk-card__num[data-text='true'][data-len] {
+  font-size: calc(var(--vk-u) * 3); line-height: 1.1; letter-spacing: -0.01em;
+}
+
+/* ฿ และ % — ทองเหมือนกันแต่เล็กกว่ามาก ลอยออกนอกกล่องไม่กินความกว้าง */
+[data-design='foilticket'] .vk-card__lead,
+[data-design='foilticket'] .vk-card__unit {
+  position: absolute;
+  top: 0.06em;
+  font-family: var(--ft-num); font-weight: 600;
+  font-size: calc(var(--vk-u) * 2.3); line-height: 1;
+  background-image: var(--ft-foil);
+  background-size: 200% 100%;
+  background-position: var(--ft-shift) 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(104, 76, 28, 0.4));
+}
+[data-design='foilticket'] .vk-card__unit {
+  inset-inline-start: 100%; margin-inline-start: calc(var(--vk-u) * 0.18);
+}
+[data-design='foilticket'] .vk-card__lead {
+  inset-inline-end: 100%; margin-inline-end: calc(var(--vk-u) * 0.18);
+}
+
+/* ── ก้านฉีก 30% — QR + รหัส + วันหมดอายุ (ส่วนที่พนักงานฉีกเก็บ) ──────── */
+
+[data-design='foilticket'] .vk-card__serial { display: none; }
+
+/* ⚠️ กล่องนี้เป็นคนทาพื้นให้ทั้งคอลัมน์ก้าน จึงต้องอยู่ "ชั้นล่างสุด" ของก้าน
+   เคยพลาด: ตั้ง z-index เท่ากับ QR แล้วมันมาทีหลังใน HTML เลยทาสีทับ QR หายทั้งอัน */
+[data-design='foilticket'][data-shape='ticket'] .vk-card__stub-body {
+  grid-area: stub;
+  position: relative; z-index: 1;
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  gap: calc(var(--vk-u) * 0.12);
+  margin: 0;
+  padding: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 1.5);
+  background: var(--ft-paper-2);
+  text-align: center;
+}
+[data-design='foilticket'] .vk-card__stub-body .vk-card__label:first-child { display: none; }
+
+[data-design='foilticket'] .vk-card__label {
+  font-family: var(--ft-mono); font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.52); letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ft-ink-2);
+  white-space: nowrap;
+}
+[data-design='foilticket'] .vk-card__code {
+  font-family: var(--ft-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.74); letter-spacing: 0.02em;
+  line-height: 1.3; white-space: nowrap; color: var(--ft-ink);
+}
+[data-design='foilticket'] .vk-card__stub-body .vk-card__code + .vk-card__label {
+  margin-top: calc(var(--vk-u) * 0.5);
+}
+[data-design='foilticket'] .vk-card__date {
+  font-family: var(--ft-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.76); line-height: 1.3;
+  white-space: nowrap; color: var(--ft-ink);
+}
+
+[data-design='foilticket'][data-shape='ticket'] .vk-card__qr {
+  grid-area: stub;
+  position: relative; z-index: 2;
+  align-self: start; justify-self: center;
+  width: calc(var(--vk-u) * 5.2);
+  margin-top: calc(var(--vk-u) * 1.5);
+  color: var(--ft-ink);
+}
+
+/* ── ใบที่ใช้แล้ว — ถอดทองออก เหลือเงินหม่น ยังอ่านครบ ─────────────────── */
+
+[data-design='foilticket'] .vk-card[data-status='redeemed'],
+[data-design='foilticket'] .vk-card[data-status='expired'],
+[data-design='foilticket'] .vk-card[data-status='void'] {
+  filter: none; opacity: 1;
+  --ft-ink: #8b857a;
+  --ft-ink-2: #a8a297;
+  --ft-line: rgba(139, 133, 122, 0.26);
+  --ft-foil: linear-gradient(100deg,
+    #9a958b 0%, #c3bcae 24%, #e4dfd6 38%, #c3bcae 56%, #9a958b 78%, #b8b1a5 100%);
+}
