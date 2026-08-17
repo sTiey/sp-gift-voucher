@@ -59,9 +59,9 @@ import { cardHtml } from '../src/ui/voucher-design.js';
 import { createVoucher } from '../src/index.js';
 import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
 
-/* ?shift=NN ตรึงตำแหน่งประกายไว้ที่ค่าเดียว — ใช้ตอนแคปหน้าจอเทียบว่าประกายขยับจริง
-   ปกติ (ไม่ใส่) ประกายจะวิ่งตามเมาส์/การเอียงเครื่อง */
-const FIXED = new URLSearchParams(location.search).get('shift');
+/* ?spot=x,y ตรึงตำแหน่งดวงแสงไว้ที่จุดเดียว — ใช้ตอนแคปหน้าจอเทียบว่าดวงแสงขยับจริง
+   ปกติ (ไม่ใส่) ดวงแสงจะวิ่งตามเมาส์/การเอียงเครื่อง */
+const FIXED = new URLSearchParams(location.search).get('spot');
 
 const SAMPLES = {
   percent: { code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
@@ -108,8 +108,13 @@ function paint() {
     </section>`).join('');
 
   for (const card of document.querySelectorAll('.vk-card')) {
-    if (FIXED !== null) card.style.setProperty('--ft-shift', `${FIXED}%`);
-    else attachFoilTilt(card);
+    if (FIXED !== null) {
+      const [x, y = x] = FIXED.split(',');
+      card.style.setProperty('--ft-spot-x', `${x}%`);
+      card.style.setProperty('--ft-spot-y', `${y}%`);
+    } else {
+      attachFoilTilt(card);
+    }
   }
 }
 

@@ -24,9 +24,7 @@
   --ft-line: rgba(122, 92, 52, 0.24);
 
   /* ฟอยล์ทอง — ไล่จากบรอนซ์เข้มในร่อง ไปเกือบขาวตรงสัน แล้วกลับลงเข้มอีก
-     ตำแหน่งไล่เฉดผูกกับ --ft-shift ซึ่งตัวเอียงการ์ดจะเป็นคนขยับ
-     (ยังไม่ต่อ ตอนนี้อยู่นิ่งที่ 50%) */
-  --ft-shift: 50%;
+     ตำแหน่งดวงแสงผูกกับ --ft-spot-x / --ft-spot-y ซึ่งตัวเอียงการ์ดเป็นคนขยับ */
   /* ⚠️ ความ "เป็นโลหะ" มาจากการมีแถบสว่าง-มืดหลายแถบพาดผ่านตัวอักษรพร้อมกัน
      ไม่ได้มาจากสีทองสวย ๆ · ถ้ายืดแผ่นฟอยล์กว้างเกิน ในตัวเลขจะเหลือแถบเดียว
      แล้วมันจะดูเป็น "ตัวหนังสือสีน้ำตาลทอง" เฉย ๆ ไม่ใช่ฟอยล์
@@ -43,14 +41,41 @@
      ชั้นล่าง = ไล่เฉดทองอ่อน ๆ ไล่อยู่ในโทนทองล้วน ไม่มีน้ำตาลเข้ม ไม่มีขาว
        มีแถบสว่างกว้าง ๆ แถบเดียว = แสงที่วิ่งตามการเอียง                      */
   --ft-foil-tex: url('../../../assets/textures/foil-grain.webp');
+
   /* ชั้นกลาง = ความกลมของเส้น (หัวเส้นรับแสง ก้นเส้นตกเงา) — เทา 128 คือ "ไม่เปลี่ยน" */
   --ft-foil-round: linear-gradient(
     177deg, #c4c4c4 0%, #a6a6a6 22%, #808080 46%, #6d6d6d 72%, #5c5c5c 100%
   );
+
+  /* ⚠️ พื้นทองต้อง "เข้ม" ไว้ก่อน — ไท้ทักว่าตอนไม่เอียงมันสว่างและซีดเกินไป
+     ความสว่างต้องมาจากดวงแสงที่วิ่งไปมาเท่านั้น ไม่ใช่มาจากพื้น
+     ถ้าพื้นสว่างอยู่แล้ว ดวงแสงจะไม่มีอะไรให้ตัด กลายเป็นทองซีดทั้งตัว */
   --ft-foil-grad: linear-gradient(
-    100deg,
-    #9d6f1c 0%, #ba8a26 13%, #d8ae4a 29%, #efd88f 43%, #fbedbb 50%,
-    #e7c96f 58%, #ca9a34 73%, #ac7f20 88%, #96691a 100%
+    172deg, #cb9d35 0%, #bb8a2b 40%, #a87720 74%, #b6842a 100%
+  );
+
+  /* ── ดวงแสง ────────────────────────────────────────────────────────────
+     ⚠️ เดิมเป็นแถบสว่างพาดทแยงทั้งตัวอักษร ไท้ทักว่าอยากได้เป็น "ดวง"
+        แถบยาวอ่านเป็นการไล่เฉด ส่วนดวงกลมอ่านเป็น "แสงตกกระทบจุดหนึ่ง" ซึ่งคือโลหะ
+     ตำแหน่งเป็น % ของกล่องตัวอักษรเอง → ใช้ค่าเดียวกันได้ทั้งตัวเลขใหญ่และ ฿ %
+        โดยไม่ต้องคำนวณแยก แต่ละตัวจะได้ดวงของตัวเองในสัดส่วนเดียวกัน
+     2 ดวง (ดวงหลัก + ดวงรองเล็กกว่า) เพราะฟอยล์จริงมักรับแสงมากกว่าจุดเดียว     */
+  --ft-spot-x: 34%;
+  --ft-spot-y: 26%;
+  --ft-spot-r: calc(var(--vk-u) * 3.2);
+  --ft-foil-spot: radial-gradient(
+    circle var(--ft-spot-r) at var(--ft-spot-x) var(--ft-spot-y),
+    rgba(255, 253, 242, 0.95) 0%,
+    rgba(255, 246, 214, 0.72) 26%,
+    rgba(253, 233, 173, 0.34) 55%,
+    rgba(250, 224, 155, 0) 100%
+  );
+  --ft-foil-spot2: radial-gradient(
+    circle calc(var(--ft-spot-r) * 0.62)
+      at calc(var(--ft-spot-x) + 42%) calc(var(--ft-spot-y) + 46%),
+    rgba(255, 250, 232, 0.7) 0%,
+    rgba(252, 236, 186, 0.36) 40%,
+    rgba(248, 224, 158, 0) 100%
   );
 
   --ft-mono: 'IBM Plex Mono', 'Noto Sans Thai', ui-monospace, monospace;
@@ -261,11 +286,18 @@
   letter-spacing: -0.04em;
 
   /* ฟอยล์: ผิวหยาบทับไล่เฉดทอง แล้วฉลุทั้งสองชั้นตามรูปตัวอักษร */
-  background-image: var(--ft-foil-tex), var(--ft-foil-round), var(--ft-foil-grad);
-  background-size: 76px 76px, 100% 100%, 200% 100%;
-  background-position: 0 0, 0 0, var(--ft-shift) 50%;
-  background-repeat: repeat, no-repeat, no-repeat;
-  background-blend-mode: overlay, overlay, normal;
+  background-image:
+    var(--ft-foil-tex),
+    var(--ft-foil-spot),
+    var(--ft-foil-spot2),
+    var(--ft-foil-round),
+    var(--ft-foil-grad);
+  background-size: 76px 76px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-position: 0 0;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  /* ดวงแสงใช้ normal + ความโปร่ง เพราะคุมได้ตรงไปตรงมา — screen จะฟุ้งจนขาวโพลน
+     ผิวฟอยล์อยู่บนสุดจึงพาดผ่านดวงแสงด้วย เหมือนผิวจริงที่ยังเห็นเนื้อแม้ตรงที่สะท้อน */
+  background-blend-mode: overlay, normal, normal, overlay, normal;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -297,11 +329,18 @@
   top: 0.06em;
   font-family: var(--ft-num); font-weight: 600;
   font-size: calc(var(--vk-u) * 2.3); line-height: 1;
-  background-image: var(--ft-foil-tex), var(--ft-foil-round), var(--ft-foil-grad);
-  background-size: 76px 76px, 100% 100%, 200% 100%;
-  background-position: 0 0, 0 0, var(--ft-shift) 50%;
-  background-repeat: repeat, no-repeat, no-repeat;
-  background-blend-mode: overlay, overlay, normal;
+  background-image:
+    var(--ft-foil-tex),
+    var(--ft-foil-spot),
+    var(--ft-foil-spot2),
+    var(--ft-foil-round),
+    var(--ft-foil-grad);
+  background-size: 76px 76px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-position: 0 0;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  /* ดวงแสงใช้ normal + ความโปร่ง เพราะคุมได้ตรงไปตรงมา — screen จะฟุ้งจนขาวโพลน
+     ผิวฟอยล์อยู่บนสุดจึงพาดผ่านดวงแสงด้วย เหมือนผิวจริงที่ยังเห็นเนื้อแม้ตรงที่สะท้อน */
+  background-blend-mode: overlay, normal, normal, overlay, normal;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

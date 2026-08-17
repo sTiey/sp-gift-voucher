@@ -6,7 +6,7 @@
  * และเล็ก (~9KB) ไม่พึ่งอะไรเลย
  *
  * สิ่งที่ไฟล์นี้ทำเพิ่มจากไลบรารี:
- *   1. เอาองศาที่กำลังเอียงไปขยับตำแหน่งแผ่นฟอยล์ (--ft-shift)
+ *   1. เอาองศาที่กำลังเอียงไปขยับตำแหน่งดวงแสง (--ft-spot-x / --ft-spot-y)
  *      → ประกายวิ่งตามการเอียงจริง ไม่ใช่แอนิเมชันวนลูปที่วิ่งเองไม่สนใจอะไร
  *   2. ขอสิทธิ์ไจโรบน iOS ให้ (ไลบรารีไม่ได้ทำให้)
  *
@@ -86,14 +86,21 @@ export async function attachFoilTilt(card, opt = {}) {
      ตัวใบเอียงด้วยการ์ดจอ (แทบไม่กินแรง) แต่การเลื่อนแผ่นฟอยล์ต้องวาดตัวเลขใหม่
      จึงกันไม่ให้สั่งวาดถี่เกินจำเป็น: ขยับไม่ถึงครึ่งเปอร์เซ็นต์ = ข้ามไปเลย
      ตาคนมองไม่เห็นความต่างระดับนั้นอยู่แล้ว แต่ช่วยลดการวาดได้เยอะบนมือถือ */
-  let last = -999;
+  let lastX = -999;
+  let lastY = -999;
   const onTilt = (e) => {
-    const p = e.detail?.percentageX;
-    if (typeof p !== 'number') return;
-    const v = lo + (p / 100) * (hi - lo);
-    if (Math.abs(v - last) < 0.5) return;
-    last = v;
-    card.style.setProperty('--ft-shift', `${v.toFixed(1)}%`);
+    const px = e.detail?.percentageX;
+    const py = e.detail?.percentageY;
+    if (typeof px !== 'number' || typeof py !== 'number') return;
+    /* แสงตกกระทบสวนทางกับการเอียง — เอียงขอบขวาเข้าหาตัว ดวงแสงวิ่งไปทางซ้าย
+       นี่คือสิ่งที่ตาคาดหวังจากของจริง ถ้าวิ่งตามทางเดียวกันจะรู้สึกผิดทันที */
+    const x = hi - (px / 100) * (hi - lo);
+    const y = hi - (py / 100) * (hi - lo);
+    if (Math.abs(x - lastX) < 0.5 && Math.abs(y - lastY) < 0.5) return;
+    lastX = x;
+    lastY = y;
+    card.style.setProperty('--ft-spot-x', `${x.toFixed(1)}%`);
+    card.style.setProperty('--ft-spot-y', `${y.toFixed(1)}%`);
   };
   card.addEventListener('tiltChange', onTilt);
 
@@ -101,7 +108,8 @@ export async function attachFoilTilt(card, opt = {}) {
     destroy() {
       card.removeEventListener('tiltChange', onTilt);
       card.vanillaTilt?.destroy();
-      card.style.removeProperty('--ft-shift');
+      card.style.removeProperty('--ft-spot-x');
+      card.style.removeProperty('--ft-spot-y');
     },
   };
 }
