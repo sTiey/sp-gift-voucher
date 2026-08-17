@@ -159,7 +159,7 @@
    → ใบเนื้อหาน้อย/มาก ก็ยังสมดุลกับก้อนเขียว ไม่เหลือรูโบ๋ข้างล่าง */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__main {
   display: grid;
-  grid-template-columns: calc(var(--vk-u) * 11.4) minmax(0, 1fr);
+  grid-template-columns: calc(var(--vk-u) * 13.5) minmax(0, 1fr);
   /* 1fr หัว-ท้าย = กลุ่มข้อความลอยกลางคอลัมน์เสมอ
      ใบเนื้อหาน้อย (ไม่มีเงื่อนไข/คำขอบคุณ) ก็ไม่เหลือรูโบ๋ข้างล่าง */
   grid-template-rows: auto 1fr auto auto auto auto 1fr;
@@ -203,24 +203,13 @@
   border-bottom: 1px solid var(--lt-line);
 }
 
-/* โลโก้ไฟล์เดียวมีทั้งมอโนแกรมและคำว่า SP EMPIRE — ตัดเอาเฉพาะมอโนแกรม
-   แล้วปล่อยให้ชื่อแบรนด์เป็นตัวพิมพ์ดีดข้าง ๆ (ไม่งั้นชื่อซ้อนกันสองที) */
+/* ⚠️ เดิมใช้ไฟล์โลโก้เต็ม (มอโนแกรม + คำว่า SP EMPIRE) แล้วเจียดกรอบให้เห็นแค่ท่อนบน
+   → เส้นกรอบของมอโนแกรมโดนตัดหัวตัดท้าย ดูเหมือนเศษรูป ไม่ใช่ตรา
+   ตอนนี้ใช้ไฟล์ที่ตัดมาเป็นมอโนแกรมล้วนแล้ว (assets/brand/spe-mark.png)
+   จึงสั่งความสูงตรง ๆ ได้ ไม่ต้องมีกลไกครอบอะไรอีก */
 [data-design='limeticket'] .vk-card__logo {
-  position: relative;
-  overflow: hidden;
-  width: calc(var(--vk-u) * 1.08);
-  height: calc(var(--vk-u) * 2.2);
+  height: calc(var(--vk-u) * 2.1);
   mix-blend-mode: multiply;
-}
-
-[data-design='limeticket'] .vk-card__logo img {
-  position: absolute;
-  inset-block-start: calc(var(--vk-u) * -0.04);
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  width: auto;
-  max-width: none;
-  height: calc(var(--vk-u) * 3.29);
 }
 
 [data-design='limeticket'] .vk-card__brandname {
@@ -257,21 +246,24 @@
 
 /* ตัวเลขนั่งชิดก้นก้อน แล้วมี padding ล่าง = ความสูงแถบดำพอดี
    → เลื่อนตัวเลขลง (margin ติดลบ) เท่าไหร่ = จมใต้แถบเท่านั้น */
-/* ก้อนสี = ที่อยู่ของตัวเลข · ตัวเลขต้องครองเต็มก้อน ไม่ใช่กองอยู่มุมเดียว
-   จัดกลางทั้งแนวตั้งและแนวนอน แล้วค่อยดันลงด้วย margin ให้ก้นจมใต้แถบ */
+/* ก้อนสี = ที่อยู่ของตัวเลข
+   ⚠️ เคยจัดกึ่งกลาง → ตัวเลขลอยกลางก้อน เหลือที่ว่างข้างซ้ายเป็นก้อนใหญ่ ดูไม่ตั้งใจ
+   ตอนนี้ชิดซ้ายให้ตรงแนวเดียวกับ ป้าย PARTNER (บน) และรหัสในแถบดำ (ล่าง)
+   → เกิดเส้นแนวตั้งสมมติเส้นเดียวที่ของทุกชิ้นเกาะอยู่ */
 [data-design='limeticket'] .vk-card__value {
   --lt-bar: 2.9;               /* ความสูงแถบข้อมูลดำ (หน่วย u) */
   --lt-dot: 0.6;               /* เม็ดสีท้ายแถบ */
+  --lt-pad: 1.15;              /* ระยะชิดซ้าย ใช้ร่วมกับป้ายและแถบดำ */
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--vk-u) * 0.3);
+  align-items: flex-end;      /* ตัวเลขเกาะก้นก้อน = ท่าจมใต้แถบดำ */
+  justify-content: flex-start;/* ชิดซ้าย = ตรงแนวกับป้ายและรหัสในแถบดำ */
+  gap: calc(var(--vk-u) * 0.12);
   overflow: hidden;
   background: var(--lt-lime);
   color: var(--lt-ink);
-  padding:
-    calc(var(--vk-u) * 0.9) calc(var(--vk-u) * 0.8) calc(var(--vk-u) * var(--lt-bar));
+  padding: calc(var(--vk-u) * 0.85) calc(var(--vk-u) * 0.8)
+           calc(var(--vk-u) * var(--lt-bar)) calc(var(--vk-u) * var(--lt-pad));
 }
 
 /* ── แถบดำที่ปลายก้อนสี ────────────────────────────────────────────────────
@@ -288,7 +280,7 @@
   display: flex;
   align-items: center;
   height: calc(var(--vk-u) * var(--lt-bar));
-  padding-inline: calc(var(--vk-u) * 0.95);
+  padding-inline: calc(var(--vk-u) * var(--lt-pad, 1.15)) calc(var(--vk-u) * 0.95);
   background: var(--lt-stalk);
   color: var(--lt-lime);
   font-family: var(--lt-mono);
@@ -325,12 +317,16 @@
 
 /* line-height 0.74 = กล่องตัวเลขจบพอดีเส้นฐาน → คุมระยะจมได้เป๊ะ
    margin ติดลบ 0.2em ≈ ก้นตัวเลขหายใต้แถบราว 1 ใน 4 — ยังอ่านออกสบาย */
+/* line-height 0.74 = กล่องตัวเลขจบพอดีเส้นฐาน → คุมระยะจมได้เป๊ะ
+   ⚠️ ระยะจมต้องผูกกับ "ขนาดตัวเลข" (em) ไม่ใช่ความสูงแถบ (u)
+      เคยเขียนเป็น -0.2em ลบด้วยครึ่งแถบอีก → รวมกันจมเกินครึ่งตัว อ่านไม่ออก
+   -0.18em ≈ ก้นหายราว 1 ใน 4 ของความสูงตัวเลข ซึ่งยังอ่านออกสบาย */
 [data-design='limeticket'] .vk-card__num {
   font-weight: 400;
   font-size: calc(var(--vk-u) * 4.6);
   line-height: 0.74;
   letter-spacing: -0.03em;
-  margin-bottom: calc(-0.2em - var(--vk-u) * var(--lt-bar) / 2);
+  margin-bottom: -0.18em;
 }
 
 /* ── ขนาดตัวเลขปรับตามจำนวนหลักเอง ────────────────────────────────────────
@@ -340,19 +336,19 @@
    (ตัววาดส่ง data-len = จำนวนตัวอักษรของค่ามาให้ CSS ใช้)              */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='1'],
 [data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='2'] {
-  font-size: calc(var(--vk-u) * 8.6);
+  font-size: calc(var(--vk-u) * 9);
 }
 [data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='3'] {
   font-size: calc(var(--vk-u) * 6.2);
 }
 [data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='4'] {
-  font-size: calc(var(--vk-u) * 5.1);
+  font-size: calc(var(--vk-u) * 4.7);
 }
 [data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='5'] {
-  font-size: calc(var(--vk-u) * 4.2);
+  font-size: calc(var(--vk-u) * 4.1);
 }
 [data-design='limeticket'][data-shape='ticket'] .vk-card__num[data-len='6'] {
-  font-size: calc(var(--vk-u) * 3.6);
+  font-size: calc(var(--vk-u) * 3.1);
 }
 
 /* ค่าที่เป็นคำ — ยกพ้นแถบดำ ต้องอ่านครบทุกตัว ห้ามจม
@@ -361,28 +357,44 @@
   font-size: calc(var(--vk-u) * 3);
   line-height: 1.18;
   letter-spacing: 0;
-  margin-bottom: 0;   /* คำต้องอ่านครบ ห้ามดันลงไปจมแถบ */
+  margin-bottom: calc(var(--vk-u) * 0.4);   /* คำต้องอ่านครบ ห้ามดันลงไปจมแถบ */
 }
 
 /* ฿ / % — ตัวเล็ก ลอยแยกไปมุมบนขวาของก้อนเขียว ไม่กินความกว้างของตัวเลข */
-/* ⚠️ เคยย้ายมาไว้ล่างใกล้ตัวเลข แล้วมันไปซ้อนใต้ตัวเลขจนอ่านไม่ออก
-   เครื่องหมายต้องอยู่ในที่ว่างของตัวเอง ไม่แย่งที่กับเลข */
+/* ⚠️ เคยวางลอยที่มุมขวาบนของก้อนสี → มันไกลจากตัวเลขจนอ่านเป็นของคนละชิ้น
+   เครื่องหมายต้องเกาะติดตัวเลข อยู่ระดับหัวเลข เหมือนตัวยกในสูตรคณิต */
+/* ทรงกระทัดรัด: ก้อนสีเป็นแถบเตี้ย → เครื่องหมายเกาะติดตัวเลขได้เลย */
 [data-design='limeticket'] .vk-card__lead,
 [data-design='limeticket'] .vk-card__unit {
-  position: absolute;
-  right: calc(var(--vk-u) * 0.9);
-  top: calc(var(--vk-u) * 1.05);
+  flex: none;
+  align-self: flex-end;
+  /* ยกขึ้นไปให้หัวของเครื่องหมายเสมอหัวตัวเลข = ท่าตัวยกในสูตรคณิต
+     ผูกกับขนาดตัวเลขไม่ได้ (คนละ element) จึงตั้งเป็นหน่วยฐานแล้ววัดด้วยตา */
+  margin-block-end: calc(var(--vk-u) * 2.55);
   font-family: var(--lt-mono);
   font-weight: 500;
-  font-size: calc(var(--vk-u) * 1.35);
+  font-size: calc(var(--vk-u) * 1.25);
   letter-spacing: 0.02em;
   line-height: 1;
+}
+
+/* ทรงยาว: ก้อนสีสูงมาก ตัวเลขเกาะก้น → % ที่เกาะตัวเลขจะจมไปพร้อมกัน
+   จึงให้ % ไปยึดมุมบนขวาของก้อนแทน เป็น "สมอ" คู่กับป้ายที่มุมบนซ้าย
+   → มุมบนสองมุมมีของยึด · มวลหนักอยู่ก้น · ที่ว่างตรงกลางจึงอ่านเป็นความตั้งใจ
+   ⚠️ ทำแบบนี้ได้เฉพาะ % เท่านั้น — ฿ ต้องอยู่ "หน้าตัวเลข" ตามที่คนอ่านเงิน
+      เอา ฿ ไปลอยมุมขวา = อ่านผิดความหมาย เหมือนเป็นของคนละชิ้น */
+[data-design='limeticket'][data-shape='ticket'] .vk-card__unit {
+  position: absolute;
+  inset: calc(var(--vk-u) * 1.05) calc(var(--vk-u) * 1.05) auto auto;
+  align-self: auto;
+  margin: 0;
+  font-size: calc(var(--vk-u) * 1.45);
 }
 
 /* ทรงกระทัดรัด ก้อนสีกว้างเกือบเต็มใบ จึงใหญ่ได้กว่าทรงยาวในทุกจำนวนหลัก */
 [data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='1'],
 [data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='2'] {
-  font-size: calc(var(--vk-u) * 6.6);
+  font-size: calc(var(--vk-u) * 6.2);
 }
 [data-design='limeticket'][data-shape='compact'] .vk-card__num[data-len='3'] {
   font-size: calc(var(--vk-u) * 5.8);
@@ -399,10 +411,7 @@
 [data-design='limeticket'][data-shape='compact'] .vk-card__num[data-text='true'][data-len] {
   font-size: calc(var(--vk-u) * 3.2);
 }
-[data-design='limeticket'][data-shape='compact'] .vk-card__lead,
-[data-design='limeticket'][data-shape='compact'] .vk-card__unit {
-  top: calc(var(--vk-u) * 0.8);
-}
+
 
 /* ── ตัวหนังสือในใบ ────────────────────────────────────────────────────── */
 
@@ -481,7 +490,7 @@
 
 /* ทรงยาว: ป้ายเป็นชิปดำมุมบนซ้ายของก้อนเขียว — ไม่ไปแย่งที่กับตัวเลขที่จมแถบ */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__badge {
-  inset: calc(var(--vk-u) * 1.02) auto auto calc(var(--vk-u) * 0.95);
+  inset: calc(var(--vk-u) * 0.95) auto auto calc(var(--vk-u) * 1.15);
 }
 
 [data-design='limeticket'][data-shape='compact'] .vk-card__badge {
@@ -533,12 +542,15 @@
   row-gap: calc(var(--vk-u) * 0.12);
 }
 
+/* ⚠️ แถบนี้กินความกว้างตั้งแต่ขอบซ้ายใบ = ข้อความไปนั่งใต้ก้อนสี
+   ซึ่งไม่ตรงแนวกับอะไรเลยข้างบน  ดันให้เริ่มตรงแนวคอลัมน์เนื้อหาแทน */
 [data-design='limeticket'][data-shape='ticket'] .vk-card__stub-body {
   grid-auto-flow: column;
   grid-auto-columns: max-content;
   align-items: baseline;
   column-gap: calc(var(--vk-u) * 1.1);
   padding: calc(var(--vk-u) * 0.7) calc(var(--vk-u) * 1.4);
+  padding-inline-start: calc(var(--vk-u) * 14.9);
   border-top: 1px solid var(--lt-line);
 }
 
@@ -681,4 +693,11 @@
   --lt-stalk: #55503f;
   --lt-paper: #ebe6dc;
   --lt-mute: #8b8578;
+}
+
+
+/* ฿ ในทรงยาว — ตัวเลขค่าเงินเล็กกว่าเปอร์เซ็นต์ จึงยกน้อยกว่า */
+[data-design='limeticket'][data-shape='ticket'] .vk-card__lead {
+  margin-block-end: calc(var(--vk-u) * 1.55);
+  font-size: calc(var(--vk-u) * 1.2);
 }
