@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ปรับดีไซน์ตั๋ว — ขยับเอง เซฟเอง</title>
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/limeticket.css">
+<style>
+  :root { --pg: #83878e; --ink: #14161a; --ink-2: #43474e; --edge: #d6d8dc; }
+  body {
+    margin: 0; background: #eceef1; color: var(--ink);
+    font-family: 'Google Sans', 'Noto Sans Thai', sans-serif;
+  }
+
+  /* ── แถบหัว ── */
+  .hd {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 11px 22px;
+    background: rgb(18 20 24 / 96%); backdrop-filter: blur(10px); color: #f2f3f5;
+  }
+  .hd__t { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .hd__s { font-size: 12px; color: #a7abb3; }
+  .sp { flex: 1; }
+  .seg { display: inline-flex; gap: 2px; padding: 2px; background: #2a2d33; border-radius: 6px; }
+  .seg button {
+    padding: 5px 11px; border-radius: 4px; font: inherit; font-size: 12px; font-weight: 500;
+    color: #a7abb3; background: none; border: 0; cursor: pointer;
+  }
+  .seg button[aria-pressed='true'] { background: #f2f3f5; color: #14161a; font-weight: 600; }
+
+  .btn {
+    padding: 6px 14px; border: 0; border-radius: 5px; cursor: pointer;
+    font: inherit; font-size: 12.5px; font-weight: 600;
+  }
+  .btn--save { background: #c9a961; color: #1f1b14; }
+  .btn--save:disabled { background: #3a3d44; color: #7c8088; cursor: default; }
+  .btn--ghost { background: none; color: #a7abb3; box-shadow: inset 0 0 0 1px #3a3d44; }
+  .btn--ghost:hover { color: #f2f3f5; }
+
+  .flag { font-size: 12px; color: #d9bd7d; }
+  .flag[data-ok='true'] { color: #8fbf6a; }
+
+  /* ── ตัวหน้า: การ์ดซ้าย · แผงปุ่มขวา ── */
+  .page { display: grid; grid-template-columns: minmax(0, 1fr) 372px; align-items: start; }
+  @media (max-width: 1080px) { .page { grid-template-columns: minmax(0, 1fr); } }
+
+  .stage { padding: 26px 22px 80px; display: grid; gap: 26px; justify-items: start; }
+  .stage__row { display: grid; gap: 9px; }
+  .stage__cap {
+    display: flex; align-items: center; gap: 10px;
+    font: 500 10px/1 'IBM Plex Mono', monospace;
+    color: rgb(20 22 26 / 55%); letter-spacing: .09em; text-transform: uppercase;
+  }
+  .stage__cap input[type='range'] { width: 130px; }
+  .stage__box { background: var(--pg); padding: 20px; border-radius: 3px; }
+
+  /* ── แผงปุ่ม ── */
+  .panel {
+    position: sticky; top: 46px; align-self: start;
+    max-height: calc(100vh - 46px); overflow-y: auto;
+    background: #fff; border-left: 1px solid var(--edge);
+  }
+  .panel__tabs { display: flex; position: sticky; top: 0; z-index: 2; background: #fff; border-bottom: 1px solid var(--edge); }
+  .panel__tabs button {
+    flex: 1; padding: 11px 8px; border: 0; background: none; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 600; color: #7c8088;
+    border-bottom: 2px solid transparent;
+  }
+  .panel__tabs button[aria-pressed='true'] { color: var(--ink); border-bottom-color: #c9a961; }
+
+  .grp { border-bottom: 1px solid #eceef1; padding: 12px 16px 14px; }
+  .grp__t {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: #8c9098; margin-bottom: 9px;
+  }
+
+  .knob { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; padding: 5px 0 6px; }
+  .knob[data-dirty='true'] { background: #fff8e8; box-shadow: -10px 0 0 #fff8e8, 10px 0 0 #fff8e8; }
+  .knob__l { font-size: 12.5px; line-height: 1.35; align-self: center; }
+  .knob__l b { font-weight: 500; }
+  .knob__l i { display: block; font-style: normal; font-size: 11px; color: #8c9098; }
+  .knob__n {
+    width: 66px; padding: 3px 6px; text-align: right;
+    font: 500 12px 'IBM Plex Mono', monospace;
+    border: 1px solid var(--edge); border-radius: 4px; background: #fbfbfc;
+  }
+  .knob[data-dirty='true'] .knob__n { border-color: #c9a961; background: #fff; }
+  .knob__r { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: #a08860; }
+
+  /* ปุ่มเซฟต้องกดได้ตลอด — แผงยาวกว่าจอ ถ้าอยู่ก้นสุดต้องเลื่อนไกลทุกครั้ง */
+  .panel__foot {
+    position: sticky; bottom: 0; z-index: 2;
+    display: grid; grid-template-columns: 1fr auto; gap: 8px;
+    padding: 10px 16px; background: #fff; border-top: 1px solid var(--edge);
+    box-shadow: 0 -6px 14px rgb(20 22 26 / 7%);
+  }
+  .panel__foot .btn { padding: 9px 14px; font-size: 13px; }
+  .panel__note { padding: 14px 16px 20px; }
+  .btn--file { background: #1f1b14; color: #f2ede3; }
+  .btn--file:disabled { background: #e4e6e9; color: #a0a4ab; cursor: default; }
+  .btn--undo { background: #f2f3f5; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge); }
+  .note { font-size: 11.5px; line-height: 1.5; color: #8c9098; }
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <span class="hd__t">ปรับดีไซน์ตั๋ว</span>
+  <span class="hd__s">ขยับแล้วเห็นทันที · กดเซฟแล้วลงไฟล์จริง</span>
+  <span class="sp"></span>
+  <span class="hd__s">ตัวอย่าง</span>
+  <div class="seg" id="seg">
+    <button type="button" data-v="percent" aria-pressed="true">ลด %</button>
+    <button type="button" data-v="amount" aria-pressed="false">บัตรกำนัล</button>
+    <button type="button" data-v="fixed" aria-pressed="false">ราคาพิเศษ</button>
+    <button type="button" data-v="ship" aria-pressed="false">ส่งฟรี</button>
+    <button type="button" data-v="used" aria-pressed="false">ใช้แล้ว</button>
+  </div>
+  <span class="flag" id="flag"></span>
+</div>
+
+<div class="page">
+  <div class="stage">
+    <div class="stage__row">
+      <div class="stage__cap">
+        <span>ทรงยาว</span>
+        <input type="range" id="w-ticket" min="380" max="900" step="10" value="720">
+        <span id="w-ticket-v">720</span>
+      </div>
+      <div class="stage__box"><div id="slot-ticket"></div></div>
+    </div>
+    <div class="stage__row">
+      <div class="stage__cap">
+        <span>ทรงกระทัดรัด</span>
+        <input type="range" id="w-compact" min="240" max="460" step="10" value="340">
+        <span id="w-compact-v">340</span>
+      </div>
+      <div class="stage__box"><div id="slot-compact"></div></div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div class="panel__tabs" id="tabs">
+      <button type="button" data-s="ticket" aria-pressed="true">ทรงยาว</button>
+      <button type="button" data-s="compact" aria-pressed="false">ทรงกระทัดรัด</button>
+    </div>
+    <div id="knobs"></div>
+    <div class="panel__note">
+      <p class="note">
+        ทุกค่าเป็น <b>จำนวนเท่าของหน่วยฐาน</b> ไม่ใช่พิกเซล — ใบย่อ/ขยายแล้วสัดส่วนคงเดิม
+        ลองลากแถบความกว้างด้านซ้ายดูได้<br>
+        กดเซฟแล้วค่าลงไฟล์ <code>limeticket.css</code> ทันที · ถ้าไม่ชอบย้อนด้วย git ได้
+      </p>
+    </div>
+    <div class="panel__foot">
+      <button type="button" class="btn btn--file" id="save" disabled>เซฟลงไฟล์</button>
+      <button type="button" class="btn btn--undo" id="undo" disabled>คืนค่าที่เซฟไว้</button>
+    </div>
+  </aside>
+</div>
+
+<script type="module">
+import { cardHtml } from '../src/ui/voucher-design.js';
+import { createVoucher } from '../src/index.js';
+import { KNOBS, namesOf } from './tune-knobs.js';
+
+const SAMPLES = {
+  percent: { code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
+    title: 'ส่วนลดพาร์ทเนอร์ ไตรมาส 3', note: 'ขอบคุณที่ร่วมงานกับเรามาตลอด 3 ปี',
+    conditions: { minSpend: 10000, maxDiscount: 2000 }, audience: { segments: ['partner'] },
+    validUntil: '2026-12-31T23:59:59+07:00', design: { badge: 'PARTNER' } },
+  amount: { code: 'VIP-3H8N-5TQA', kind: 'amount', value: 1500,
+    title: 'บัตรกำนัลลูกค้าประจำ', conditions: { minSpend: 8000 },
+    audience: { segments: ['vip'] }, validUntil: '2026-09-30T23:59:59+07:00' },
+  fixed: { code: 'BACK-9RD2-6MWB', kind: 'fixed_price', value: 7900,
+    title: 'ราคาพิเศษ · ราวระเบียง 1 ชุด', audience: { segments: ['returning'] },
+    validUntil: '2026-10-31T23:59:59+07:00', design: { badge: '30 สิทธิ์' } },
+  ship: { code: 'SHIP-4C7B-8XJR', kind: 'free_shipping', value: 0,
+    title: 'ส่งฟรีทั่วประเทศ', conditions: { minSpend: 5000 }, validUntil: null },
+  used: { code: 'SPE-6J2X-4NBY', kind: 'amount', value: 500,
+    title: 'ส่วนลดต้อนรับลูกค้าใหม่', conditions: { minSpend: 3000 },
+    state: 'redeemed', validUntil: '2026-12-31T23:59:59+07:00' },
+};
+
+const SHAPES = ['ticket', 'compact'];
+const $ = (s) => document.querySelector(s);
+
+let sample = 'percent';
+let tab = 'ticket';
+let saved = null;    // ค่าที่อยู่ในไฟล์ตอนนี้
+let state = null;    // ค่าที่กำลังลากอยู่บนจอ
+const widths = { ticket: 720, compact: 340 };
+
+/* วาดการ์ดก่อน 1 รอบ เพื่อ "อ่านค่าตั้งต้นจากไฟล์" ผ่าน getComputedStyle
+   ⚠️ ต้องอ่านก่อนใส่ค่าทับ ไม่งั้นจะได้ค่าที่เราเพิ่งใส่เอง ไม่ใช่ค่าในไฟล์ */
+function paint() {
+  const v = createVoucher(SAMPLES[sample]);
+  for (const shape of SHAPES) {
+    $(`#slot-${shape}`).innerHTML = cardHtml(v, { design: 'limeticket', shape, art: 'balcony' });
+    const el = $(`#slot-${shape} .vk-voucher`);
+    el.style.width = `${widths[shape]}px`;
+    el.style.maxWidth = 'none';
+  }
+}
+
+function readFromFile() {
+  const out = {};
+  for (const shape of SHAPES) {
+    const cs = getComputedStyle($(`#slot-${shape} .vk-voucher`));
+    out[shape] = {};
+    for (const name of namesOf(shape)) {
+      const raw = parseFloat(cs.getPropertyValue(name));
+      out[shape][name] = Number.isFinite(raw) ? raw : 0;
+    }
+  }
+  return out;
+}
+
+function apply() {
+  for (const shape of SHAPES) {
+    const el = $(`#slot-${shape} .vk-voucher`);
+    for (const [name, val] of Object.entries(state[shape])) el.style.setProperty(name, val);
+  }
+}
+
+const dirtyList = () =>
+  SHAPES.flatMap((s) => namesOf(s).filter((n) => state[s][n] !== saved[s][n]).map((n) => `${s}${n}`));
+
+function refreshFlags() {
+  const n = dirtyList().length;
+  $('#save').disabled = n === 0;
+  $('#undo').disabled = n === 0;
+  $('#flag').dataset.ok = String(n === 0);
+  $('#flag').textContent = n === 0 ? '' : `ยังไม่ได้เซฟ ${n} ค่า`;
+  for (const row of document.querySelectorAll('.knob')) {
+    const { shape, name } = row.dataset;
+    row.dataset.dirty = String(state[shape][name] !== saved[shape][name]);
+  }
+}
+
+function buildPanel() {
+  const box = $('#knobs');
+  box.innerHTML = KNOBS[tab].map((grp) => `
+    <div class="grp">
+      <div class="grp__t">${grp.title}</div>
+      ${grp.items.map((it) => `
+        <div class="knob" data-shape="${tab}" data-name="${it.name}">
+          <label class="knob__l" for="i${it.name}">
+            <b>${it.label}</b>${it.hint ? `<i>${it.hint}</i>` : ''}
+          </label>
+          <input class="knob__n" id="i${it.name}" type="number"
+                 min="${it.min}" max="${it.max}" step="${it.step}" value="${state[tab][it.name]}">
+          <input class="knob__r" type="range"
+                 min="${it.min}" max="${it.max}" step="${it.step}" value="${state[tab][it.name]}">
+        </div>`).join('')}
+    </div>`).join('');
+
+  for (const row of box.querySelectorAll('.knob')) {
+    const num = row.querySelector('.knob__n');
+    const rng = row.querySelector('.knob__r');
+    const set = (raw) => {
+      const val = Number(raw);
+      if (!Number.isFinite(val)) return;
+      state[row.dataset.shape][row.dataset.name] = val;
+      num.value = val; rng.value = val;
+      apply(); refreshFlags();
+    };
+    num.addEventListener('input', () => set(num.value));
+    rng.addEventListener('input', () => set(rng.value));
+  }
+  refreshFlags();
+}
+
+/* ── เหตุการณ์ ── */
+
+$('#seg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  sample = b.dataset.v;
+  for (const x of $('#seg').querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+  paint(); apply();     // วาดใหม่ = inline style หาย ต้องใส่กลับทุกครั้ง
+});
+
+$('#tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  tab = b.dataset.s;
+  for (const x of $('#tabs').querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+  buildPanel();
+});
+
+for (const shape of SHAPES) {
+  $(`#w-${shape}`).addEventListener('input', (e) => {
+    widths[shape] = Number(e.target.value);
+    $(`#w-${shape}-v`).textContent = widths[shape];
+    $(`#slot-${shape} .vk-voucher`).style.width = `${widths[shape]}px`;
+  });
+}
+
+$('#undo').addEventListener('click', () => {
+  state = structuredClone(saved);
+  apply(); buildPanel();
+});
+
+$('#save').addEventListener('click', async () => {
+  const btn = $('#save');
+  btn.disabled = true; btn.textContent = 'กำลังเซฟ…';
+  try {
+    const res = await fetch('/__tune', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(state),
+    });
+    if (!res.ok) throw new Error(`เซิร์ฟเวอร์ตอบ ${res.status}`);
+    const out = await res.json();
+    saved = structuredClone(state);
+    btn.textContent = 'เซฟลงไฟล์';
+    /* ⚠️ ต้องเรียก refreshFlags ก่อนแล้วค่อยเขียนข้อความ — มันล้างช่องนี้เป็นค่าว่าง
+       เมื่อไม่มีอะไรค้าง ถ้าเขียนก่อนจะโดนล้างทันทีจนดูเหมือนเซฟไม่ติด */
+    refreshFlags();
+    $('#flag').dataset.ok = 'true';
+    $('#flag').textContent = out.changed.length
+      ? `เซฟแล้ว ${out.changed.length} ค่า`
+      : 'ไม่มีอะไรเปลี่ยน';
+  } catch (err) {
+    btn.textContent = 'เซฟลงไฟล์';
+    $('#flag').dataset.ok = 'false';
+    $('#flag').textContent = `เซฟไม่สำเร็จ — ${err.message}`;
+    btn.disabled = false;
+  }
+});
+
+/* ── เริ่ม ── */
+paint();
+saved = readFromFile();
+state = structuredClone(saved);
+apply();
+buildPanel();
+</script>
+</body>
+</html>
