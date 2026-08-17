@@ -63,7 +63,7 @@ export async function attachFoilTilt(card, opt = {}) {
   /* ⚠️ ถ้าเครื่องตั้งค่า "ลดแอนิเมชัน" ไว้ ทุกอย่างจะเงียบสนิทโดยไม่มีอะไรฟ้อง
      จึงต้องคืนสถานะออกไปให้หน้าเว็บเอาไปแสดง ไม่ใช่คืน null เฉย ๆ
      (Windows ปิดเอฟเฟกต์แอนิเมชันไว้ก็เข้าเงื่อนไขนี้ — คนตั้งไว้เยอะกว่าที่คิด) */
-  if (REDUCED()) return { state: 'reduced-motion', destroy() {} };
+  if (REDUCED() && !opt.force) return { state: 'reduced-motion', destroy() {} };
 
   let VanillaTilt;
   try {
@@ -74,9 +74,11 @@ export async function attachFoilTilt(card, opt = {}) {
   const [lo, hi] = opt.sweep || [8, 92];
 
   VanillaTilt.init(card, {
-    max: opt.max ?? 9,
+    /* 9° มองแทบไม่ออกบนใบแบน ๆ กว้าง ๆ — ไท้อัดคลิปมาแล้วยังนึกว่าไม่ขยับเลย
+       13° คือจุดที่เห็นชัดว่าเอียงจริงโดยยังไม่ดูเป็นของเล่น */
+    max: opt.max ?? 13,
     speed: 480,
-    scale: 1.012,
+    scale: 1.02,
     perspective: 1100,
     glare: true,
     'max-glare': opt.glare ?? 0.16,

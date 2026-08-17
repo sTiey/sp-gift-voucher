@@ -34,6 +34,22 @@
   .row__name { font-size: 16px; font-weight: 700; }
   .row__note { font-size: 12.5px; color: #6c6152; }
   .stage { background: #b4ada0; padding: 26px; }
+
+  /* แผงบอกสถานะ — วางติดการ์ดเลย ไม่ใช่ซ่อนอยู่บนหัวหน้าที่เลื่อนผ่านได้
+     ถ้าเอฟเฟกต์ไม่ทำงาน ต้องรู้สาเหตุจากตรงนี้ทันทีโดยไม่ต้องเปิดคอนโซล */
+  .diag {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-top: 10px; padding: 10px 14px; background: #fff;
+    border-left: 4px solid #b58f3c;
+    font: 500 12.5px/1.5 'IBM Plex Mono', 'Noto Sans Thai', monospace;
+    color: #4a4235;
+  }
+  .diag[data-bad='true'] { border-left-color: #c4432c; background: #fff4f1; }
+  .diag b { font-weight: 700; }
+  .diag button {
+    padding: 5px 12px; border: 0; border-radius: 4px; cursor: pointer;
+    font: inherit; font-weight: 700; background: #221c12; color: #f4efe4;
+  }
 </style>
 </head>
 <body>
@@ -53,6 +69,7 @@
 </div>
 
 <div class="wrap" id="wrap"></div>
+<div class="wrap" style="padding-top:0"><div class="diag" id="diag">กำลังตรวจ…</div></div>
 
 <script type="module">
 import { cardHtml } from '../src/ui/voucher-design.js';
@@ -115,28 +132,54 @@ function paint() {
       card.style.setProperty('--ft-spot-x', `${x}%`);
       card.style.setProperty('--ft-spot-y', `${y}%`);
     }
-    say(`ตรึงดวงแสงไว้ที่ ${x}%, ${y}% — เอา ?spot ออกจากลิงก์ถ้าอยากให้วิ่งตามเมาส์`);
+    document.querySelector('#diag').textContent =
+      `ตรึงดวงแสงไว้ที่ ${x}%, ${y}% ตามลิงก์ — เอา ?spot ออกถ้าอยากให้วิ่งตามเมาส์`;
     return;
   }
 
-  /* บอกสถานะให้เห็นบนหน้าเลย — ถ้าการเอียงไม่ทำงานจะได้รู้ทันทีว่าเพราะอะไร
-     ไม่ใช่นั่งเดาว่าโค้ดพังหรือเครื่องตั้งค่าไว้ */
-  Promise.all(cards.map((c) => attachFoilTilt(c))).then((rs) => {
+  wire(cards, false);
+}
+
+/* บอกสถานะแบบเลี่ยงไม่ได้ — ถ้าเอฟเฟกต์ไม่ทำงาน ต้องรู้สาเหตุจากหน้าเว็บทันที
+   ไม่ใช่ต้องอัดคลิปมาถามกัน · อ่านค่าจาก "ไล่เฉดที่วาดจริง" ไม่ใช่จากตัวแปรที่เราเซ็ตเอง */
+function wire(cards, force) {
+  const diag = document.querySelector('#diag');
+  const box = (bad, html) => { diag.dataset.bad = String(bad); diag.innerHTML = html; };
+
+  Promise.all(cards.map((c) => attachFoilTilt(c, { force }))).then((rs) => {
     const r = rs[0] || {};
     if (r.state === 'reduced-motion') {
-      say('⚠️ ปิดอยู่ เพราะเครื่องตั้งค่า "ลดแอนิเมชัน" ไว้ — Windows: การช่วยการเข้าถึง → เอฟเฟกต์ภาพ → เอฟเฟกต์ภาพเคลื่อนไหว');
-    } else if (r.state === 'load-failed') {
-      say(`⚠️ โหลดไลบรารีเอียงไม่สำเร็จ — ${r.error}`);
-    } else if (r.state === 'on') {
-      say('เอาเมาส์ไปวางบนใบ แล้วดูดวงแสงวิ่ง');
-      const live = rs.find((x) => x && x.spot);
-      cards[0].addEventListener('pointermove', () => {
-        const [sx, sy] = live.spot();
-        say(`ดวงแสง ${sx || '—'} , ${sy || '—'}`);
-      }, { passive: true });
-    } else {
-      say(`⚠️ สถานะไม่รู้จัก: ${r.state}`);
+      box(true, '<b>⚠️ เอฟเฟกต์ถูกปิดอยู่</b> เพราะเครื่องตั้งค่า "ลดแอนิเมชัน" ไว้ ' +
+        '<span>(Windows → การช่วยการเข้าถึง → เอฟเฟกต์ภาพ → เอฟเฟกต์ภาพเคลื่อนไหว)</span> ' +
+        '<button type="button" id="force">บังคับเปิดเพื่อดู</button>');
+      diag.querySelector('#force').onclick = () => wire(cards, true);
+      return;
     }
+    if (r.state !== 'on') {
+      box(true, `<b>⚠️ เปิดเอฟเฟกต์ไม่สำเร็จ</b> — ${r.state}${r.error ? ' · ' + r.error : ''}`);
+      return;
+    }
+
+    const card = cards[0];
+    const num = card.querySelector('.vk-card__num');
+    const centre = () => {
+      const m = getComputedStyle(num).backgroundImage.match(/at ([0-9.]+%) ([0-9.]+%)/);
+      return m ? `${m[1]} ${m[2]}` : 'กึ่งกลาง';
+    };
+    /* บอกให้ชัดว่า "ยังไม่เอียง" ต่างจาก "อ่านค่าไม่ได้" — ตอนยังไม่ขยับ
+       ตัวใบไม่มี transform เลย ถ้าโชว์ขีดเฉย ๆ จะแยกไม่ออกว่าพังหรือแค่ยังไม่ขยับ */
+    const tilted = () => {
+      const t = getComputedStyle(card).transform;
+      if (t === 'none') return 'ยังไม่เอียง';
+      const m = t.match(/matrix3d\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)/);
+      return m ? `เอียงอยู่ (${(+m[3]).toFixed(3)})` : 'เอียงอยู่';
+    };
+    box(false, `<b>พร้อมใช้${force ? ' (บังคับเปิด)' : ''}</b> — เอาเมาส์ไปวางบนใบ แล้วดูตัวเลขสองชุดนี้วิ่ง` +
+      ' · <span id="live">ยังไม่ได้ขยับเมาส์</span>');
+    card.addEventListener('pointermove', () => {
+      diag.querySelector('#live').textContent =
+        `ดวงแสง ${centre()} · การ์ดเอียง ${tilted() ?? '—'}`;
+    }, { passive: true });
   });
 }
 
