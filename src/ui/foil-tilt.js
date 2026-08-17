@@ -81,11 +81,19 @@ export async function attachFoilTilt(card, opt = {}) {
   });
 
   /* ไลบรารีส่งตำแหน่งปัจจุบันมาให้ทุกเฟรมเป็น 0–100
-     เอามาแปลงเป็นตำแหน่งแผ่นฟอยล์ → เอียงซ้ายประกายไปทางหนึ่ง เอียงขวาไปอีกทาง */
+     เอามาแปลงเป็นตำแหน่งแผ่นฟอยล์ → เอียงซ้ายประกายไปทางหนึ่ง เอียงขวาไปอีกทาง
+
+     ตัวใบเอียงด้วยการ์ดจอ (แทบไม่กินแรง) แต่การเลื่อนแผ่นฟอยล์ต้องวาดตัวเลขใหม่
+     จึงกันไม่ให้สั่งวาดถี่เกินจำเป็น: ขยับไม่ถึงครึ่งเปอร์เซ็นต์ = ข้ามไปเลย
+     ตาคนมองไม่เห็นความต่างระดับนั้นอยู่แล้ว แต่ช่วยลดการวาดได้เยอะบนมือถือ */
+  let last = -999;
   const onTilt = (e) => {
     const p = e.detail?.percentageX;
     if (typeof p !== 'number') return;
-    card.style.setProperty('--ft-shift', `${(lo + (p / 100) * (hi - lo)).toFixed(1)}%`);
+    const v = lo + (p / 100) * (hi - lo);
+    if (Math.abs(v - last) < 0.5) return;
+    last = v;
+    card.style.setProperty('--ft-shift', `${v.toFixed(1)}%`);
   };
   card.addEventListener('tiltChange', onTilt);
 
