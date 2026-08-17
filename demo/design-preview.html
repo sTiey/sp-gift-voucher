@@ -35,7 +35,6 @@ const q = new URLSearchParams(location.search);
 const design = q.get('d') || 'ironwindow';
 const only = q.get('shape');            // ระบุทรงเดียวได้ เช่น ?shape=ticket
 const which = q.get('v') || 'percent';  // เปลี่ยนตัวอย่างคูปองได้
-const accent = q.get('accent') || undefined;  // เช่น ?accent=lime
 const variant = q.get('variant') || undefined;  // เช่น ?variant=v2
 
 const SAMPLES = {
@@ -84,7 +83,7 @@ const shapes = only ? [only] : ['ticket', 'compact'];
 document.title = `${design} · ${(DESIGNS.find((d) => d.id === design) || {}).name || ''}`;
 document.querySelector('#stage').innerHTML = shapes.map((shape) => `
   <div class="stage__row">
-    <div class="stage__box">${cardHtml(v, { design, shape, accent, variant, art: art[design] || 'balcony' })}</div>
+    <div class="stage__box">${cardHtml(v, { design, shape, variant, art: art[design] || 'balcony' })}</div>
     <span class="stage__cap">${design} · ${shape}</span>
   </div>`).join('');
 </script>

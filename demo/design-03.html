@@ -35,19 +35,9 @@
 
   .wrap { max-width: 1180px; margin-inline: auto; padding: 34px 24px 90px; }
 
-  /* วางสองสีเรียงลงล่าง ไม่ใช่เคียงข้าง — ใบทรงยาวกว้าง 720px
-     ถ้าบีบให้อยู่ 2 คอลัมน์ ใบจะถูกย่อจนเทียบสีกันไม่ตรงความจริง */
-  .cols { display: grid; gap: 52px; grid-template-columns: minmax(0, 1fr); }
+  /* ทรงยาวกว้าง 720px — ถ้าบีบเข้าคอลัมน์แคบใบจะถูกย่อจนดูสัดส่วนไม่ตรงความจริง */
   .row2 { display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); align-items: start; }
   @media (min-width: 1140px) { .row2 { grid-template-columns: 720px minmax(0, 1fr); } }
-
-  .col { display: grid; gap: 16px; align-content: start; }
-  .col__hd { display: flex; align-items: baseline; gap: 10px; }
-  .col__name { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
-  .col__note { font-size: 12px; color: var(--ink-2); }
-  .dot { width: 13px; height: 13px; border: 1px solid rgb(20 22 26 / 35%); }
-  .dot[data-c='lime'] { background: #c8f000; }
-  .dot[data-c='gold'] { background: #c9a961; }
 
   .slot { display: grid; gap: 8px; }
   .slot__cap {
@@ -63,7 +53,7 @@
 
 <div class="hd">
   <span class="hd__t">ตั๋ว · ทองเหลือง</span>
-  <span class="hd__s">สีที่ไท้เลือก · เขียวเก็บไว้ข้างล่างให้เทียบ</span>
+  <span class="hd__s">ทองเหลืองสีเดียว — ไท้เคาะ 17 ส.ค. 69</span>
   <span class="sp"></span>
   <span class="hd__s">ตัวอย่าง</span>
   <div class="seg" id="seg">
@@ -76,7 +66,7 @@
 </div>
 
 <div class="wrap">
-  <div class="cols" id="cols"></div>
+  <div class="row2" id="cols"></div>
 </div>
 
 <script type="module">
@@ -101,33 +91,19 @@ const SAMPLES = {
     state: 'redeemed', validUntil: '2026-12-31T23:59:59+07:00' },
 };
 
-const VARIANTS = [
-  { accent: 'gold', key: 'gold', name: 'ทองเหลือง', note: 'สีที่เลือกใช้จริง — มาจากจุดตัดทองบนงานเหล็ก' },
-  { accent: 'lime', key: 'lime', name: 'เขียวมะนาว', note: 'เก็บไว้เทียบ · เปลี่ยนได้ด้วยค่าเดียว' },
-];
-
 let sample = 'percent';
 
 function paint() {
   const v = createVoucher(SAMPLES[sample]);
-  document.querySelector('#cols').innerHTML = VARIANTS.map((x) => `
-    <div class="col">
-      <div class="col__hd">
-        <span class="dot" data-c="${x.key}"></span>
-        <span class="col__name">${x.name}</span>
-        <span class="col__note">${x.note}</span>
-      </div>
-      <div class="row2">
-        <div class="slot slot--ticket">
-          ${cardHtml(v, { design: 'limeticket', shape: 'ticket', accent: x.accent, art: 'balcony' })}
-          <span class="slot__cap">ทรงยาว — ส่ง LINE / อีเมล / จอคอม</span>
-        </div>
-        <div class="slot slot--compact">
-          ${cardHtml(v, { design: 'limeticket', shape: 'compact', accent: x.accent, art: 'balcony' })}
-          <span class="slot__cap">ทรงกระทัดรัด — บนมือถือ</span>
-        </div>
-      </div>
-    </div>`).join('');
+  document.querySelector('#cols').innerHTML = `
+    <div class="slot slot--ticket">
+      ${cardHtml(v, { design: 'limeticket', shape: 'ticket', art: 'balcony' })}
+      <span class="slot__cap">ทรงยาว — ส่ง LINE / อีเมล / จอคอม</span>
+    </div>
+    <div class="slot slot--compact">
+      ${cardHtml(v, { design: 'limeticket', shape: 'compact', art: 'balcony' })}
+      <span class="slot__cap">ทรงกระทัดรัด — บนมือถือ</span>
+    </div>`;
 }
 
 document.querySelector('#seg').addEventListener('click', (e) => {

@@ -32,7 +32,7 @@ export const DESIGNS = [
   { id: 'goldplate', name: 'แผ่นทอง', family: 'brand', photo: false,
     blurb: 'ดำสนิท ตัดเส้นทองบาง ๆ · กลิ่นบัตรสมาชิกระดับสูง' },
   /* ไอดี 'limeticket' เป็นชื่อตอนเริ่มร่าง (ตอนนั้นเป็นสีเขียว)
-     ไท้เลือกทองเหลืองเป็นสีจริง 2026-08-14 — เขียวยังเรียกใช้ได้ด้วย accent:'lime' */
+     ไท้เคาะ 2026-08-17: ทองเหลืองสีเดียว — เขียวถูกตัดออกจากโค้ดแล้ว */
   { id: 'limeticket', name: 'ตั๋ว', family: 'brand', photo: true,
     blurb: 'กระดาษงาช้าง + ก้อนทองเหลือง + ก้านฉีกดำ · รหัสคูปองอยู่ในแถบดำใต้ตัวเลข' },
 ];
@@ -81,7 +81,7 @@ function expiryLine(v, now) {
 /**
  * วาดคูปอง 1 ใบ
  * @param {object} v คูปองตาม schema
- * @param {{design?:string, shape?:'ticket'|'compact', accent?:string, variant?:string, art?:string, qr?:boolean, now?:number}} opt
+ * @param {{design?:string, shape?:'ticket'|'compact', variant?:string, art?:string, qr?:boolean, now?:number}} opt
  */
 export function cardHtml(v, opt = {}) {
   const design = opt.design || 'ironwindow';
@@ -101,11 +101,9 @@ export function cardHtml(v, opt = {}) {
       dark: 'currentColor', light: 'none', quiet: 1,
     })}</div>`;
 
-  // ไท้เลือกทองเหลืองเป็นสีจริงของคูปอง (2026-08-14) — เขียวยังเรียกใช้ได้ด้วย accent:'lime'
-  const accent = ` data-accent="${esc(opt.accent || 'gold')}"`;
   const variant = opt.variant ? ` data-variant="${esc(opt.variant)}"` : '';
 
-  return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${accent}${variant}>
+  return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${variant}>
   <article class="vk-card" data-status="${esc(status)}" data-kind="${esc(v.kind)}" data-code="${esc(v.code)}">
 
     <figure class="vk-card__art">
