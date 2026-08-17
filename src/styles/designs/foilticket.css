@@ -72,6 +72,8 @@
 
   --ft-stub: 30;                /* ก้านฉีก = 30% ของความกว้างใบ */
   --ft-pad: 1.7;                /* ระยะขอบเนื้อหา */
+  --ft-text: 13.4;              /* ความกว้างคอลัมน์ตัวหนังสือ — ที่เหลือยกให้ตัวเลข */
+  --ft-mark: 13.6;              /* ความสูงลายน้ำโลโก้ */
   --ft-notch: 0.85;             /* รัศมีรอยบากครึ่งวงกลม */
   --ft-scallop: 0.4;            /* รัศมีคลื่นขอบขวา */
 }
@@ -125,13 +127,21 @@
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 
-  grid-template-columns: minmax(0, 1fr) calc(var(--ft-stub) * 1%);
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  /* จัดวางใหม่ให้ตัวเลขได้ที่มากที่สุด (ไท้สั่ง "ตัวเลขหลักขอตัวใหญ่ ๆ เลย")
+     ตัวหนังสือทั้งหมดยุบไปอยู่คอลัมน์ซ้ายแคบ ๆ คอลัมน์เดียว ที่เหลือเป็นของตัวเลขล้วน
+     หัวใบพาดสองคอลัมน์ เพราะป้ายสถานะต้องอยู่มุมขวาบนสุดของฝั่งเนื้อหา */
+  grid-template-columns:
+    calc(var(--vk-u) * var(--ft-text))
+    minmax(0, 1fr)
+    calc(var(--ft-stub) * 1%);
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
   grid-template-areas:
-    'head stub'
-    'body stub'
-    'cond stub'
-    'note stub';
+    'head   head stub'
+    '...... num  stub'
+    'kicker num  stub'
+    'title  num  stub'
+    'cond   num  stub'
+    'note   num  stub';
 }
 
 [data-design='foilticket'] .vk-card__art { display: none; }
@@ -152,17 +162,24 @@
   background-size: 1px calc(var(--vk-u) * 0.5);
 }
 
-/* ── ของตกแต่ง: เส้นวงกลมบาง ๆ — ชิ้นเดียวที่ไม่ใช่ตัวหนังสือ ─────────── */
+/* ── ลายน้ำโลโก้ SP — อยู่ในชั้นกระดาษ หลังข้อความทุกตัว ────────────────
+   ⚠️ ใช้ "หน้ากาก" ไม่ใช่วางไฟล์ภาพตรง ๆ เพราะไฟล์โลโก้เป็นหมึกดำ
+      ถ้าวางตรง ๆ แล้วหรี่ความทึบจะได้สีเทา ไม่ใช่น้ำตาลของใบ
+      หน้ากาก = ตัดรูปทรงโลโก้ออกมาจากแผ่นสีน้ำตาล → ได้สีเดียวกับตัวหนังสือเป๊ะ
+   z-index 0 + ลูกทุกตัวอยู่ชั้น 2 ขึ้นไป → ไม่มีทางบังข้อความได้เลย            */
 
 [data-design='foilticket'][data-shape='ticket'] .vk-card::after {
   content: '';
   position: absolute;
   z-index: 0;
-  inset: auto auto calc(var(--vk-u) * -4.4) calc(var(--vk-u) * -3.2);
-  width: calc(var(--vk-u) * 11);
-  height: calc(var(--vk-u) * 11);
-  border: 1px solid var(--ft-line);
-  border-radius: 50%;
+  inset: 50% auto auto calc(var(--vk-u) * 0.6);
+  transform: translateY(-50%);
+  height: calc(var(--vk-u) * var(--ft-mark));
+  aspect-ratio: 151 / 320;      /* สัดส่วนจริงของไฟล์มอโนแกรม ห้ามยืดผิดส่วน */
+  background: var(--ft-ink);
+  opacity: 0.07;
+  -webkit-mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
+  mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
   pointer-events: none;
 }
 
@@ -199,10 +216,9 @@
 /* ── ตัวหนังสือฝั่งซ้าย — เล็กหมด ไม่มีของขนาดกลาง ─────────────────────── */
 
 [data-design='foilticket'] .vk-card__kicker {
-  grid-area: body;
+  grid-area: kicker;
   position: relative; z-index: 2;
-  align-self: start;
-  margin: calc(var(--vk-u) * 1.15) calc(var(--vk-u) * var(--ft-pad)) 0;
+  margin: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 0.42) calc(var(--vk-u) * var(--ft-pad));
   display: flex; align-items: center; gap: calc(var(--vk-u) * 0.5);
   font-family: var(--ft-mono); font-weight: 500;
   font-size: calc(var(--vk-u) * 0.62); letter-spacing: 0.16em;
@@ -215,11 +231,9 @@
 }
 
 [data-design='foilticket'] .vk-card__title {
-  grid-area: body;
+  grid-area: title;
   position: relative; z-index: 2;
-  align-self: start;
-  margin: calc(var(--vk-u) * 2.5) calc(var(--vk-u) * var(--ft-pad)) 0;
-  max-width: calc(var(--vk-u) * 15);
+  margin: 0 calc(var(--vk-u) * 0.8) calc(var(--vk-u) * 0.9) calc(var(--vk-u) * var(--ft-pad));
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
   font-weight: 500;
   font-size: calc(var(--vk-u) * 1.06);
@@ -231,9 +245,8 @@
 [data-design='foilticket'] .vk-card__cond {
   grid-area: cond;
   position: relative; z-index: 2;
-  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * 0.34);
-  max-width: calc(var(--vk-u) * 15);
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;
+  margin: 0 calc(var(--vk-u) * 0.6) calc(var(--vk-u) * 0.3) calc(var(--vk-u) * var(--ft-pad));
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
   font-family: var(--ft-mono);
   font-size: calc(var(--vk-u) * 0.64);
   line-height: 1.4; color: var(--ft-ink-2);
@@ -241,9 +254,8 @@
 [data-design='foilticket'] .vk-card__note {
   grid-area: note;
   position: relative; z-index: 2;
-  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad));
-  max-width: calc(var(--vk-u) * 15);
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden;
+  margin: 0 calc(var(--vk-u) * 0.6) calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad));
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
   font-size: calc(var(--vk-u) * 0.66);
   line-height: 1.4; color: var(--ft-ink-2);
 }
@@ -253,13 +265,18 @@
    ⚠️ ต้องเป็นของมันวาว "ชิ้นเดียว" ในใบ อย่าเผลอเอาไล่เฉดทองไปใส่ที่อื่น
       พอมีของวาวสองที่ ตาจะเลือกไม่ถูกแล้วทั้งใบดูถูกลงทันที (บทเรียนจากภาพอ้างอิง)
    วางลอยเทียบกับใบ ชิดขวาของฝั่งเนื้อหา ให้ชนแนวเส้นประพอดี                */
+/* ⚠️ เดิมวางลอย (absolute) ซึ่งทำให้ ฿ กับ % ที่ลอยออกนอกกล่องยื่นไปทับคอลัมน์ซ้ายได้
+   ตอนนี้เป็นช่องหนึ่งของกริดและเรียงในสายปกติ → กล่องกว้างเท่ากลุ่มทั้งหมดจริง
+   จัดกึ่งกลางช่องแล้วไม่มีอะไรล้นไปหาตัวหนังสือ ไม่ว่าตัวเลขจะกี่หลัก */
 [data-design='foilticket'][data-shape='ticket'] .vk-card__value {
-  position: absolute;
+  grid-area: num;
+  position: relative;
   z-index: 3;
-  right: calc(var(--ft-stub) * 1% + var(--vk-u) * var(--ft-pad));
-  top: 50%;
-  transform: translateY(-46%);
-  display: block;
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--vk-u) * 0.16);
   margin: 0; padding: 0; background: none;
   pointer-events: none;
 }
@@ -268,9 +285,9 @@
   display: block;
   font-family: var(--ft-num);
   font-weight: 600;
-  font-size: calc(var(--vk-u) * 8.6);
-  line-height: 0.86;
-  letter-spacing: -0.04em;
+  font-size: calc(var(--vk-u) * 12);
+  line-height: 0.84;
+  letter-spacing: -0.045em;
 
   /* ฟอยล์: ผิวหยาบทับไล่เฉดทอง แล้วฉลุทั้งสองชั้นตามรูปตัวอักษร */
   /* ⚠️⚠️ ไล่เฉด "ดวงแสง" 3 ดวงต้องเขียนตรงนี้ ห้ามยกไปเก็บเป็นตัวแปร
@@ -324,21 +341,26 @@
     drop-shadow(0 6px 12px rgba(90, 66, 22, 0.22));
 }
 
-[data-design='foilticket'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 7); }
-[data-design='foilticket'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 6.2); }
-[data-design='foilticket'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 5.4); }
-[data-design='foilticket'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 4.6); }
+/* ตัวเลขยิ่งหลายหลักยิ่งต้องเล็กลง ไม่งั้นล้นเข้าไปในคอลัมน์ตัวหนังสือ
+   ตัวเลขชุดนี้วัดมาแล้วว่าไม่ล้นทั้ง 5 แบบคูปอง — แก้แล้วต้องวัดใหม่ทุกครั้ง */
+[data-design='foilticket'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 8.6); }
+[data-design='foilticket'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 7.5); }
+[data-design='foilticket'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 6); }
+[data-design='foilticket'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 5.1); }
 [data-design='foilticket'] .vk-card__num[data-text='true'][data-len] {
-  font-size: calc(var(--vk-u) * 3); line-height: 1.1; letter-spacing: -0.01em;
+  font-size: calc(var(--vk-u) * 4.8); line-height: 1.08; letter-spacing: -0.01em;
 }
 
 /* ฿ และ % — ทองเหมือนกันแต่เล็กกว่ามาก ลอยออกนอกกล่องไม่กินความกว้าง */
+/* ฿ และ % เรียงในสายปกติ (ไม่ลอย) → กล่องตัวเลขกว้างเท่ากลุ่มทั้งหมดจริง
+   เกาะขอบบนเหมือนตัวยก แล้วเยื้องลงนิดเดียวให้หัวเสมอหัวตัวเลข */
 [data-design='foilticket'] .vk-card__lead,
 [data-design='foilticket'] .vk-card__unit {
-  position: absolute;
-  top: 0.06em;
+  flex: none;
+  align-self: flex-start;
+  margin-block-start: calc(var(--vk-u) * 0.62);
   font-family: var(--ft-num); font-weight: 600;
-  font-size: calc(var(--vk-u) * 2.3); line-height: 1;
+  font-size: calc(var(--vk-u) * 2.2); line-height: 1;
   /* ⚠️⚠️ ไล่เฉด "ดวงแสง" 3 ดวงต้องเขียนตรงนี้ ห้ามยกไปเก็บเป็นตัวแปร
      ตัวแปรที่ข้างในมี var() จะถูกแทนค่า **ตั้งแต่จุดที่ประกาศ** ไม่ใช่ที่จุดที่ใช้
      ถ้าเก็บ radial-gradient ไว้ในตัวแปรที่ประกาศบนกล่องนอก มันจะอบค่า
@@ -379,12 +401,7 @@
   color: transparent;
   filter: drop-shadow(0 1px 0 rgba(104, 76, 28, 0.4));
 }
-[data-design='foilticket'] .vk-card__unit {
-  inset-inline-start: 100%; margin-inline-start: calc(var(--vk-u) * 0.18);
-}
-[data-design='foilticket'] .vk-card__lead {
-  inset-inline-end: 100%; margin-inline-end: calc(var(--vk-u) * 0.18);
-}
+/* ฿ อยู่หน้าตัวเลข % อยู่หลัง — ลำดับใน HTML ถูกอยู่แล้ว ไม่ต้องสลับอะไร */
 
 /* ── ก้านฉีก 30% — QR + รหัส + วันหมดอายุ (ส่วนที่พนักงานฉีกเก็บ) ──────── */
 

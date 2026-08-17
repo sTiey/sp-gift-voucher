@@ -132,8 +132,9 @@ function paint() {
       card.style.setProperty('--ft-spot-x', `${x}%`);
       card.style.setProperty('--ft-spot-y', `${y}%`);
     }
-    document.querySelector('#diag').textContent =
-      `ตรึงดวงแสงไว้ที่ ${x}%, ${y}% ตามลิงก์ — เอา ?spot ออกถ้าอยากให้วิ่งตามเมาส์`;
+    const msg = `ตรึงดวงแสงไว้ที่ ${x}%, ${y}% ตามลิงก์ — เอา ?spot ออกถ้าอยากให้วิ่งตามเมาส์`;
+    document.querySelector('#diag').textContent = msg;
+    say(msg);
     return;
   }
 
