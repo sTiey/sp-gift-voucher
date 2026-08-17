@@ -25,16 +25,27 @@ import { deriveStatus, daysLeft, remainingUses } from '../core/lifecycle.js';
 import { toSvg as qrSvg } from '../core/qr.js';
 import { voucherUrl } from '../core/codes.js';
 
-/** ดีไซน์ที่มีให้เลือก — เพิ่มแบบใหม่ = เติมที่นี่ + เขียนไฟล์ CSS 1 ไฟล์ */
+/** ดีไซน์ที่มีให้เลือก — เพิ่มแบบใหม่ = เติมที่นี่ + เขียนไฟล์ CSS 1 ไฟล์
+ *  shapes = ทรงที่เขียน CSS ไว้จริง · หน้ารวมดีไซน์ใช้ค่านี้ตัดสินว่าจะวาดทรงไหน
+ *  ⚠️ ใส่ทรงที่ยังไม่ได้เขียน CSS = ใบนั้นออกมาเป็นโครงเปล่า ดูเหมือนดีไซน์พัง */
 export const DESIGNS = [
-  { id: 'ironwindow', name: 'ช่องเหล็ก', family: 'brand', photo: true,
+  { id: 'ironwindow', name: 'ช่องเหล็ก', family: 'brand', photo: true, shapes: ['ticket', 'compact'],
     blurb: 'ภาพงานเหล็กจริงเต็มพื้น แล้ววางแผ่นดำทับ · ขายด้วยของจริง' },
-  { id: 'goldplate', name: 'แผ่นทอง', family: 'brand', photo: false,
+  { id: 'goldplate', name: 'แผ่นทอง', family: 'brand', photo: false, shapes: ['ticket', 'compact'],
     blurb: 'ดำสนิท ตัดเส้นทองบาง ๆ · กลิ่นบัตรสมาชิกระดับสูง' },
   /* ไอดี 'limeticket' เป็นชื่อตอนเริ่มร่าง (ตอนนั้นเป็นสีเขียว)
      ไท้เคาะ 2026-08-17: ทองเหลืองสีเดียว — เขียวถูกตัดออกจากโค้ดแล้ว */
-  { id: 'limeticket', name: 'ตั๋ว', family: 'brand', photo: true,
+  { id: 'limeticket', name: 'ตั๋ว', family: 'brand', photo: true, shapes: ['ticket', 'compact'],
     blurb: 'กระดาษงาช้าง + ก้อนทองเหลือง + ก้านฉีกดำ · รหัสคูปองอยู่ในแถบดำใต้ตัวเลข' },
+
+  /* ชุดใหม่ 2026-08-17 — ไท้ขอผสมความเป็นตั๋วจริง (เส้นปรุ · ก้านฉีก · ดูโอโทน)
+     ในสไตล์โมเดิร์นอาร์ต คลีน ๆ · ทำทรงยาวก่อนอย่างเดียว รอไท้เลือกก่อนขยาย */
+  { id: 'stubline', name: 'เส้นปรุ', family: 'modern', photo: true, shapes: ['ticket'],
+    blurb: 'โครงตั๋วจริงแบบสวิส · ตัวเลขคร่อมเส้นปรุ ฉีกก้านออกแล้วเลขขาดครึ่ง' },
+  { id: 'arcdisc', name: 'จานทอง', family: 'modern', photo: true, shapes: ['ticket'],
+    blurb: 'รูปทรงนำ · วงกลมทองวงเดียวเป็นบ้านของตัวเลข ยื่นล้ำขอบใบ' },
+  { id: 'slantset', name: 'เอียง', family: 'modern', photo: true, shapes: ['ticket'],
+    blurb: 'ตัวหนังสือนำ · ชื่อคูปองเอียง 12° พาดขวางใบที่ตรงเป๊ะทั้งใบ' },
 ];
 
 /** ภาพสินค้าที่มีให้ใช้ */

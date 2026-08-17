@@ -100,8 +100,13 @@ const SAMPLES = {
     state: 'redeemed', validUntil: '2026-12-31T23:59:59+07:00' },
 };
 
-const ART = { ironwindow: 'stair', goldplate: 'gate', limeticket: 'balcony' };
-const FAMILY = { brand: 'สีแบรนด์', bold: 'ปล่อยกล้า' };
+const ART = { ironwindow: 'stair', goldplate: 'gate', limeticket: 'balcony',
+              stubline: 'stair', arcdisc: 'balcony', slantset: 'gate' };
+const FAMILY = { brand: 'สีแบรนด์', bold: 'ปล่อยกล้า', modern: 'โมเดิร์นอาร์ต' };
+const SHAPE_CAP = {
+  ticket: 'ทรงยาว — ส่ง LINE / อีเมล / จอคอม',
+  compact: 'ทรงกระทัดรัด — บนมือถือ',
+};
 
 let sample = 'percent';
 
@@ -117,14 +122,11 @@ function paint() {
         <p class="row__blurb">${d.blurb}</p>
       </div>
       <div class="pair">
-        <div class="slot">
-          ${cardHtml(v, { design: d.id, shape: 'ticket', art: ART[d.id] })}
-          <span class="slot__cap">ทรงยาว — ส่ง LINE / อีเมล / จอคอม</span>
-        </div>
-        <div class="slot">
-          ${cardHtml(v, { design: d.id, shape: 'compact', art: ART[d.id] })}
-          <span class="slot__cap">ทรงกระทัดรัด — บนมือถือ</span>
-        </div>
+        ${(d.shapes || ['ticket', 'compact']).map((shape) => `
+          <div class="slot">
+            ${cardHtml(v, { design: d.id, shape, art: ART[d.id] })}
+            <span class="slot__cap">${SHAPE_CAP[shape]}</span>
+          </div>`).join('')}
       </div>
     </section>`).join('');
 }

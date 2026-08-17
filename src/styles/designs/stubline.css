@@ -1,0 +1,255 @@
+/* ============================================================================
+   stubline — "เส้นปรุ"   ทิศทาง ก · โครงตั๋วจริง สะอาดแบบสวิส
+   ----------------------------------------------------------------------------
+   ท่าเด็ด: **ตัวเลขคร่อมเส้นปรุ** ครึ่งซ้ายอยู่บนกระดาษ ครึ่งขวาอยู่บนก้านทอง
+     → ฉีกก้านออก = ตัวเลขขาดครึ่ง  มูลค่าอยู่ที่ "ใบเต็ม" ไม่ใช่ชิ้นส่วน
+     เป็นความหมายที่ตั๋วจริงมีอยู่แล้ว แค่เอามาพูดออกมาตรง ๆ
+
+   หน้าตา: กระดาษขาวนวล · ภาพดูโอโทนบล็อกซ้าย · ตัวหนังสือเล็กและเป๊ะ
+     ที่ว่างเยอะ ไม่มีลวดลาย ไม่มีพื้นผิว — ให้เส้นปรุกับตัวเลขทำงานสองอย่างพอ
+   ========================================================================== */
+
+[data-design='stubline'] {
+  --sl-paper: #faf8f4;
+  --sl-ink: #16150f;
+  --sl-brass: #c9a961;
+  --sl-mute: #8a8172;
+  --sl-line: rgba(22, 21, 15, 0.16);
+
+  --sl-mono: 'IBM Plex Mono', 'Noto Sans Thai', ui-monospace, monospace;
+  --sl-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
+
+  --sl-stub: 11;        /* ความกว้างก้านฉีก */
+  --sl-art: 7.4;        /* ความกว้างภาพ */
+}
+
+[data-design='stubline'][data-shape='ticket'] { contain-intrinsic-inline-size: 45rem; }
+
+[data-design='stubline'] .vk-card {
+  --vk-u: inherit;
+  background: var(--sl-paper);
+  color: var(--sl-ink);
+  font-family: var(--sl-sans);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px var(--sl-line);
+}
+
+[data-design='stubline'] .vk-card__stub { display: contents; }
+[data-design='stubline'] .vk-card__hero { display: contents; }
+
+/* ── ทรงยาว: ภาพ | เนื้อหา | เส้นปรุ | ก้าน ───────────────────────────── */
+
+/* ⚠️ กล่องเนื้อหาต้อง display:contents — ให้ลูก ๆ ไปนั่งใน "กริดของใบ" โดยตรง
+   เคยพลาด: ตั้ง grid-area ให้ลูกทั้งที่ลูกยังอยู่ในกริดของกล่อง ชื่อช่องไม่มีอยู่จริง
+   → ทุกชิ้นตกไปวางอัตโนมัติแล้วทับกันเป็นกองเดียว โดยไม่มี error ให้เห็น */
+[data-design='stubline'][data-shape='ticket'] .vk-card__main { display: contents; }
+
+[data-design='stubline'][data-shape='ticket'] .vk-card {
+  aspect-ratio: 2.6 / 1;
+  grid-template-columns:
+    calc(var(--vk-u) * var(--sl-art))
+    minmax(0, 1fr)
+    calc(var(--vk-u) * var(--sl-stub));
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    'art head   stub'
+    'art ...... stub'
+    'art kicker stub'
+    'art title  stub'
+    'art cond   stub';
+}
+
+[data-design='stubline'] .vk-card__art { grid-area: art; }
+[data-design='stubline'] .vk-card__head { grid-area: head; }
+[data-design='stubline'] .vk-card__kicker { grid-area: kicker; }
+[data-design='stubline'] .vk-card__title { grid-area: title; }
+[data-design='stubline'] .vk-card__cond { grid-area: cond; }
+[data-design='stubline'] .vk-card__note { display: none; }
+
+[data-design='stubline'] .vk-card__head {
+  align-self: start;
+  gap: calc(var(--vk-u) * 0.6);
+  margin: calc(var(--vk-u) * 1.5) calc(var(--vk-u) * 1.6) 0;
+  padding-bottom: calc(var(--vk-u) * 0.7);
+  border-bottom: 1px solid var(--sl-line);
+  min-width: 0;
+}
+[data-design='stubline'] .vk-card__logo { height: calc(var(--vk-u) * 1.9); mix-blend-mode: multiply; }
+[data-design='stubline'] .vk-card__brandname {
+  font-family: var(--sl-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.58); letter-spacing: 0.3em;
+  color: var(--sl-mute); white-space: nowrap; overflow: hidden;
+}
+[data-design='stubline'] .vk-card__pill {
+  margin-inline-start: auto; flex: none;
+  background: none; color: var(--sl-mute);
+  box-shadow: inset 0 0 0 1px var(--sl-line);
+  font-family: var(--sl-mono); font-size: calc(var(--vk-u) * 0.58);
+  letter-spacing: 0.06em; line-height: 1.2;
+  padding: calc(var(--vk-u) * 0.24) calc(var(--vk-u) * 0.5);
+}
+[data-design='stubline'] .vk-card__pill[data-tone='ok'] {
+  background: var(--sl-ink); color: var(--sl-paper); box-shadow: none;
+}
+
+/* ── ตัวเลขคร่อมเส้นปรุ — ลายเซ็นของทิศทางนี้ ───────────────────────────
+   วางลอยเทียบกับตัวใบ แล้วเลื่อนให้ "กึ่งกลางตัวเลข" ตกที่เส้นปรุพอดี
+   เส้นปรุอยู่ห่างขอบขวา = ความกว้างก้าน → จุดกึ่งกลางจึงคำนวณจากค่าเดียวกัน  */
+[data-design='stubline'][data-shape='ticket'] .vk-card__value {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  right: calc(var(--vk-u) * var(--sl-stub));
+  transform: translate(50%, -50%);
+  /* ⚠️ กล่องนี้ต้องกว้างเท่า "ตัวเลข" เท่านั้น เครื่องหมายจึงต้องวางลอยออกไป
+     ไม่งั้นกึ่งกลางกล่องจะเป็นกึ่งกลางของ (ตัวเลข + %) แล้วตัวเลขถูกดันไปซ้าย
+     เส้นปรุจะไปตกที่ช่องว่างข้าง % แทนที่จะผ่ากลางตัวเลข = ลายเซ็นหายไปเฉย ๆ */
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: none;
+  pointer-events: none;
+}
+
+[data-design='stubline'] .vk-card__num {
+  display: block;
+  font-weight: 400;
+  font-size: calc(var(--vk-u) * 6.4);
+  line-height: 0.82;
+  letter-spacing: -0.045em;
+  color: var(--sl-ink);
+}
+[data-design='stubline'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 5); }
+[data-design='stubline'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 4.4); }
+[data-design='stubline'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 3.6); }
+[data-design='stubline'] .vk-card__num[data-text='true'][data-len] {
+  font-size: calc(var(--vk-u) * 2.5); line-height: 1.1; letter-spacing: 0;
+  max-width: calc(var(--vk-u) * 9); text-align: center;
+}
+
+/* เครื่องหมายเกาะข้างตัวเลขแบบตัวยก — ลอยออกนอกกล่อง ไม่กินความกว้าง */
+[data-design='stubline'] .vk-card__lead,
+[data-design='stubline'] .vk-card__unit {
+  position: absolute;
+  top: calc(var(--vk-u) * 0.5);
+  font-family: var(--sl-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 1.1); line-height: 1;
+}
+[data-design='stubline'] .vk-card__unit { inset-inline-start: 100%; margin-inline-start: calc(var(--vk-u) * 0.16); }
+[data-design='stubline'] .vk-card__lead { inset-inline-end: 100%; margin-inline-end: calc(var(--vk-u) * 0.16); }
+
+/* ── ตัวหนังสือ ─────────────────────────────────────────────────────────── */
+
+[data-design='stubline'] .vk-card__kicker {
+  margin: 0 calc(var(--vk-u) * 1.6) calc(var(--vk-u) * 0.42);
+  display: flex; align-items: center; gap: calc(var(--vk-u) * 0.45);
+  font-family: var(--sl-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.68); letter-spacing: 0.08em;
+  line-height: 1.3; color: var(--sl-mute);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+[data-design='stubline'] .vk-card__kicker::before {
+  content: ''; flex: none;
+  width: calc(var(--vk-u) * 0.46); height: calc(var(--vk-u) * 0.46);
+  background: var(--sl-brass); border-radius: 50%;
+}
+[data-design='stubline'] .vk-card__title {
+  margin: 0 calc(var(--vk-u) * 1.6) calc(var(--vk-u) * 0.34);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  max-width: calc(var(--vk-u) * 12);
+  font-weight: 500; font-size: calc(var(--vk-u) * 1.22);
+  line-height: 1.3; letter-spacing: -0.005em;
+}
+[data-design='stubline'] .vk-card__cond {
+  margin: 0 calc(var(--vk-u) * 1.6) calc(var(--vk-u) * 1.5);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  max-width: calc(var(--vk-u) * 12);
+  font-family: var(--sl-mono); font-size: calc(var(--vk-u) * 0.72);
+  line-height: 1.4; color: var(--sl-mute);
+}
+
+[data-design='stubline'] .vk-card__badge {
+  inset: auto auto calc(var(--vk-u) * 1.5) calc(var(--vk-u) * 1.6);
+  background: var(--sl-brass); color: var(--sl-ink);
+  font-family: var(--sl-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.58); letter-spacing: 0.08em;
+  padding: calc(var(--vk-u) * 0.2) calc(var(--vk-u) * 0.46);
+  white-space: nowrap;
+  display: none;   /* ทิศทางนี้เน้นสะอาด — ป้ายไปอยู่บนก้านแทน */
+}
+
+/* ── ภาพดูโอโทน — บล็อกซ้ายเต็มความสูง ─────────────────────────────────── */
+
+[data-design='stubline'] .vk-card__art { position: relative; }
+[data-design='stubline'] .vk-card__art img {
+  filter: grayscale(1) contrast(1.14) brightness(1.04);
+}
+[data-design='stubline'] .vk-card__art::after {
+  content: ''; position: absolute; inset: 0;
+  background: var(--sl-brass); mix-blend-mode: multiply; opacity: 0.9;
+}
+
+/* ── ก้านฉีก + เส้นปรุ ─────────────────────────────────────────────────── */
+
+[data-design='stubline'] .vk-card__serial { display: none; }
+
+/* ก้านกินพื้นที่ทั้งช่อง (เป็นคนทาสีทองให้ทั้งคอลัมน์) แล้วดันข้อมูลไว้บนสุด
+   ช่องกลางที่เหลือคือที่ของตัวเลขที่คร่อมเส้นปรุ · QR ไปเกาะก้นก้าน */
+[data-design='stubline'][data-shape='ticket'] .vk-card__stub-body {
+  grid-area: stub;
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: calc(var(--vk-u) * 0.24);
+  padding: calc(var(--vk-u) * 1.5) calc(var(--vk-u) * 1.1);
+  background: var(--sl-brass);
+  text-align: center;
+}
+
+/* เส้นปรุ: วงกลมเรียงถี่บนเส้นแบ่ง — เจาะเป็นสีกระดาษ ไม่ใช่เส้นประ */
+[data-design='stubline'][data-shape='ticket'] .vk-card__stub-body::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--vk-u) * -0.3);
+  width: calc(var(--vk-u) * 0.6);
+  background-image: radial-gradient(circle at 50% 50%, var(--sl-paper) 0 34%, transparent 36%);
+  background-size: 100% calc(var(--vk-u) * 0.72);
+  z-index: 2;
+}
+
+[data-design='stubline'] .vk-card__label {
+  font-family: var(--sl-mono); font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.56); letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(22, 21, 15, 0.6);
+  white-space: nowrap;
+}
+[data-design='stubline'] .vk-card__code,
+[data-design='stubline'] .vk-card__date {
+  font-family: var(--sl-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.76); line-height: 1.3;
+  white-space: nowrap; color: var(--sl-ink);
+}
+[data-design='stubline'] .vk-card__stub-body .vk-card__label:first-child { display: none; }
+
+[data-design='stubline'][data-shape='ticket'] .vk-card__qr {
+  grid-area: stub;
+  align-self: end;
+  justify-self: center;
+  width: calc(var(--vk-u) * 3.5);
+  margin-bottom: calc(var(--vk-u) * 1.4);
+  color: var(--sl-ink);
+  z-index: 4;
+}
+
+/* ── ใบที่ใช้แล้ว ───────────────────────────────────────────────────────── */
+
+[data-design='stubline'] .vk-card[data-status='redeemed'],
+[data-design='stubline'] .vk-card[data-status='expired'],
+[data-design='stubline'] .vk-card[data-status='void'] {
+  filter: none; opacity: 1;
+  --sl-brass: #cdc8bd;
+  --sl-ink: #5b564a;
+  --sl-mute: #918b7e;
+}
