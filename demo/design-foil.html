@@ -40,7 +40,7 @@
 
 <div class="hd">
   <span class="hd__t">ตั๋วฟอยล์ทอง</span>
-  <span class="hd__s">ทำตามภาพอ้างอิงที่ไท้เคาะ · ยังไม่ต่อการเอียง/ประกายวิ่ง</span>
+  <span class="hd__s" id="status">กำลังเริ่ม…</span>
   <span class="sp"></span>
   <span class="hd__s">ตัวอย่าง</span>
   <div class="seg" id="seg">
@@ -62,6 +62,7 @@ import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
 /* ?spot=x,y ตรึงตำแหน่งดวงแสงไว้ที่จุดเดียว — ใช้ตอนแคปหน้าจอเทียบว่าดวงแสงขยับจริง
    ปกติ (ไม่ใส่) ดวงแสงจะวิ่งตามเมาส์/การเอียงเครื่อง */
 const FIXED = new URLSearchParams(location.search).get('spot');
+const say = (t) => { document.querySelector('#status').textContent = t; };
 
 const SAMPLES = {
   percent: { code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
@@ -107,15 +108,36 @@ function paint() {
       </div>
     </section>`).join('');
 
-  for (const card of document.querySelectorAll('.vk-card')) {
-    if (FIXED !== null) {
-      const [x, y = x] = FIXED.split(',');
+  const cards = [...document.querySelectorAll('.vk-card')];
+  if (FIXED !== null) {
+    const [x, y = x] = FIXED.split(',');
+    for (const card of cards) {
       card.style.setProperty('--ft-spot-x', `${x}%`);
       card.style.setProperty('--ft-spot-y', `${y}%`);
-    } else {
-      attachFoilTilt(card);
     }
+    say(`ตรึงดวงแสงไว้ที่ ${x}%, ${y}% — เอา ?spot ออกจากลิงก์ถ้าอยากให้วิ่งตามเมาส์`);
+    return;
   }
+
+  /* บอกสถานะให้เห็นบนหน้าเลย — ถ้าการเอียงไม่ทำงานจะได้รู้ทันทีว่าเพราะอะไร
+     ไม่ใช่นั่งเดาว่าโค้ดพังหรือเครื่องตั้งค่าไว้ */
+  Promise.all(cards.map((c) => attachFoilTilt(c))).then((rs) => {
+    const r = rs[0] || {};
+    if (r.state === 'reduced-motion') {
+      say('⚠️ ปิดอยู่ เพราะเครื่องตั้งค่า "ลดแอนิเมชัน" ไว้ — Windows: การช่วยการเข้าถึง → เอฟเฟกต์ภาพ → เอฟเฟกต์ภาพเคลื่อนไหว');
+    } else if (r.state === 'load-failed') {
+      say(`⚠️ โหลดไลบรารีเอียงไม่สำเร็จ — ${r.error}`);
+    } else if (r.state === 'on') {
+      say('เอาเมาส์ไปวางบนใบ แล้วดูดวงแสงวิ่ง');
+      const live = rs.find((x) => x && x.spot);
+      cards[0].addEventListener('pointermove', () => {
+        const [sx, sy] = live.spot();
+        say(`ดวงแสง ${sx || '—'} , ${sy || '—'}`);
+      }, { passive: true });
+    } else {
+      say(`⚠️ สถานะไม่รู้จัก: ${r.state}`);
+    }
+  });
 }
 
 /* iOS ขอสิทธิ์ไจโรได้เฉพาะตอนผู้ใช้แตะ — ผูกไว้กับการแตะครั้งแรกของหน้า */

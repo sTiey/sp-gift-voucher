@@ -77,6 +77,15 @@
     rgba(252, 236, 186, 0.36) 40%,
     rgba(248, 224, 158, 0) 100%
   );
+  /* ดวงที่สาม — ไท้วงจุดนี้มาเอง (มุมล่างขวาของตัวเลข)
+     เล็กและคมกว่าสองดวงแรก ทำหน้าที่เป็นประกายปลายเส้น ไม่ใช่แสงตกกระทบเป็นผืน */
+  --ft-foil-spot3: radial-gradient(
+    circle calc(var(--ft-spot-r) * 0.44)
+      at calc(var(--ft-spot-x) + 58%) calc(var(--ft-spot-y) + 66%),
+    rgba(255, 252, 240, 0.82) 0%,
+    rgba(253, 240, 198, 0.4) 34%,
+    rgba(250, 228, 165, 0) 100%
+  );
 
   --ft-mono: 'IBM Plex Mono', 'Noto Sans Thai', ui-monospace, monospace;
   --ft-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
@@ -290,14 +299,15 @@
     var(--ft-foil-tex),
     var(--ft-foil-spot),
     var(--ft-foil-spot2),
+    var(--ft-foil-spot3),
     var(--ft-foil-round),
     var(--ft-foil-grad);
-  background-size: 76px 76px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-size: 76px 76px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   background-position: 0 0;
-  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
   /* ดวงแสงใช้ normal + ความโปร่ง เพราะคุมได้ตรงไปตรงมา — screen จะฟุ้งจนขาวโพลน
      ผิวฟอยล์อยู่บนสุดจึงพาดผ่านดวงแสงด้วย เหมือนผิวจริงที่ยังเห็นเนื้อแม้ตรงที่สะท้อน */
-  background-blend-mode: overlay, normal, normal, overlay, normal;
+  background-blend-mode: overlay, normal, normal, normal, overlay, normal;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -333,14 +343,15 @@
     var(--ft-foil-tex),
     var(--ft-foil-spot),
     var(--ft-foil-spot2),
+    var(--ft-foil-spot3),
     var(--ft-foil-round),
     var(--ft-foil-grad);
-  background-size: 76px 76px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-size: 76px 76px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   background-position: 0 0;
-  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
   /* ดวงแสงใช้ normal + ความโปร่ง เพราะคุมได้ตรงไปตรงมา — screen จะฟุ้งจนขาวโพลน
      ผิวฟอยล์อยู่บนสุดจึงพาดผ่านดวงแสงด้วย เหมือนผิวจริงที่ยังเห็นเนื้อแม้ตรงที่สะท้อน */
-  background-blend-mode: overlay, normal, normal, overlay, normal;
+  background-blend-mode: overlay, normal, normal, normal, overlay, normal;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
