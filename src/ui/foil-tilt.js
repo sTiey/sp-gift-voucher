@@ -64,6 +64,12 @@ export async function attachFoilTilt(card, opt = {}) {
      จึงต้องคืนสถานะออกไปให้หน้าเว็บเอาไปแสดง ไม่ใช่คืน null เฉย ๆ
      (Windows ปิดเอฟเฟกต์แอนิเมชันไว้ก็เข้าเงื่อนไขนี้ — คนตั้งไว้เยอะกว่าที่คิด) */
   if (REDUCED() && !opt.force) return { state: 'reduced-motion', destroy() {} };
+  /* เครื่องสเปกต่ำ: ข้ามการเอียงไปเลย เหลือหน้าตา "ตอนพัก" ซึ่งคือแบบที่ไท้อนุมัติ
+     ผิวฟอยล์ ขอบรับแสง เงา ครบเหมือนเดิมทุกอย่าง ต่างแค่ไม่ขยับตามเมาส์
+     ดีกว่าปล่อยให้กระตุกจนใช้ไม่ได้ · เบราว์เซอร์เก่าที่ไม่บอกสเปกจะถือว่าแรงพอ */
+  if (!opt.force && (navigator.deviceMemory <= 2 || navigator.hardwareConcurrency <= 2)) {
+    return { state: 'low-end', destroy() {} };
+  }
 
   let VanillaTilt;
   try {
@@ -117,24 +123,37 @@ export async function attachFoilTilt(card, opt = {}) {
   const BEV_X = 3.2;        /* พิกเซล */
   const BEV_Y = 1.25;
 
-  const setSpot = (fx, fy) => {
-    const cx = Math.min(Math.max(fx, 0), 1);
-    const cy = Math.min(Math.max(fy, 0), 1);
+  /* ⚠️ เบราว์เซอร์ยิง pointermove ได้เกิน 120 ครั้ง/วินาที แต่จอวาดได้แค่ 60
+     เขียนสไตล์ทุกครั้งที่ยิง = คำนวณสไตล์ทิ้งไปกว่าครึ่ง
+     รวบไว้แล้วเขียนทีเดียวตอนเบราว์เซอร์จะวาดจริง — ภาพที่ออกมาเหมือนกันเป๊ะ
+     เพราะค่าสุดท้ายก่อนวาดคือค่าเดียวกัน แค่ไม่เสียแรงกับค่าระหว่างทางที่ไม่มีใครเห็น */
+  let pending = null;
+  let frame = 0;
+
+  const flush = () => {
+    frame = 0;
+    if (!pending) return;
+    const [cx, cy] = pending;
+    pending = null;
     const x = (0.5 - cx) * ENV + 50;
     const y = (0.5 - cy) * ENV + 50;
     if (Math.abs(x - lastX) < 0.4 && Math.abs(y - lastY) < 0.4) return;
     lastX = x;
     lastY = y;
-    card.style.setProperty('--ft-ex', `${x.toFixed(1)}%`);
-    card.style.setProperty('--ft-ey', `${y.toFixed(1)}%`);
-    /* ระยะเลื่อนพื้นผิวเป็นพิกเซล — ไม่ผูกกับขนาดกระเบื้อง จึงย่อกระเบื้องให้
-       ลายละเอียดขึ้นได้โดยไม่เสียระยะเลื่อน */
-    card.style.setProperty('--ft-px', `${((0.5 - cx) * 150).toFixed(1)}px`);
-    card.style.setProperty('--ft-py', `${((0.5 - cy) * 150).toFixed(1)}px`);
-    card.style.setProperty('--ft-bx', `${((cx - 0.5) * 2 * BEV_X).toFixed(2)}px`);
+    const st = card.style;
+    st.setProperty('--ft-ex', `${x.toFixed(1)}%`);
+    st.setProperty('--ft-ey', `${y.toFixed(1)}%`);
+    st.setProperty('--ft-px', `${((0.5 - cx) * 150).toFixed(1)}px`);
+    st.setProperty('--ft-py', `${((0.5 - cy) * 150).toFixed(1)}px`);
+    st.setProperty('--ft-bx', `${((cx - 0.5) * 2 * BEV_X).toFixed(2)}px`);
     /* ⚠️ ต้องเป็นบวกเสมอ = เงาทอดลงล่างเสมอ = ตัวอักษรนูนเสมอ
        ปล่อยให้ติดลบเมื่อไหร่ ตัวอักษรจะพลิกเป็นบุ๋มลงไปทันที */
-    card.style.setProperty('--ft-by', `${(1.45 + (cy - 0.5) * 2 * BEV_Y).toFixed(2)}px`);
+    st.setProperty('--ft-by', `${(1.45 + (cy - 0.5) * 2 * BEV_Y).toFixed(2)}px`);
+  };
+
+  const setSpot = (fx, fy) => {
+    pending = [Math.min(Math.max(fx, 0), 1), Math.min(Math.max(fy, 0), 1)];
+    if (!frame) frame = requestAnimationFrame(flush);
   };
 
   /* ⚠️ ทางเดินที่ 1 — อ่านเมาส์จากใบเองตรง ๆ ไม่ผ่านไลบรารี
@@ -159,6 +178,16 @@ export async function attachFoilTilt(card, opt = {}) {
     setSpot(px / 100, py / 100);
   };
 
+  /* บอกล่วงหน้าว่าตัวเลขจะเปลี่ยนบ่อย → เบราว์เซอร์แยกมันเป็นชั้นของตัวเอง
+     การวาดใหม่จึงจำกัดอยู่แค่ตัวเลข ไม่ลามไปวาดทั้งใบ
+     ใส่ตอนติดและถอดตอนเลิกใช้ ไม่ทิ้งไว้ถาวรเพราะมันกินหน่วยความจำ */
+  const paint = card.querySelector('.vk-card__value');
+  if (paint) {
+    /* ⚠️ ห้ามใส่ contain: paint ตรงนี้ — เงาที่ทอดออกนอกกล่องจะโดนตัดทิ้ง
+       ซึ่งเปลี่ยนหน้าตาที่อนุมัติไปแล้ว · will-change อย่างเดียวพอ */
+    paint.style.willChange = 'filter, background-position';
+  }
+
   card.addEventListener('pointermove', onPointer, { passive: true });
   card.addEventListener('pointerleave', onLeave, { passive: true });
   card.addEventListener('tiltChange', onTilt);
@@ -172,6 +201,8 @@ export async function attachFoilTilt(card, opt = {}) {
       card.removeEventListener('pointerleave', onLeave);
       card.removeEventListener('tiltChange', onTilt);
       card.vanillaTilt?.destroy();
+      if (paint) paint.style.willChange = '';
+      if (frame) cancelAnimationFrame(frame);
       onLeave();
     },
   };

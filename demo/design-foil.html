@@ -164,6 +164,13 @@ function wire(cards, force) {
       diag.querySelector('#force').onclick = () => wire(cards, true);
       return;
     }
+    if (r.state === 'low-end') {
+      box(true, '<b>เครื่องนี้ถูกจัดว่าสเปกต่ำ</b> — ปิดการเอียงไว้เพื่อไม่ให้กระตุก ' +
+        '<span>หน้าตายังเป็นแบบที่อนุมัติทุกอย่าง ต่างแค่ไม่ขยับตามเมาส์</span> ' +
+        '<button type="button" id="force">บังคับเปิดเพื่อดู</button>');
+      diag.querySelector('#force').onclick = () => wire(cards, true);
+      return;
+    }
     if (r.state !== 'on') {
       box(true, `<b>⚠️ เปิดเอฟเฟกต์ไม่สำเร็จ</b> — ${r.state}${r.error ? ' · ' + r.error : ''}`);
       return;
