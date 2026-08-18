@@ -18,6 +18,7 @@
 
 [data-design='foilticket'] {
   --ft-paper: #f7f3ea;          /* กระดาษงาช้าง */
+  --ft-paper-0: rgba(247, 243, 234, 0);   /* สีเดียวกันแต่โปร่ง — ใช้เป็นปลายม่าน */
   --ft-paper-2: #f1ece0;        /* สำรอง เผื่อทรงอื่นที่ยังใช้ก้านสีอ่อน */
   --ft-ink: #7a5c34;            /* น้ำตาลอุ่น — ตัวหนังสือทั้งใบ ไม่ใช้ดำ */
   --ft-ink-2: #a08a68;          /* น้ำตาลอ่อน สำหรับบรรทัดรอง */
@@ -95,7 +96,9 @@
 
   --ft-stub: 30;                /* ก้านฉีก = 30% ของความกว้างใบ */
   --ft-pad: 1.7;                /* ระยะขอบเนื้อหา */
-  --ft-text: 13.4;              /* ความกว้างคอลัมน์ตัวหนังสือ — ที่เหลือยกให้ตัวเลข */
+  --ft-text: 12.6;              /* คอลัมน์ตัวหนังสือ — ที่เหลือยกให้ตัวเลข
+                                   ⚠️ ข้อจำกัดจริงของขนาดตัวเลขคือ **ความกว้าง ไม่ใช่ความสูง**
+                                   จะขยายตัวเลขต้องแบ่งที่มาจากตรงนี้ และต้องวัดซ้ำทั้ง 5 แบบคูปอง */
   --ft-mark: 32;                /* ลายน้ำ — ใหญ่จนกรอบสี่เหลี่ยมโดนก้านตัดหมด เหลือแค่หัวอักษร */
   --ft-notch: 0.85;             /* รัศมีรอยบากครึ่งวงกลม */
   --ft-scallop: 0.4;            /* รัศมีคลื่นขอบขวา */
@@ -115,9 +118,34 @@
   /* เนื้อกระดาษ — ภาพโปร่งใสเม็ดขาว/ดำ วางทับเฉย ๆ ไม่ต้องผสมโหมด
      ซึ่งถูกกว่า และได้ผลเท่ากันทั้งบนครีมและบนก้านน้ำเงิน
      นิ่งอยู่กับที่ — ไม่ขยับตอนเอียง จึงวาดครั้งเดียวจบ ไม่กินแรงตอนขยับ */
+  /* ── ชั้นของกระดาษ เรียงจากบนลงล่าง ───────────────────────────
+       1. เนื้อกระดาษ        — อยู่บนสุดเสมอ เพราะมันคือผิวของแผ่นจริง
+       2. ม่านครีมไล่จาง     — ทึบสุดทางซ้าย โปร่งขึ้นเรื่อย ๆ จนจางสุดที่แนวฉีก
+       3. ภาพสินค้า       — ชิดขวา สูงเต็มใบ
+       4. สีกระดาษทึบ     — พื้นสุด
+     ไท้สั่ง: "เป็น Bg layer หลังสุด หลัง texture พื้นผิวของกระดาษอีกที"
+
+     ⚠️ ก้านฉีกไม่เห็นภาพนี้ เพราะกล่องก้านทาพื้นน้ำเงินทึบทับอยู่แล้ว
+        ภาพจึงจางหายพอดีตรงแนวฉีก — ตรงกับที่ไท้ขอพอดี ไม่ต้องตัดภาพเอง */
   background:
     url('../../../assets/textures/paper-grain.webp') 0 0 / 100px 100px repeat,
+    linear-gradient(to top,
+      var(--ft-paper) 0%,
+      rgba(247, 243, 234, 0.72) 16%,
+      var(--ft-paper-0) 34%),
+    linear-gradient(to right,
+      var(--ft-paper) 2%,
+      rgba(247, 243, 234, 0.985) 20%,
+      rgba(247, 243, 234, 0.93) 40%,
+      rgba(247, 243, 234, 0.85) 56%,
+      rgba(247, 243, 234, 0.78) 70%),
+    var(--ft-art, none) right center / cover no-repeat,
     var(--ft-paper);
+  /* 🔑 ภาพสินค้าผสมแบบ "คูณ" กับกระดาษ — เหมือนหมึกที่พิมพ์ลงกระดาษจริง
+     วางทับเฉย ๆ ไม่ได้ผล — รูปเหล็กดัดเป็นรูปสว่างเกือบทั้งภาพ (ผนังขาว/ท้องฟ้า)
+     วางบนกระดาษครีมแล้วจึงจมหายไปเฉย ๆ (เจอมาแล้วรอบนี้)
+     คูณ = ส่วนสว่างปล่อยกระดาษไว้ตามเดิม ส่วนเส้นเหล็กดำกดกระดาษให้เข้มขึ้น → เห็นลายเหล็กทันที */
+  background-blend-mode: normal, normal, normal, multiply, normal;
   color: var(--ft-ink);
   font-family: var(--ft-sans);
   border-radius: calc(var(--vk-u) * 0.55);
@@ -224,11 +252,9 @@
   height: calc(var(--vk-u) * 2);
   mix-blend-mode: multiply;
 }
-[data-design='foilticket'] .vk-card__brandname {
-  font-family: var(--ft-mono); font-weight: 500;
-  font-size: calc(var(--vk-u) * 0.6); letter-spacing: 0.34em;
-  color: var(--ft-ink); white-space: nowrap; overflow: hidden;
-}
+/* ไท้สั่งตัดคำว่า SP EMPIRE ออก (2026-08-18) — เหลือแต่ตรามอโนแกรม
+   ซ่อนด้วย CSS ไม่ตัดออกจาก markup — ดีไซน์อื่นใช้ markup ชุดเดียวกัน และยังใช้ชื่ออยู่ */
+[data-design='foilticket'] .vk-card__brandname { display: none; }
 /* ใบที่ยังใช้ได้ = ไม่ต้องป้ายบอกว่าใช้ได้ — มี "ใช้ได้ถึง 31 ธ.ค. 69" บนก้านอยู่แล้ว
    ป้ายนี้เก็บไว้เฉพาะใบที่ผิดปกติ (ใช้แล้ว/หมดอายุ/ยกเลิก/ยังไม่เริ่ม) — คนจะสะดุ้งทันที */
 [data-design='foilticket'] .vk-card[data-status='active'] .vk-card__pill { display: none; }
@@ -246,30 +272,34 @@
 
 /* ── ตัวหนังสือฝั่งซ้าย — เล็กหมด ไม่มีของขนาดกลาง ─────────────────────── */
 
+/* หมวดสิทธิ์ — ชิปสีน้ำเงินหมึก สีเดียวกับก้านฉีก
+   🔑 เดิมสีน้ำเงินมีที่ก้านฉีกที่เดียว — ทั้งใบเลยดูเหมือนของสองชิ้นมาต่อกัน
+      ดึงสีนี้ข้ามมาฝั่งซ้ายสักจุด ทั้งใบจึงอ่านเป็นชิ้นเดียว และได้สีตัดกันตามที่ไท้ขอโดยไม่ต้องเพิ่มสีใหม่ */
 [data-design='foilticket'] .vk-card__kicker {
   grid-area: kicker;
   position: relative; z-index: 2;
-  margin: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 0.42) calc(var(--vk-u) * var(--ft-pad));
-  display: flex; align-items: center; gap: calc(var(--vk-u) * 0.5);
+  justify-self: start;
+  margin: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 0.72) calc(var(--vk-u) * var(--ft-pad));
+  padding: calc(var(--vk-u) * 0.3) calc(var(--vk-u) * 0.72);
+  border-radius: 2px;
+  background: var(--ft-stub-bg);
   font-family: var(--ft-mono); font-weight: 500;
-  font-size: calc(var(--vk-u) * 0.62); letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--ft-ink-2);
+  font-size: calc(var(--vk-u) * 0.56); letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ft-stub-ink);
   white-space: nowrap; overflow: hidden;
-}
-[data-design='foilticket'] .vk-card__kicker::before {
-  content: ''; flex: none;
-  width: calc(var(--vk-u) * 1.4); height: 1px; background: var(--ft-ink-2);
 }
 
 [data-design='foilticket'] .vk-card__title {
   grid-area: title;
   position: relative; z-index: 2;
   margin: 0 calc(var(--vk-u) * 0.8) calc(var(--vk-u) * 0.9) calc(var(--vk-u) * var(--ft-pad));
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-  font-weight: 500;
-  font-size: calc(var(--vk-u) * 1.06);
-  line-height: 1.34;
-  letter-spacing: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+  /* หัวข้อ = ชิ้นที่หนักสุดของตัวหนังสือทั้งใบ — ต้องกระโดดจากชิปหมวดชัดเจน
+     ไม่งั้นทุกอย่างตัวเท่ากันหมด ตาไม่รู้จะเริ่มอ่านตรงไหน */
+  font-weight: 700;
+  font-size: calc(var(--vk-u) * 1.34);
+  line-height: 1.24;
+  letter-spacing: -0.005em;
   color: var(--ft-ink);
 }
 
@@ -284,6 +314,13 @@
 }
 /* แต่ละข้อเป็นก้อนที่ห้ามขึ้นบรรทัด — จุดตัดที่เหลือคือช่องไฟรอบ · เท่านั้น */
 [data-design='foilticket'] .vk-card__cond-part { white-space: nowrap; }
+/* คำอธิบายจาง จำนวนเงินเข้มและหนัก — ตากระโดดไปที่ตัวเลขก่อน ค่อยอ่านคำรอบ ๆ */
+[data-design='foilticket'] .vk-card__cond-label { color: var(--ft-ink-2); }
+[data-design='foilticket'] .vk-card__cond-value {
+  color: var(--ft-stub-bg);
+  font-weight: 600;
+}
+[data-design='foilticket'] .vk-card__cond-sep { color: var(--ft-line); }
 [data-design='foilticket'] .vk-card__note {
   grid-area: note;
   position: relative; z-index: 2;
@@ -309,21 +346,25 @@
 /* ⚠️ เดิมวางลอย (absolute) ซึ่งทำให้ ฿ กับ % ที่ลอยออกนอกกล่องยื่นไปทับคอลัมน์ซ้ายได้
    ตอนนี้เป็นช่องหนึ่งของกริดและเรียงในสายปกติ → กล่องกว้างเท่ากลุ่มทั้งหมดจริง
    จัดกึ่งกลางช่องแล้วไม่มีอะไรล้นไปหาตัวหนังสือ ไม่ว่าตัวเลขจะกี่หลัก */
+/* ⚠️ วางลอย (absolute) ไม่ใช่ช่องกริด — เพราะช่องกริดของตัวเลขเริ่มใต้หัวใบ
+   จัดกึ่งกลางช่องนั้น = ต่ำกว่ากึ่งกลางใบจริงอยู่ราวครึ่งหนึ่งของหัวใบ (ไท้สั่ง "ขยับขึ้นอยู่กลางใบ")
+   กางเกร็งที่เคยทำให้ต้องเลิก absolute คือ ฿ กับ % เคยลอยออกนอกกล่องไปทับตัวหนังสือ
+   — ตอนนี้สองตัวนั้นเรียงในสายปกติแล้ว กล่องจึงกว้างเท่าช่องจริง ไม่ล้นไปหาใคร */
 [data-design='foilticket'][data-shape='ticket'] .vk-card__value {
-  grid-area: num;
-  position: relative;
+  position: absolute;
   z-index: 3;
-  /* เดิมลอยกึ่งกลางช่องตัวเอง — ก้นตัวเลขจึงไม่ตรงกับอะไรเลย
-     วางชิดล่างแทน → ก้นตัวเลขไปนั่งเส้นเดียวกับบรรทัดล่างสุดของคอลัมน์ซ้าย พอดี
-     (ค่า line-height 0.84 ทำให้เส้นฐานอยู่สูงจากก้นกล่องเท่ากับระยะขอบล่างของบรรทัดนั้นพอดี) */
-  align-self: end;
-  justify-self: center;
+  top: 50%;
+  /* เลื่อนกล่องมาทางซ้ายทั้งก้อน 0.7u (ความกว้างเท่าเดิม) — ไท้ว่าชิดเส้นปรุเกินไป */
+  inset-inline-start: calc(var(--vk-u) * (var(--ft-text) - 0.7));
+  inset-inline-end: calc(var(--ft-stub) * 1% + var(--vk-u) * 0.7);
+  transform: translateY(-50%);
   display: flex;
+  justify-content: center;
   align-items: flex-start;
   gap: calc(var(--vk-u) * 0.16);
   /* ⚠️ ระยะยกตัวเลขขึ้นต้องอยู่ในคำสั่งรวบนี้ — เขียน margin-bottom แยกไว้ข้างบน
      จะโดน margin: 0 บรรทัดนี้ล้างทิ้ง และไม่มีอะไรฟ้องเลย (เจอมาแล้วรอบนี้) */
-  margin: 0 0 calc(var(--vk-u) * 1.4); padding: 0; background: none;
+  margin: 0; padding: 0; background: none;
   pointer-events: none;
 }
 
@@ -331,9 +372,16 @@
   display: block;
   font-family: var(--ft-num);
   font-weight: 600;
-  font-size: calc(var(--vk-u) * 12);
+  font-size: calc(var(--vk-u) * 13.9);
   line-height: 0.84;
   letter-spacing: -0.045em;
+  /* ⚠️ ตัวสุดท้ายโดนตัดขอบขวา — สาเหตุคือ letter-spacing ติดลบ
+     ช่องไฟติดลบถูกเติม "หลังตัวสุดท้าย" ด้วย → กล่องขององค์ประกอบหดสั้นกว่าหมึกจริง
+     และเนื่องจากแผ่นฟอยล์ถูกฉลุตามรูปตัวอักษร (background-clip: text) ส่วนที่เลยกล่องจึงไม่มีสี
+     = ขอบขวาของตัวสุดท้ายโดนเฉือนเรียบ ดูเหมือนตัวอักษรผิดรูป
+     แก้ด้วยการขยายกล่องด้วย padding แล้วหักคืนด้วย margin ติดลบ → สีเต็มตัว แต่ตำแหน่งไม่ขยับ */
+  padding-inline-end: 0.06em;
+  margin-inline-end: -0.06em;
 
   /* ฟอยล์: ผิวหยาบทับไล่เฉดทอง แล้วฉลุทั้งสองชั้นตามรูปตัวอักษร */
   /* ⚠️⚠️ ไล่เฉด "ดวงแสง" 3 ดวงต้องเขียนตรงนี้ ห้ามยกไปเก็บเป็นตัวแปร
@@ -423,12 +471,12 @@
 
 /* ตัวเลขยิ่งหลายหลักยิ่งต้องเล็กลง ไม่งั้นล้นเข้าไปในคอลัมน์ตัวหนังสือ
    ตัวเลขชุดนี้วัดมาแล้วว่าไม่ล้นทั้ง 5 แบบคูปอง — แก้แล้วต้องวัดใหม่ทุกครั้ง */
-[data-design='foilticket'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 8.6); }
-[data-design='foilticket'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 7.5); }
+[data-design='foilticket'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 8.9); }
+[data-design='foilticket'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 7.6); }
 [data-design='foilticket'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 6); }
-[data-design='foilticket'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 5.1); }
+[data-design='foilticket'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 5); }
 [data-design='foilticket'] .vk-card__num[data-text='true'][data-len] {
-  font-size: calc(var(--vk-u) * 4.8); line-height: 1.08; letter-spacing: -0.01em;
+  font-size: calc(var(--vk-u) * 5.8); line-height: 1.08; letter-spacing: -0.01em;
 }
 
 /* ฿ และ % — ทองเหมือนกันแต่เล็กกว่ามาก ลอยออกนอกกล่องไม่กินความกว้าง */
@@ -440,7 +488,7 @@
   align-self: flex-start;
   margin-block-start: calc(var(--vk-u) * 0.62);
   font-family: var(--ft-num); font-weight: 600;
-  font-size: calc(var(--vk-u) * 2.2); line-height: 1;
+  font-size: calc(var(--vk-u) * 2.4); line-height: 1;
   /* ⚠️ ต้องเขียนไล่เฉดตรงนี้ ห้ามยกไปเก็บเป็นตัวแปร — ตัวแปรที่ข้างในมี var()
      จะถูกแทนค่าตั้งแต่จุดที่ประกาศ ไม่ใช่ที่จุดที่ใช้ แล้วค่าที่โค้ดตั้งใหม่จะไม่มีผล
      (เจอจริงมาแล้ว ไท้ต้องอัดคลิปมาให้ดูถึงจะรู้ว่าแสงค้างนิ่ง โดยไม่มี error เลย)
@@ -563,6 +611,8 @@
   --ft-stub-ink: #e6e3dc;
   --ft-stub-ink-2: rgba(230, 227, 220, 0.58);
   --ft-perf-line: rgba(230, 227, 220, 0.32);
+  /* ใบที่ตายแล้วไม่ควรมีภาพสินค้าสดใสกว่าตัวใบ — ถอดภาพออกเลย ไม่ต้องหรี่ */
+  --ft-art: none;
   /* เปลี่ยนแค่พื้นใต้แผนที่ห้อง — แผนที่เดิมยังทำงาน ได้ฟอยล์เงินหม่นแทนทอง */
   --ft-foil-base: linear-gradient(176deg, #a9a49a 0%, #918c83 54%, #9c968c 100%);
 }
@@ -699,4 +749,89 @@
    เคลือบมันค้างกลางใบไว้เฉย ๆ ก็พอ แต่ถอดเลเยอร์การ์ดจอออก จะได้ไม่กินหน่วยความจำเครื่องเปล่า ๆ */
 @media (prefers-reduced-motion: reduce) {
   [data-design='foilticket'] .vk-card__sheen { will-change: auto; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ผังที่สอง — ตัวเลขเตี้ยแต่กว้าง (จำนวนเงิน / คำ) — ไท้สั่ง 2026-08-18
+   ไท้สั่งตรง ๆ: "ขนาด design/layout ทำแยกกันก็ได้ ตัวเลขเปอร์เซนต์มันสูงแต่มันแคบ
+   ตัวเลขที่เป็นชุดจำนวนเงินมันไม่สูงแต่มันกว้าง คุณก็ปรับตำแหน่งข้อความให้วิ่งล้อมรอบด้านใต้หรือด้านบนแทนก็ได้"
+
+   🔑 ข้อจำกัดของสองผังสลับกัน:
+      ผังสูง-แคบ  ตัวเลขชน **ความกว้าง** ก่อน (เพราะต้องแบ่งกับคอลัมน์ข้อความ)
+      ผังเตี้ย-กว้าง ตัวเลขชน **ความสูง** ก่อน (ได้ความกว้างเต็มแล้ว เหลือแค่ช่องสูงระหว่างหัวกับข้อความ)
+      → ขนาดตัวอักษรของสองผังจึงต้องคนละชุด และต้องวัดคนละทาง
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] {
+  /* สามคอลัมน์: หัวข้อยืดได้ · เงื่อนไขกว้างเท่าเนื้อมัน · ก้านฉีก
+     หัวข้อกับเงื่อนไขอยู่แถวเดียวกัน (ไท้สั่ง) — หัวข้อชิดซ้าย เงื่อนไขชิดขวา นั่งเส้นเดียวกัน */
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    calc(var(--ft-stub) * 1%);
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    'head   head   stub'
+    'num    num    stub'
+    'kicker kicker stub'
+    'title  cond   stub'
+    'note   note   stub';
+}
+
+/* เงื่อนไขขึ้นไปนั่งเส้นเดียวกับหัวข้อ — baseline คือสิ่งที่ทำให้มันอ่านเป็นบรรทัดเดียวจริง
+   (ถ้าจัดชิดบน/กึ่งกลาง ตัวอักษรคนละขนาดจะเหลื่อมกันทันที) */
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__title {
+  margin-bottom: calc(var(--vk-u) * var(--ft-pad));
+  align-self: baseline;
+}
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__cond {
+  grid-area: cond;
+  align-self: baseline;
+  justify-self: end;
+  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad))
+          calc(var(--vk-u) * 1.2);
+}
+
+/* ในผังนี้ตัวเลขกลับเข้าสายกริด ไม่ลอยแล้ว
+   เพราะแถว num เป็น 1fr — มันจะกินที่เหลือทั้งหมดหลังหักหัวใบกับก้อนข้อความออก
+   แล้วจัดกึ่งกลางในช่องนั้นเอง — ข้อความยาวสั้นแค่ไหน ตัวเลขก็ขยับตามเอง */
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__value {
+  position: relative;
+  inset: auto;
+  transform: none;
+  grid-area: num;
+  align-self: center;
+  /* กึ่งกลางแล้วเยื้องขวาเล็กน้อย (ไท้สั่ง) — ชิดซ้ายสุดแล้วไม่ผ่าน
+     ⚠️ justify-self: center จะหารครึ่งระยะขอบที่ต่างกัน → อยากเยื้องขวา X ต้องใส่ขอบซ้ายเพิ่ม 2X */
+  justify-self: center;
+  margin: 0 calc(var(--vk-u) * var(--ft-pad))
+            0 calc(var(--vk-u) * (var(--ft-pad) + 2.4));
+}
+
+/* ตัวเลขใหญ่ขึ้นมากเมื่อได้ความกว้างเต็มใบ
+   ⚠️ ค่าชุดนี้ถูกจำกัดด้วย **ความสูงของแถวที่เหลือ** ไม่ใช่ความกว้าง — แก้แล้วต้องวัดใหม่ */
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 9.6); }
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 8.8); }
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 8); }
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 6.9); }
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-text='true'][data-len] {
+  font-size: calc(var(--vk-u) * 6.4);
+}
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__lead,
+[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__unit {
+  font-size: calc(var(--vk-u) * 2.9);
+  margin-block-start: calc(var(--vk-u) * 0.8);
+}
+
+/* เส้นคาดสั้นใต้หัวข้อ — กราฟฟิกชิ้นเดียวที่คั่นหัวออกจากรายละเอียด
+
+   ⚠️ ทำเป็น ::after ไม่ได้ — หัวข้อใช้ -webkit-line-clamp จำกัดจำนวนบรรทัด
+      อะไรที่เป็น "เนื้อหา" ของกล่องนั้นจะโดนนับเป็นบรรทัดด้วย แล้วโดนตัดทิ้งโดยไม่มีอะไรฟ้อง
+      วาดเป็น "พื้นหลัง" ของกล่องแทน — พื้นหลังวาดบนกล่อง ไม่เกี่ยวกับการนับบรรทัดเลย */
+[data-design='foilticket'] .vk-card__title {
+  padding-bottom: calc(var(--vk-u) * 0.92);
+  background-image: linear-gradient(var(--ft-stub-bg), var(--ft-stub-bg));
+  background-repeat: no-repeat;
+  background-size: calc(var(--vk-u) * 2.2) 2px;
+  background-position: left bottom calc(var(--vk-u) * 0.3);
 }

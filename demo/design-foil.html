@@ -90,19 +90,19 @@ if (ZOOM) {
 }
 
 const SAMPLES = {
-  percent: { code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
+  percent: { art: 'fence', code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
     title: 'ส่วนลดพาร์ทเนอร์ ไตรมาส 3', note: 'ขอบคุณที่ร่วมงานกับเรามาตลอด 3 ปี',
     conditions: { minSpend: 10000, maxDiscount: 2000 }, audience: { segments: ['partner'] },
     validUntil: '2026-12-31T23:59:59+07:00', design: { badge: 'PARTNER' } },
-  amount: { code: 'VIP-3H8N-5TQA', kind: 'amount', value: 1500,
+  amount: { art: 'stair', code: 'VIP-3H8N-5TQA', kind: 'amount', value: 1500,
     title: 'บัตรกำนัลลูกค้าประจำ', conditions: { minSpend: 8000 },
     audience: { segments: ['vip'] }, validUntil: '2026-09-30T23:59:59+07:00' },
-  fixed: { code: 'BACK-9RD2-6MWB', kind: 'fixed_price', value: 7900,
+  fixed: { art: 'balcony', code: 'BACK-9RD2-6MWB', kind: 'fixed_price', value: 7900,
     title: 'ราคาพิเศษ · ราวระเบียง 1 ชุด', audience: { segments: ['returning'] },
     validUntil: '2026-10-31T23:59:59+07:00', design: { badge: '30 สิทธิ์' } },
-  ship: { code: 'SHIP-4C7B-8XJR', kind: 'free_shipping', value: 0,
+  ship: { art: 'gate', code: 'SHIP-4C7B-8XJR', kind: 'free_shipping', value: 0,
     title: 'ส่งฟรีทั่วประเทศ', conditions: { minSpend: 5000 }, validUntil: null },
-  used: { code: 'SPE-6J2X-4NBY', kind: 'amount', value: 500,
+  used: { art: 'window', code: 'SPE-6J2X-4NBY', kind: 'amount', value: 500,
     title: 'ส่วนลดต้อนรับลูกค้าใหม่', conditions: { minSpend: 3000 },
     state: 'redeemed', validUntil: '2026-12-31T23:59:59+07:00' },
 };
@@ -128,7 +128,7 @@ function paint() {
         <span class="row__note">${r.note}</span>
       </div>
       <div class="stage">
-        ${cardHtml(v, { design: 'foilticket', shape: 'ticket' })
+        ${cardHtml(v, { design: 'foilticket', shape: 'ticket', art: SAMPLES[sample].art })
           .replace('<div class="vk-voucher"', `<div class="vk-voucher"${r.face ? ` data-numface="${r.face}"` : ''}`)}
       </div>
     </section>`).join('');

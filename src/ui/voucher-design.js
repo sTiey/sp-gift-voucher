@@ -74,11 +74,11 @@ const TONE = {
  */
 function conditionBits(v) {
   const bits = [];
-  if (v.conditions.minSpend) bits.push(`${t('card.minSpendPrefix')} ${money(v.conditions.minSpend)}`);
-  if (v.conditions.maxDiscount) bits.push(`${t('card.maxDiscountPrefix')} ${money(v.conditions.maxDiscount)}`);
+  if (v.conditions.minSpend) bits.push({ label: t('card.minSpendPrefix'), value: money(v.conditions.minSpend) });
+  if (v.conditions.maxDiscount) bits.push({ label: t('card.maxDiscountPrefix'), value: money(v.conditions.maxDiscount) });
   const left = remainingUses(v);
   if (left != null && left > 0 && v.limits.total > 1) {
-    bits.push(`${t('card.remainingPrefix')} ${left} ${t('card.remainingSuffix')}`);
+    bits.push({ label: t('card.remainingPrefix'), value: `${left} ${t('card.remainingSuffix')}` });
   }
   return bits;
 }
@@ -127,7 +127,21 @@ export function cardHtml(v, opt = {}) {
   // ค่าเป็นคำ (เช่น "ส่งฟรี") ไม่ใช่ตัวเลข → ดีไซน์ต้องย่อขนาดและห้ามให้ถูกบัง
   const isText = !/^[\d,.×]/.test(parts.main);
 
-  const artSlug = opt.art || 'balcony';
+  const artSlug = opt.art || 'fence';
+  /* ภาพพื้นหลังของใบ — เป็นคนละไฟล์กับภาพสินค้าเต็ม เพราะย่อมาหนัก 1 ใน 8
+
+     ⚠️ **กับดักที่เสียเวลาไปจริง**: url() ที่อยู่ในตัวแปร CSS
+        ถึงจะเขียนไว้ใน style ของหน้าเว็บ แต่ Chrome กลับไปอ้างอิงกับ
+        **ที่อยู่ของไฟล์ CSS ที่เอาค่านั้นไปใช้** — พาที่เลยกลายเป็น /src/styles/assets/...
+        ภาพจึงโหลดไม่ขึ้น โดยที่หน้าไม่ฟ้องอะไรเลย (เสียเวลาไล่อยู่พักหนึ่ง)
+        → แก้ด้วยการ **คลี่ที่อยู่ให้เต็มตั้งแต่ใน JS** จะได้ไม่ขึ้นกับว่าใครเป็นคนตีความ */
+  const artPath = `../assets/products/bg/${artSlug}.webp`;
+  const artUrl = typeof document !== 'undefined'
+    ? new URL(artPath, document.baseURI).href
+    : artPath;
+  /* ⚠️ ใบที่ตายแล้วต้องตัดภาพที่นี่ — เคยไปเขียนทับใน CSS แล้วไม่มีผล
+     เพราะ style ที่ติดกับหน้าชนะกฎในไฟล์ CSS เสมอ ไม่ว่ากฎนั้นจะเจาะจงแค่ไหน */
+  const artBg = TONE[status] === 'dead' ? '' : `--ft-art:url('${esc(artUrl)}')`;
   const artFile = `../assets/products/${artSlug}-${shape === 'ticket' ? 'wide' : 'square'}.jpg`;
 
   const qr = opt.qr === false ? '' :
@@ -137,13 +151,21 @@ export function cardHtml(v, opt = {}) {
 
   /* แต่ละข้อห่อ span ของตัวเอง คั่นด้วยจุดกลางที่ขึ้นบรรทัดได้จุดเดียว */
   const conds = conditionBits(v)
-    .map((b) => `<span class="vk-card__cond-part">${esc(b)}</span>`)
+    .map((b) => `<span class="vk-card__cond-part">`
+      + `<span class="vk-card__cond-label">${esc(b.label)}</span> `
+      + `<span class="vk-card__cond-value">${esc(b.value)}</span></span>`)
     .join('<span class="vk-card__cond-sep"> · </span>');
+
+  /* ทรงของตัวเลขตัดสินผังทั้งใบ (ไท้สั่ง 2026-08-18):
+     เปอร์เซ็นต์สั้นแค่ 1-3 ตัว → สูงแต่แคบ → ข้อความอยู่ข้างได้
+     จำนวนเงินมีลูกน้ำกับจุลภาค → เตี้ยแต่กว้าง → ต้องกินความกว้างเต็ม แล้วเอาข้อความไปไว้ใต้
+     ยัดทั้งคู่เข้าผังเดียว = ใบหนึ่งตัวเลขเล็กเกินไป อีกใบชนเส้นปรุ — เป็นสิ่งที่เจอมาจริง */
+  const numShape = (v.kind === 'percent' || parts.main.length <= 2) ? 'tall' : 'wide';
 
   const variant = opt.variant ? ` data-variant="${esc(opt.variant)}"` : '';
 
   return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${variant}>
-  <article class="vk-card" data-status="${esc(status)}" data-kind="${esc(v.kind)}" data-code="${esc(v.code)}">
+  <article class="vk-card" data-status="${esc(status)}" data-kind="${esc(v.kind)}" data-numshape="${numShape}" data-code="${esc(v.code)}" style="${artBg}">
 
     <figure class="vk-card__art">
       <!-- ⚠️ ห้ามใส่ loading="lazy" ที่นี่
