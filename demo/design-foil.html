@@ -80,6 +80,14 @@ import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
    ปกติ (ไม่ใส่) แสงจะวิ่งตามเมาส์/การเอียงเครื่อง */
 const FIXED = new URLSearchParams(location.search).get('light');
 const say = (t) => { document.querySelector('#status').textContent = t; };
+/* ?zoom=N ขยายใบเพื่อตรวจผิวใกล้ ๆ — ใช้ตอนตรวจงานเท่านั้น ไม่เกี่ยวกับดีไซน์ */
+const ZOOM = new URLSearchParams(location.search).get('zoom');
+if (ZOOM) {
+  const st = document.createElement('style');
+  st.textContent = `.stage{zoom:${ZOOM}} .row__hd,.diag,.hd{display:none}
+                    .wrap{max-width:none;padding:0}`;
+  document.head.append(st);
+}
 
 const SAMPLES = {
   percent: { code: 'SPE-7K4M-92XH', kind: 'percent', value: 15,
