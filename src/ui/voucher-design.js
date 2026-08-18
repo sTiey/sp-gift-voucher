@@ -65,7 +65,14 @@ const TONE = {
   redeemed: 'dead', expired: 'dead', void: 'dead', draft: 'dead',
 };
 
-function conditionLine(v) {
+/**
+ * คืนเงื่อนไขเป็น "รายชิ้น" ไม่ใช่สายเดียวที่ต่อกันแล้ว
+ * ⚠️ ทำไมถึงต้องแยก: **ภาษาไทยไม่มีช่องไฟระหว่างคำ**
+ *    เบราว์เซอร์จึงตัดขึ้นบรรทัดกลางคำได้ — เจอจริง: "ลด" บรรทัดหนึ่ง "สูงสุด ฿2,000" อีกบรรทัด
+ *    `word-break: keep-all` **ไม่ช่วย** (ลองแล้ว Chrome ยังตัดอยู่)
+ *    ทางที่ได้ผลคือห่อแต่ละข้อด้วย span ที่สั่งห้ามขึ้นบรรทัด → ตัดได้เฉพาะตรงตัวคั่น
+ */
+function conditionBits(v) {
   const bits = [];
   if (v.conditions.minSpend) bits.push(`${t('card.minSpendPrefix')} ${money(v.conditions.minSpend)}`);
   if (v.conditions.maxDiscount) bits.push(`${t('card.maxDiscountPrefix')} ${money(v.conditions.maxDiscount)}`);
@@ -73,7 +80,19 @@ function conditionLine(v) {
   if (left != null && left > 0 && v.limits.total > 1) {
     bits.push(`${t('card.remainingPrefix')} ${left} ${t('card.remainingSuffix')}`);
   }
-  return bits.join(' · ');
+  return bits;
+}
+
+/**
+ * ข้อความสั้นๆ บนสันก้านฉีก — ย้ำอีกทีว่าใบนี้คือโปรอะไร (ไท้สั่ง)
+ * สั้นเพราะมันต้องหมุนตั้ง — ยาวไปกว่านี้จะเกินความสูงก้าน
+ * "ส่งฟรี" ไม่ต้องต่อตัวเลข — ชื่อชนิดกับค่าเป็นคำเดียวกัน ไม่งั้นได้ "ส่งฟรี ส่งฟรี"
+ */
+function spineText(v) {
+  const p = valueParts(v);
+  const head = t(`kind.${v.kind}`);
+  if (v.kind === 'free_shipping') return head;
+  return `${head} ${p.lead}${p.main}${p.unit}`;
 }
 
 function kickerLine(v) {
@@ -116,6 +135,11 @@ export function cardHtml(v, opt = {}) {
       dark: 'currentColor', light: 'none', quiet: 1,
     })}</div>`;
 
+  /* แต่ละข้อห่อ span ของตัวเอง คั่นด้วยจุดกลางที่ขึ้นบรรทัดได้จุดเดียว */
+  const conds = conditionBits(v)
+    .map((b) => `<span class="vk-card__cond-part">${esc(b)}</span>`)
+    .join('<span class="vk-card__cond-sep"> · </span>');
+
   const variant = opt.variant ? ` data-variant="${esc(opt.variant)}"` : '';
 
   return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${variant}>
@@ -143,15 +167,20 @@ export function cardHtml(v, opt = {}) {
           ${parts.unit ? `<span class="vk-card__unit">${esc(parts.unit)}</span>` : ''}
         </p>
         <h3 class="vk-card__title">${esc(v.title || '')}</h3>
-        ${conditionLine(v) ? `<p class="vk-card__cond">${esc(conditionLine(v))}</p>` : ''}
+        ${conds.length ? `<p class="vk-card__cond">${conds}</p>` : ''}
         ${v.note ? `<p class="vk-card__note">${esc(v.note)}</p>` : ''}
       </div>
 
       ${v.design?.badge ? `<span class="vk-card__badge">${esc(v.design.badge)}</span>` : ''}
     </div>
 
+    <!-- ชั้นเคลือบมันของกระดาษ — ดีไซน์ไหนไม่ใช้ก็ซ่อนไว้ ไม่มีเนื้อหา -->
+    <span class="vk-card__sheen" aria-hidden="true"></span>
+
     <aside class="vk-card__stub">
       ${qr}
+      <span class="vk-card__scan">${esc(t('card.scanHint'))}</span>
+      <span class="vk-card__spine">${esc(spineText(v))}</span>
       <div class="vk-card__stub-body">
         <span class="vk-card__label">${esc(t('card.codeLabel'))}</span>
         <span class="vk-card__code">${esc(v.code)}</span>

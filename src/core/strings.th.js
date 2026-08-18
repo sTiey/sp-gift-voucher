@@ -56,6 +56,7 @@ export const TH = {
   /* ---- บนตัวการ์ด ---- */
   card: {
     codeLabel: 'รหัสคูปอง',
+    scanHint: 'สแกนเพื่อใช้สิทธิ์',
     expiresPrefix: 'ใช้ได้ถึง',
     startsPrefix: 'เริ่มใช้ได้',
     noExpiry: 'ไม่มีวันหมดอายุ',

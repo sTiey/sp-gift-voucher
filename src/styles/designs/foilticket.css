@@ -31,7 +31,11 @@
   --ft-stub-ink: #f4ecdb;                       /* ตัวหนังสือ + QR บนก้าน */
   --ft-stub-ink-2: rgba(244, 236, 219, 0.58);   /* บรรทัดรองบนก้าน */
   --ft-perf-line: rgba(244, 236, 219, 0.5);    /* รอยปรุ — เส้นอยู่ฝั่งเข้ม ต้องสว่าง */
-  --ft-mark-op: 0.13;                           /* ความจางลายน้ำ */
+  --ft-mark-op: 0.16;
+  --ft-spine: 2.4;                              /* แถบสันซ้ายของก้าน — ที่ของข้อความแนวตั้ง */
+  --ft-spine-push: 0;                         /* ระยะที่ของขยับหนีสัน
+     ⚠️ เคยตั้ง 1.6 เพราะคิดว่าต้องกึ่งกลาง "ช่องที่เหลือหลังหักสัน" — ไท้ดูแล้วทักว่าเบี้ยว
+        ถูกของไท้: ตาวัดจากขอบก้านซึ่งเป็นเส้นแข็ง ไม่ได้วัดจากสันซึ่งเป็นเส้นจาง → กึ่งกลางก้านจริง คือ 0 */
 
   /* ฟอยล์ทอง — ไล่จากบรอนซ์เข้มในร่อง ไปเกือบขาวตรงสัน แล้วกลับลงเข้มอีก
      ตำแหน่งที่หยิบแผนที่ห้องมาใช้ผูกกับ --ft-ex / --ft-ey ซึ่งตัวเอียงการ์ดเป็นคนขยับ */
@@ -81,8 +85,8 @@
   --ft-px: 0px;             /* ระยะเลื่อนพื้นผิวตอนพลิก (พิกเซล) */
   --ft-py: 0px;
   --ft-ey: 50%;
-  --ft-bx: 1.2px;           /* ทิศเงาที่ทอดลงกระดาษ — ต้องลงล่างเสมอ ไม่งั้นกลายเป็นบุ๋ม */
-  --ft-by: 1.8px;
+  --ft-bx: 0.75px;           /* ทิศเงาที่ทอดลงกระดาษ — ต้องลงล่างเสมอ ไม่งั้นกลายเป็นบุ๋ม */
+  --ft-by: 1.05px;
 
   --ft-mono: 'IBM Plex Mono', 'Noto Sans Thai', ui-monospace, monospace;
   --ft-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
@@ -108,7 +112,12 @@
 [data-design='foilticket'] .vk-card {
   --vk-u: inherit;
   position: relative;
-  background: var(--ft-paper);
+  /* เนื้อกระดาษ — ภาพโปร่งใสเม็ดขาว/ดำ วางทับเฉย ๆ ไม่ต้องผสมโหมด
+     ซึ่งถูกกว่า และได้ผลเท่ากันทั้งบนครีมและบนก้านน้ำเงิน
+     นิ่งอยู่กับที่ — ไม่ขยับตอนเอียง จึงวาดครั้งเดียวจบ ไม่กินแรงตอนขยับ */
+  background:
+    url('../../../assets/textures/paper-grain.webp') 0 0 / 100px 100px repeat,
+    var(--ft-paper);
   color: var(--ft-ink);
   font-family: var(--ft-sans);
   border-radius: calc(var(--vk-u) * 0.55);
@@ -220,6 +229,10 @@
   font-size: calc(var(--vk-u) * 0.6); letter-spacing: 0.34em;
   color: var(--ft-ink); white-space: nowrap; overflow: hidden;
 }
+/* ใบที่ยังใช้ได้ = ไม่ต้องป้ายบอกว่าใช้ได้ — มี "ใช้ได้ถึง 31 ธ.ค. 69" บนก้านอยู่แล้ว
+   ป้ายนี้เก็บไว้เฉพาะใบที่ผิดปกติ (ใช้แล้ว/หมดอายุ/ยกเลิก/ยังไม่เริ่ม) — คนจะสะดุ้งทันที */
+[data-design='foilticket'] .vk-card[data-status='active'] .vk-card__pill { display: none; }
+
 [data-design='foilticket'] .vk-card__pill {
   margin-inline-start: auto; flex: none;
   background: none; color: var(--ft-ink-2);
@@ -269,6 +282,8 @@
   font-size: calc(var(--vk-u) * 0.64);
   line-height: 1.4; color: var(--ft-ink-2);
 }
+/* แต่ละข้อเป็นก้อนที่ห้ามขึ้นบรรทัด — จุดตัดที่เหลือคือช่องไฟรอบ · เท่านั้น */
+[data-design='foilticket'] .vk-card__cond-part { white-space: nowrap; }
 [data-design='foilticket'] .vk-card__note {
   grid-area: note;
   position: relative; z-index: 2;
@@ -278,6 +293,14 @@
   line-height: 1.4; color: var(--ft-ink-2);
 }
 [data-design='foilticket'] .vk-card__badge { display: none; }
+
+/* ตัวเลขนั่งเส้นเดียวกับบรรทัดล่างสุด — แต่คูปองบางใบไม่มีหมายเหตุ/ไม่มีเงื่อนไข
+   ถ้าปล่อยไว้ บรรทัดสุดท้ายจะอยู่คนละความสูงแล้วเส้นจะไม่ตรง — จึงบังคับระยะก้นใบให้เท่ากันทุกกรณี */
+[data-design='foilticket'] .vk-card__title:last-child,
+[data-design='foilticket'] .vk-card__cond:last-child,
+[data-design='foilticket'] .vk-card__note:last-child {
+  margin-bottom: calc(var(--vk-u) * var(--ft-pad));
+}
 
 /* ── ตัวเลขฟอยล์ทอง — พระเอกของใบ ──────────────────────────────────────
    ⚠️ ต้องเป็นของมันวาว "ชิ้นเดียว" ในใบ อย่าเผลอเอาไล่เฉดทองไปใส่ที่อื่น
@@ -290,12 +313,17 @@
   grid-area: num;
   position: relative;
   z-index: 3;
-  align-self: center;
+  /* เดิมลอยกึ่งกลางช่องตัวเอง — ก้นตัวเลขจึงไม่ตรงกับอะไรเลย
+     วางชิดล่างแทน → ก้นตัวเลขไปนั่งเส้นเดียวกับบรรทัดล่างสุดของคอลัมน์ซ้าย พอดี
+     (ค่า line-height 0.84 ทำให้เส้นฐานอยู่สูงจากก้นกล่องเท่ากับระยะขอบล่างของบรรทัดนั้นพอดี) */
+  align-self: end;
   justify-self: center;
   display: flex;
   align-items: flex-start;
   gap: calc(var(--vk-u) * 0.16);
-  margin: 0; padding: 0; background: none;
+  /* ⚠️ ระยะยกตัวเลขขึ้นต้องอยู่ในคำสั่งรวบนี้ — เขียน margin-bottom แยกไว้ข้างบน
+     จะโดน margin: 0 บรรทัดนี้ล้างทิ้ง และไม่มีอะไรฟ้องเลย (เจอมาแล้วรอบนี้) */
+  margin: 0 0 calc(var(--vk-u) * 1.4); padding: 0; background: none;
   pointer-events: none;
 }
 
@@ -373,12 +401,24 @@
      ⚠️ ขอบรับแสงต้องบางกว่าเงาเสมอ — ของจริงขอบที่รับแสงคือสันแคบ ๆ
         ถ้าหนาเท่าเงาจะกลายเป็นเส้นขอบรอบตัวอักษร ดูเป็นสติกเกอร์ไม่ใช่ของนูน
      เงาหลักเบาลงจากเดิมตั้งใจ เพื่อให้ขอบสว่างมีที่ยืน ไม่ถูกกลบ */
+  /* ⚠️ ไท้ทัก (2026-08-18): ตัวเลข "ดูลอยออกจากการ์ด มากกว่านูนออกมา"
+     ต้นเหตุสองข้อ เขียนไว้กันทำพลาดซ้ำ:
+     1. เงาทอดฟุ้ง 10px และเยื้องลงอีก 3px — นั่นคือเงาของ "ของที่ลอยเหนือกระดาษ"
+        ตัวอักษรปั๊มนูนคือเนื้อเดียวกับแผ่น มันไม่ทอดเงาลงบนตัวเอง → ตัดเหลือแค่เงาสัมผัสสั้น ๆ
+     2. สีเงาจางเกินจนอ่านเป็นเทา — หน้าเอียงของของนูนที่ไม่โดนแสง ก็ยังเป็นทองอยู่
+        เพียงแต่เป็น **ทองเข้มอมน้ำตาล** ไม่ใช่เทา — วัสดุเดียวกันทั้งตัว
+     เงาตอนนี้จึงเหลือแค่สองชั้นที่เป็น "หน้าเอียงสีทองเข้ม" ซ้อนกัน บวกเงาสัมผัสสั้นมาก */
   filter:
     drop-shadow(calc(var(--ft-bx) * -0.5) calc(var(--ft-by) * -0.5) 0
                 rgba(255, 250, 226, 0.9))
-    drop-shadow(var(--ft-bx) var(--ft-by) 0 rgba(98, 70, 20, 0.32))
-    drop-shadow(calc(var(--ft-bx) * 1.7) calc(var(--ft-by) * 1.7 + 3px) 10px
-                rgba(92, 66, 20, 0.2));
+    /* ⚠️ สีที่เขียน ≠ สีที่เห็น — drop-shadow ผสมกับกระดาษครีมตามความทึบ
+       ค่าดั้งเดิม rgba(98,70,20,.32) เขียนเป็นน้ำตาล แต่ผสมแล้วจริงได้ #AF9970
+       = เทาอมน้ำตาลจาง — นี่คือที่มาของคำว่า "ดูเป็นเทา" ต้องคิดที่สีหลังผสมเสมอ
+       ⚠️ เคยดันไป .86 ทีเดียว → ไท้ตีกลับว่าเข้มเกิน ขอแค่เข้มขึ้น ๆ 10%
+       .64 ผสมแล้วได้ #A38B5C = เข้มกว่าเดิม 9% พอดี ห้ามดันขึ้นอีกโดยไม่ได้คำนวณ */
+    drop-shadow(var(--ft-bx) var(--ft-by) 0 rgba(116, 80, 12, 0.64))
+    drop-shadow(calc(var(--ft-bx) * 1.5) calc(var(--ft-by) * 1.5) 1.5px
+                rgba(97, 66, 10, 0.35));
 }
 
 /* ตัวเลขยิ่งหลายหลักยิ่งต้องเล็กลง ไม่งั้นล้นเข้าไปในคอลัมน์ตัวหนังสือ
@@ -443,7 +483,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(104, 76, 28, 0.4));
+  filter: drop-shadow(0 1px 0 rgba(104, 76, 28, 0.46));
 }
 /* ฿ อยู่หน้าตัวเลข % อยู่หลัง — ลำดับใน HTML ถูกอยู่แล้ว ไม่ต้องสลับอะไร */
 
@@ -462,7 +502,9 @@
   gap: calc(var(--vk-u) * 0.12);
   margin: 0;
   padding: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 1.5);
-  background: var(--ft-stub-bg);
+  background:
+    url('../../../assets/textures/paper-grain.webp') 0 0 / 100px 100px repeat,
+    var(--ft-stub-bg);
   color: var(--ft-stub-ink);
   text-align: center;
   /* ลายน้ำใหญ่กว่าก้าน — กล่องนี้เป็นคนตัด ไม่มีอะไรเลื่อนในนี้จึงปลอดภัย */
@@ -539,7 +581,7 @@
   [data-design='foilticket'] .vk-card__unit {
     background: none;
     color: #b8901f;
-    filter: drop-shadow(0 1.5px 0 rgba(98, 70, 20, 0.32));
+    filter: drop-shadow(0 1.5px 0 rgba(98, 70, 20, 0.37));
   }
 }
 
@@ -559,3 +601,102 @@
    ไม่ต้องเขียนอะไรกันเพิ่ม — ถ้าไม่รองรับ ชั้นหน้ากากจะรวมกันแบบ add
    ผลคือใบทึบทั้งใบ = ตั๋วมุมมนธรรมดา ยังใช้งานได้ครบ แค่ไม่มีรอยบาก
    เขียนไว้ให้รู้ว่าตั้งใจ ไม่ใช่ลืมเช็ค */
+
+/* ── คำกำกับใต้ QR · เส้นคาด · สันข้อความแนวตั้ง ──────────────
+   ก้านเดิมมี QR อยู่บน รหัสอยู่ล่าง กลางก้านโล่งไปเกือบครึ่ง — สามอย่างนี้เข้ามาถือที่ว่างนั้น
+   ⚠️ สันวางด้วย position: absolute เทียบกับใบ ไม่ใช่เทียบกับ .vk-card__stub
+      เพราะกล่องนั้นเป็น display: contents — มันไม่มีกล่องจริงให้เกาะ */
+
+/* คำกำกับใต้ QR — บอกว่า QR มีไว้ทำอะไร และทำให้ QR มีฐาน ไม่ลอยเปล่า */
+[data-design='foilticket'][data-shape='ticket'] .vk-card__scan {
+  display: block;
+  grid-area: stub;
+  position: relative; z-index: 2;
+  align-self: start; justify-self: center;
+  margin-top: calc(var(--vk-u) * 7.25);
+  margin-inline-start: calc(var(--vk-u) * var(--ft-spine-push));
+  font-family: var(--ft-mono); font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.5); letter-spacing: 0.1em;
+  color: var(--ft-stub-ink-2); white-space: nowrap;
+}
+
+/* เส้นคาด — คั่นช่อง "สแกน" กับช่อง "อ่าน" ออกจากกัน และกินช่องว่างกลางก้าน
+   ใช้ ::after ของใบ — ว่างอยู่ตั้งแต่ย้ายลายน้ำไปไว้ที่ stub-body::before */
+[data-design='foilticket'][data-shape='ticket'] .vk-card::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--vk-u) * 10);
+  height: 1px;
+  inset-inline-start: calc(var(--ft-perf) + var(--vk-u) * 2.1);
+  inset-inline-end: calc(var(--vk-u) * 2.1);
+  background: var(--ft-perf-line);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* สันข้อความแนวตั้ง — อ่านจากล่างขึ้นบน แบบสันหนังสือ
+   ทำหน้าที่สามอย่าง: ย้ำว่าใบนี้คือโปรอะไร · กินช่องว่างกลางก้าน · ให้ก้านมีสัน
+   ⚠️ เอาข้อความโปรมาตั้ง ไม่เอารหัสคูปอง — รหัสต้องอ่านทีละตัวตอนกรอกมือ ตั้งแล้วอ่านยากขึ้น */
+[data-design='foilticket'][data-shape='ticket'] .vk-card__spine {
+  display: block;
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  inset-inline-start: calc(var(--ft-perf) + var(--vk-u) * (var(--ft-spine) * 0.5));
+  transform: translate(-50%, -50%) rotate(-90deg);
+  transform-origin: center;
+  font-family: var(--ft-mono); font-weight: 500;
+  font-size: calc(var(--vk-u) * 0.62); letter-spacing: 0.34em;
+  color: var(--ft-stub-ink);
+  opacity: 0.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* QR กับก้อนรหัสเลื่อนออกจากสัน — จะได้กึ่งกลางของ "ช่องที่เหลือ" ไม่ใช่กึ่งกลางก้าน */
+[data-design='foilticket'][data-shape='ticket'] .vk-card__qr {
+  margin-inline-start: calc(var(--vk-u) * var(--ft-spine-push));
+}
+[data-design='foilticket'][data-shape='ticket'] .vk-card__stub-body {
+  padding-inline-start: calc(var(--vk-u) * (1 + var(--ft-spine-push)));
+}
+
+/* ── เคลือบมันทับทั้งใบ ───────────────────────────────────────
+   กระดาษอาร์ตเคลือบมัน — เงาฟุ้งกว้าง ๆ ดวงเดียว ไม่มีขอบชัด ไม่สว่างจนอ่านไม่ออก
+
+   🔑 จุดสำคัญที่ทำให้มันไม่แพง: **ขยับด้วย transform ไม่ใช่ background-position**
+      ถ้าเลื่อนไล่เฉดด้วย background-position เครื่องต้อง **วาดพื้นที่ใบใหม่ทุกเฟรม**
+      แต่ transform บนชั้นที่มีเลเยอร์ของตัวเอง = การ์ดจอเลื่อนภาพที่วาดไว้แล้ว ไม่วาดใหม่
+
+   กล่องใหญ่กว่าใบ 1.4 เท่า (inset: -20%) เพื่อให้ดวงแสงเลื่อนไปสุดขอบได้โดยขอบกล่องไม่โผล่
+   จึงต้องหาร 1.4 ตอนแปลง % ของใบ → % ของตัวกล่องเอง
+   ตำแหน่งแสงผูกกับ --ft-ex/--ft-ey ชุดเดียวกับตัวเลขทอง (ไท้สั่ง) — แสงจึงมาจากดวงเดียวกันทั้งใบ
+
+   ⚠️ ความทึบสูงสุดต้องต่ำ — นี่คือเคลือบผิวกระดาษ ไม่ใช่ไฟสอง
+      แรงกว่านี้ = ตัวหนังสือจางลง และไปแย่งซีนเกล็ดทองทันที (ไท้สั่งห้าม) */
+
+[data-design='foilticket'] .vk-card__sheen {
+  display: block;
+  position: absolute;
+  inset: -20%;
+  z-index: 5;
+  pointer-events: none;
+  /* ⚠️ หางต้องยาวถึง 100% — ตัดที่ 80% แล้วขอบดวงจะเห็นเป็นเส้นบนก้านน้ำเงินที่เรียบ */
+  background: radial-gradient(ellipse 44% 60% at 50% 50%,
+    rgba(255, 255, 255, 0.135) 0%,
+    rgba(255, 255, 255, 0.078) 30%,
+    rgba(255, 255, 255, 0.036) 54%,
+    rgba(255, 255, 255, 0.012) 76%,
+    rgba(255, 255, 255, 0) 100%);
+  transform:
+    translate(calc((var(--ft-ex) - 50%) / 1.4),
+              calc((var(--ft-ey) - 50%) / 1.4));
+  will-change: transform;
+}
+
+/* เครื่องที่ตั้งค่า "ลดแอนิเมชัน" ไว้ — ใบไม่เอียงอยู่แล้ว
+   เคลือบมันค้างกลางใบไว้เฉย ๆ ก็พอ แต่ถอดเลเยอร์การ์ดจอออก จะได้ไม่กินหน่วยความจำเครื่องเปล่า ๆ */
+@media (prefers-reduced-motion: reduce) {
+  [data-design='foilticket'] .vk-card__sheen { will-change: auto; }
+}
