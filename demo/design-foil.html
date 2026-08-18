@@ -76,9 +76,9 @@ import { cardHtml } from '../src/ui/voucher-design.js';
 import { createVoucher } from '../src/index.js';
 import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
 
-/* ?spot=x,y ตรึงตำแหน่งดวงแสงไว้ที่จุดเดียว — ใช้ตอนแคปหน้าจอเทียบว่าดวงแสงขยับจริง
-   ปกติ (ไม่ใส่) ดวงแสงจะวิ่งตามเมาส์/การเอียงเครื่อง */
-const FIXED = new URLSearchParams(location.search).get('spot');
+/* ?light=lx,hz ตรึงสภาพแสงไว้ที่จุดเดียว — ใช้ตอนแคปหน้าจอเทียบว่าดวงแสงขยับจริง
+   ปกติ (ไม่ใส่) แสงจะวิ่งตามเมาส์/การเอียงเครื่อง */
+const FIXED = new URLSearchParams(location.search).get('light');
 const say = (t) => { document.querySelector('#status').textContent = t; };
 
 const SAMPLES = {
@@ -129,10 +129,10 @@ function paint() {
   if (FIXED !== null) {
     const [x, y = x] = FIXED.split(',');
     for (const card of cards) {
-      card.style.setProperty('--ft-spot-x', `${x}%`);
-      card.style.setProperty('--ft-spot-y', `${y}%`);
+      card.style.setProperty('--ft-lx', `${x}%`);
+      card.style.setProperty('--ft-hz', `${y}%`);
     }
-    const msg = `ตรึงดวงแสงไว้ที่ ${x}%, ${y}% ตามลิงก์ — เอา ?spot ออกถ้าอยากให้วิ่งตามเมาส์`;
+    const msg = `ตรึงสภาพแสงไว้ที่ ${x}%, ${y}% ตามลิงก์ — เอา ?light ออกถ้าอยากให้วิ่งตามเมาส์`;
     document.querySelector('#diag').textContent = msg;
     say(msg);
     return;

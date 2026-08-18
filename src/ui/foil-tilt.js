@@ -6,7 +6,7 @@
  * และเล็ก (~9KB) ไม่พึ่งอะไรเลย
  *
  * สิ่งที่ไฟล์นี้ทำเพิ่มจากไลบรารี:
- *   1. เอาองศาที่กำลังเอียงไปขยับตำแหน่งดวงแสง (--ft-spot-x / --ft-spot-y)
+ *   1. เอาองศาที่กำลังเอียงไปขยับ "การสะท้อนสภาพแวดล้อม" บนตัวเลข
  *      → ประกายวิ่งตามการเอียงจริง ไม่ใช่แอนิเมชันวนลูปที่วิ่งเองไม่สนใจอะไร
  *   2. ขอสิทธิ์ไจโรบน iOS ให้ (ไลบรารีไม่ได้ทำให้)
  *
@@ -100,17 +100,30 @@ export async function attachFoilTilt(card, opt = {}) {
   let lastX = -999;
   let lastY = -999;
 
-  /* แสงตกกระทบสวนทางกับการเอียง — เอียงขอบขวาเข้าหาตัว ดวงแสงวิ่งไปทางซ้าย
-     นี่คือสิ่งที่ตาคาดหวังจากของจริง ถ้าวิ่งตามทางเดียวกันจะรู้สึกผิดทันที
-     ขยับไม่ถึงครึ่งเปอร์เซ็นต์ = ข้ามไป (ตามองไม่เห็น แต่ลดการวาดใหม่ได้เยอะบนมือถือ) */
+  /* ⚠️ นี่คือ "การสะท้อนสภาพแวดล้อม" ไม่ใช่ "ดวงไฟวิ่ง" — ไท้ทักว่าดวงไฟหลายดวง
+     เรียงกันเป็นสิ่งที่ธรรมชาติสร้างไม่ได้ ซึ่งถูกต้อง จึงเปลี่ยนมาขยับ 3 อย่างนี้แทน:
+
+       เส้นขอบฟ้า (hz)  ตามแกนตั้ง  — เงยใบขึ้นเห็นเพดานมาก ขอบฟ้าเลื่อนลง ผิวสว่างขึ้น
+       แถบไฟเพดาน (lx)  ตามแกนนอน  — เลื่อนสวนทางการเอียง เหมือนเงาสะท้อนของจริง
+       ทิศขอบนูน (bx/by)            — ด้านรับแสงกับด้านตกเงาสลับข้างเมื่อแหล่งแสงย้าย
+
+     ช่วงของขอบฟ้าแคบกว่าของแถบไฟตั้งใจ — กวาดเต็ม 0-100 แล้วจะเหลือแต่ทองซีด
+     หรือทองมืดทั้งตัว ซึ่งไม่ใช่สิ่งที่เกิดขึ้นจริงในห้องปกติ */
+  const HZ = [72, 26];      /* เมาส์บนสุด -> ล่างสุด */
+  const BEVEL = 2.6;        /* พิกเซล */
+
   const setSpot = (fx, fy) => {
-    const x = hi - Math.min(Math.max(fx, 0), 1) * (hi - lo);
-    const y = hi - Math.min(Math.max(fy, 0), 1) * (hi - lo);
+    const cx = Math.min(Math.max(fx, 0), 1);
+    const cy = Math.min(Math.max(fy, 0), 1);
+    const x = hi - cx * (hi - lo);
+    const y = HZ[0] - cy * (HZ[0] - HZ[1]);
     if (Math.abs(x - lastX) < 0.5 && Math.abs(y - lastY) < 0.5) return;
     lastX = x;
     lastY = y;
-    card.style.setProperty('--ft-spot-x', `${x.toFixed(1)}%`);
-    card.style.setProperty('--ft-spot-y', `${y.toFixed(1)}%`);
+    card.style.setProperty('--ft-lx', `${x.toFixed(1)}%`);
+    card.style.setProperty('--ft-hz', `${y.toFixed(1)}%`);
+    card.style.setProperty('--ft-bx', `${((0.5 - cx) * 2 * BEVEL).toFixed(2)}px`);
+    card.style.setProperty('--ft-by', `${((0.5 - cy) * 2 * BEVEL).toFixed(2)}px`);
   };
 
   /* ⚠️ ทางเดินที่ 1 — อ่านเมาส์จากใบเองตรง ๆ ไม่ผ่านไลบรารี
@@ -123,8 +136,7 @@ export async function attachFoilTilt(card, opt = {}) {
     setSpot((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
   };
   const onLeave = () => {
-    card.style.removeProperty('--ft-spot-x');
-    card.style.removeProperty('--ft-spot-y');
+    for (const v of ['--ft-lx', '--ft-hz', '--ft-bx', '--ft-by']) card.style.removeProperty(v);
     lastX = lastY = -999;
   };
 
@@ -142,8 +154,8 @@ export async function attachFoilTilt(card, opt = {}) {
 
   return {
     state: 'on',
-    /** ให้หน้าเว็บอ่านตำแหน่งดวงแสงปัจจุบันไปแสดงได้ ตอนไล่หาสาเหตุ */
-    spot: () => [card.style.getPropertyValue('--ft-spot-x'), card.style.getPropertyValue('--ft-spot-y')],
+    /** ให้หน้าเว็บอ่านสถานะแสงปัจจุบันไปแสดงได้ ตอนไล่หาสาเหตุ */
+    spot: () => [card.style.getPropertyValue('--ft-lx'), card.style.getPropertyValue('--ft-hz')],
     destroy() {
       card.removeEventListener('pointermove', onPointer);
       card.removeEventListener('pointerleave', onLeave);
