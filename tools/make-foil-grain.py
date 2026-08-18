@@ -47,7 +47,7 @@ mix = (mix - mix.mean()) / (mix.std() + 1e-9)
 # แปลงเป็นภาพเทารอบ ๆ 128 — โหมดผสมแบบ overlay ใช้ 128 = "ไม่เปลี่ยนอะไร"
 # ประวัติการปรับ: ±34 แรงไปจนดูเป็นลายด่าง · ±17 จางไปจนแทบไม่เห็นผิว
 # ±27 = ไท้ขอ "ชัดขึ้นอีกนิด" — เห็นเนื้อฟอยล์ชัดแต่ยังไม่กลืนสีทอง
-img = np.clip(128 + mix * 27, 0, 255).astype(np.uint8)
+img = np.clip(128 + mix * 21, 0, 255).astype(np.uint8)
 
 out = Image.fromarray(img, mode='L')
 out.save('D:/Gift vocher/assets/textures/foil-grain.webp', format='WEBP', quality=82, method=6)

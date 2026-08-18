@@ -109,21 +109,27 @@ export async function attachFoilTilt(card, opt = {}) {
 
      ช่วงของขอบฟ้าแคบกว่าของแถบไฟตั้งใจ — กวาดเต็ม 0-100 แล้วจะเหลือแต่ทองซีด
      หรือทองมืดทั้งตัว ซึ่งไม่ใช่สิ่งที่เกิดขึ้นจริงในห้องปกติ */
-  const HZ = [72, 26];      /* เมาส์บนสุด -> ล่างสุด */
-  const BEVEL = 2.6;        /* พิกเซล */
+  /* ⚠️ ไม่ได้ "ขยับดวงไฟ" แล้ว — ดวงไฟอยู่นิ่งตามความจริง
+     สิ่งที่ขยับคือ **ตำแหน่งที่หยิบแผนที่ห้องมาใช้** เหมือนพลิกวัตถุจริงแล้วเห็นห้องคนละมุม
+     สวนทางกับการเอียง เพราะภาพสะท้อนวิ่งสวนทางการหมุนของผิวเสมอ */
+  const ENV = 145;          /* ระยะที่เลื่อนแผนที่ (% ของกล่อง) ยิ่งมากยิ่งไวต่อการเอียง */
+  const BEV_X = 2.4;        /* พิกเซล */
+  const BEV_Y = 1.3;
 
   const setSpot = (fx, fy) => {
     const cx = Math.min(Math.max(fx, 0), 1);
     const cy = Math.min(Math.max(fy, 0), 1);
-    const x = hi - cx * (hi - lo);
-    const y = HZ[0] - cy * (HZ[0] - HZ[1]);
-    if (Math.abs(x - lastX) < 0.5 && Math.abs(y - lastY) < 0.5) return;
+    const x = (0.5 - cx) * ENV + 50;
+    const y = (0.5 - cy) * ENV + 50;
+    if (Math.abs(x - lastX) < 0.4 && Math.abs(y - lastY) < 0.4) return;
     lastX = x;
     lastY = y;
-    card.style.setProperty('--ft-lx', `${x.toFixed(1)}%`);
-    card.style.setProperty('--ft-hz', `${y.toFixed(1)}%`);
-    card.style.setProperty('--ft-bx', `${((0.5 - cx) * 2 * BEVEL).toFixed(2)}px`);
-    card.style.setProperty('--ft-by', `${((0.5 - cy) * 2 * BEVEL).toFixed(2)}px`);
+    card.style.setProperty('--ft-ex', `${x.toFixed(1)}%`);
+    card.style.setProperty('--ft-ey', `${y.toFixed(1)}%`);
+    card.style.setProperty('--ft-bx', `${((cx - 0.5) * 2 * BEV_X).toFixed(2)}px`);
+    /* ⚠️ ต้องเป็นบวกเสมอ = เงาทอดลงล่างเสมอ = ตัวอักษรนูนเสมอ
+       ปล่อยให้ติดลบเมื่อไหร่ ตัวอักษรจะพลิกเป็นบุ๋มลงไปทันที */
+    card.style.setProperty('--ft-by', `${(1.7 + (cy - 0.5) * 2 * BEV_Y).toFixed(2)}px`);
   };
 
   /* ⚠️ ทางเดินที่ 1 — อ่านเมาส์จากใบเองตรง ๆ ไม่ผ่านไลบรารี
@@ -136,7 +142,7 @@ export async function attachFoilTilt(card, opt = {}) {
     setSpot((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
   };
   const onLeave = () => {
-    for (const v of ['--ft-lx', '--ft-hz', '--ft-bx', '--ft-by']) card.style.removeProperty(v);
+    for (const v of ['--ft-ex', '--ft-ey', '--ft-bx', '--ft-by']) card.style.removeProperty(v);
     lastX = lastY = -999;
   };
 
@@ -155,7 +161,7 @@ export async function attachFoilTilt(card, opt = {}) {
   return {
     state: 'on',
     /** ให้หน้าเว็บอ่านสถานะแสงปัจจุบันไปแสดงได้ ตอนไล่หาสาเหตุ */
-    spot: () => [card.style.getPropertyValue('--ft-lx'), card.style.getPropertyValue('--ft-hz')],
+    spot: () => [card.style.getPropertyValue('--ft-ex'), card.style.getPropertyValue('--ft-ey')],
     destroy() {
       card.removeEventListener('pointermove', onPointer);
       card.removeEventListener('pointerleave', onLeave);

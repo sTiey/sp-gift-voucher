@@ -129,8 +129,8 @@ function paint() {
   if (FIXED !== null) {
     const [x, y = x] = FIXED.split(',');
     for (const card of cards) {
-      card.style.setProperty('--ft-lx', `${x}%`);
-      card.style.setProperty('--ft-hz', `${y}%`);
+      card.style.setProperty('--ft-ex', `${x}%`);
+      card.style.setProperty('--ft-ey', `${y}%`);
     }
     const msg = `ตรึงสภาพแสงไว้ที่ ${x}%, ${y}% ตามลิงก์ — เอา ?light ออกถ้าอยากให้วิ่งตามเมาส์`;
     document.querySelector('#diag').textContent = msg;
