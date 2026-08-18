@@ -329,7 +329,7 @@
       rgba(255, 240, 190, 0) 100%),
     var(--ft-foil-env),
     var(--ft-foil-base);
-  background-size: 132% 132%, 224% 224%, 100% 100%, 166% 166%, 100% 100%;
+  background-size: 118% 118%, 150% 150%, 100% 100%, 166% 166%, 100% 100%;
   background-position:
     var(--ft-ex) var(--ft-ey), var(--ft-ex) var(--ft-ey), 0 0,
     var(--ft-ex) var(--ft-ey), 0 0;
@@ -405,7 +405,7 @@
       rgba(255, 240, 190, 0) 100%),
     var(--ft-foil-env),
     var(--ft-foil-base);
-  background-size: 132% 132%, 224% 224%, 100% 100%, 166% 166%, 100% 100%;
+  background-size: 118% 118%, 150% 150%, 100% 100%, 166% 166%, 100% 100%;
   background-position:
     var(--ft-ex) var(--ft-ey), var(--ft-ex) var(--ft-ey), 0 0,
     var(--ft-ex) var(--ft-ey), 0 0;
