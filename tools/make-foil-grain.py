@@ -16,6 +16,21 @@ SIZE = 256
 rng = np.random.default_rng(20260817)
 
 
+def streaks(noise, fx_lo, fx_hi, fy_max):
+    """ริ้วขนแมวของสแตนเลสขัด — เก็บเฉพาะความถี่ "ตามแนวนอน" แต่บีบแนวตั้งให้ต่ำ
+    ผลคือลายเปลี่ยนเร็วเมื่อเลื่อนซ้าย-ขวา แต่แทบไม่เปลี่ยนเมื่อเลื่อนขึ้น-ลง
+    = เส้นยาวตามแนวตั้ง ซึ่งคือรอยขัดจริงบนแผ่นสแตนเลส
+    ⚠️ นี่คือสิ่งที่ทำให้แสงยืดออกเป็นฝ้ากว้าง แทนที่จะเป็นจุดกลม
+       ผิวที่กระจายเท่ากันทุกทิศให้แสงเป็นจุด ผิวที่มีทิศทางให้แสงเป็นแถบ"""
+    f = np.fft.fft2(noise)
+    fy = np.abs(np.fft.fftfreq(SIZE)[:, None]) * SIZE
+    fx = np.abs(np.fft.fftfreq(SIZE)[None, :]) * SIZE
+    mask = (fx >= fx_lo) & (fx <= fx_hi) & (fy <= fy_max)
+    out = np.real(np.fft.ifft2(f * mask))
+    sd = out.std()
+    return out / sd if sd > 1e-9 else out
+
+
 def band(noise, lo, hi):
     """เก็บเฉพาะความถี่ในช่วงที่ต้องการ — คุมว่าจะได้เกล็ดหยาบหรือละเอียด"""
     f = np.fft.fft2(noise)
@@ -36,18 +51,21 @@ white = rng.normal(size=(SIZE, SIZE))
 crease = band(white, 8, 18)
 grain = band(white, 26, 58)
 speck = band(white, 64, 120)
+# ริ้วขัดแนวตั้ง 2 ความถี่ — หยาบเล็กน้อยกับละเอียดจัด ซ้อนกันแบบผิวขัดจริง
+# ⚠️ เริ่มที่ 18 = เส้นห่างราว 4px บนจอ ตาอ่านเป็น "ลายไม้" ไม่ใช่โลหะ
+#    สแตนเลสขัดจริงเส้นถี่จนแทบไม่เห็นเป็นเส้น เหลือแค่ความรู้สึกซาติน
+brush = streaks(rng.normal(size=(SIZE, SIZE)), 46, 112, 2.5)
+brush_fine = streaks(rng.normal(size=(SIZE, SIZE)), 96, 127, 4.0)
 
-# ยับแบบสันคม: กลับค่าสัมบูรณ์ ทำให้เกิด "สัน" เหมือนรอยพับฟอยล์จริง
 ridge = 1.0 - np.abs(crease / (np.abs(crease).max() + 1e-9))
 ridge = (ridge - ridge.mean()) / (ridge.std() + 1e-9)
 
-mix = 0.22 * ridge + 0.55 * grain + 0.52 * speck
+# ริ้วขัดต้องเป็นตัวเอกของผิว ไม่ใช่เม็ดกระจายทุกทิศ — นั่นคือสิ่งที่ทำให้อ่านว่า
+# "สแตนเลสขัด" ไม่ใช่ "ทองพ่นทราย" · เม็ดกระจายเหลือไว้แค่พอมีเนื้อ
+mix = 0.16 * ridge + 0.26 * grain + 0.24 * speck + 0.85 * brush + 0.62 * brush_fine
 mix = (mix - mix.mean()) / (mix.std() + 1e-9)
 
-# แปลงเป็นภาพเทารอบ ๆ 128 — โหมดผสมแบบ overlay ใช้ 128 = "ไม่เปลี่ยนอะไร"
-# ประวัติการปรับ: ±34 แรงไปจนดูเป็นลายด่าง · ±17 จางไปจนแทบไม่เห็นผิว
-# ±27 = ไท้ขอ "ชัดขึ้นอีกนิด" — เห็นเนื้อฟอยล์ชัดแต่ยังไม่กลืนสีทอง
-img = np.clip(128 + mix * 21, 0, 255).astype(np.uint8)
+img = np.clip(128 + mix * 17, 0, 255).astype(np.uint8)
 
 out = Image.fromarray(img, mode='L')
 out.save('D:/Gift vocher/assets/textures/foil-grain.webp', format='WEBP', quality=82, method=6)

@@ -305,11 +305,24 @@
      ผิวฟอยล์อยู่บนสุดจึงพาดผ่านดวงแสงด้วย เหมือนผิวจริงที่ยังเห็นเนื้อแม้ตรงที่สะท้อน */
   /* ผิวละเอียด (ประกายเม็ด) ทับ แผนที่ห้อง (ความมั่ว/ฝ้า/รุ้ง) ทับ พื้นทอง
      ทั้งสามชั้นถูกฉลุตามรูปตัวอักษรพร้อมกัน */
-  background-image: var(--ft-foil-tex), var(--ft-foil-env), var(--ft-foil-base);
-  background-size: 76px 76px, 165% 165%, 100% 100%;
-  background-position: 0 0, var(--ft-ex) var(--ft-ey), 0 0;
-  background-repeat: repeat, repeat, no-repeat;
-  background-blend-mode: overlay, soft-light, normal;
+  background-image:
+    var(--ft-foil-tex),
+    /* ⚠️ แสงฝ้าแบบเคาน์เตอร์สแตนเลสขัด — ต้องเป็นวงรีที่ "แบนและกว้างมาก"
+       ตั้งฉากกับริ้วขัด และจางหายไปเรื่อย ๆ ไม่มีขอบให้ตาจับได้
+       นี่คือสิ่งที่ต่างจาก "ดวงไฟ" ที่ถูกตีกลับ: ดวงไฟมีขอบและมีหลายดวง
+       ส่วนอันนี้คือฝ้าผืนเดียวที่กินเกือบทั้งตัวอักษร ตาอ่านเป็นแสงตกกระทบ
+       ผิวที่มีริ้วทิศทางเดียวจะยืดแสงออกด้านข้างแบบนี้เสมอ (anisotropic) */
+    radial-gradient(ellipse 128% 44% at var(--ft-ex) var(--ft-ey),
+      rgba(255, 253, 240, 0.58) 0%,
+      rgba(255, 248, 219, 0.32) 36%,
+      rgba(255, 242, 196, 0.07) 68%,
+      rgba(255, 240, 190, 0) 100%),
+    var(--ft-foil-env),
+    var(--ft-foil-base);
+  background-size: 76px 76px, 100% 100%, 165% 165%, 100% 100%;
+  background-position: 0 0, 0 0, var(--ft-ex) var(--ft-ey), 0 0;
+  background-repeat: repeat, no-repeat, repeat, no-repeat;
+  background-blend-mode: overlay, screen, soft-light, normal;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -359,11 +372,24 @@
      ใช้ชุดเดียวกับตัวเลข ฿ กับ % จึงสะท้อนห้องเดียวกัน ไม่หลุดเป็นวัสดุคนละชิ้น */
   /* ผิวละเอียด (ประกายเม็ด) ทับ แผนที่ห้อง (ความมั่ว/ฝ้า/รุ้ง) ทับ พื้นทอง
      ทั้งสามชั้นถูกฉลุตามรูปตัวอักษรพร้อมกัน */
-  background-image: var(--ft-foil-tex), var(--ft-foil-env), var(--ft-foil-base);
-  background-size: 76px 76px, 165% 165%, 100% 100%;
-  background-position: 0 0, var(--ft-ex) var(--ft-ey), 0 0;
-  background-repeat: repeat, repeat, no-repeat;
-  background-blend-mode: overlay, soft-light, normal;
+  background-image:
+    var(--ft-foil-tex),
+    /* ⚠️ แสงฝ้าแบบเคาน์เตอร์สแตนเลสขัด — ต้องเป็นวงรีที่ "แบนและกว้างมาก"
+       ตั้งฉากกับริ้วขัด และจางหายไปเรื่อย ๆ ไม่มีขอบให้ตาจับได้
+       นี่คือสิ่งที่ต่างจาก "ดวงไฟ" ที่ถูกตีกลับ: ดวงไฟมีขอบและมีหลายดวง
+       ส่วนอันนี้คือฝ้าผืนเดียวที่กินเกือบทั้งตัวอักษร ตาอ่านเป็นแสงตกกระทบ
+       ผิวที่มีริ้วทิศทางเดียวจะยืดแสงออกด้านข้างแบบนี้เสมอ (anisotropic) */
+    radial-gradient(ellipse 128% 44% at var(--ft-ex) var(--ft-ey),
+      rgba(255, 253, 240, 0.58) 0%,
+      rgba(255, 248, 219, 0.32) 36%,
+      rgba(255, 242, 196, 0.07) 68%,
+      rgba(255, 240, 190, 0) 100%),
+    var(--ft-foil-env),
+    var(--ft-foil-base);
+  background-size: 76px 76px, 100% 100%, 165% 165%, 100% 100%;
+  background-position: 0 0, 0 0, var(--ft-ex) var(--ft-ey), 0 0;
+  background-repeat: repeat, no-repeat, repeat, no-repeat;
+  background-blend-mode: overlay, screen, soft-light, normal;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
