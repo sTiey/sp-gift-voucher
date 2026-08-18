@@ -115,6 +115,8 @@ const ROWS = [
 ];
 
 /* ?sample=used เปิดมาที่ตัวอย่างไหนเลย — จำเป็นตอนแคปหน้าจอ เพราะคลิกเองไม่ได้ */
+/* ?shape=compact — ดูทรงกระทัดรัด */
+const SHAPE = new URLSearchParams(location.search).get('shape') === 'compact' ? 'compact' : 'ticket';
 let sample = new URLSearchParams(location.search).get('sample') || 'percent';
 if (!SAMPLES[sample]) sample = 'percent';
 
@@ -128,7 +130,7 @@ function paint() {
         <span class="row__note">${r.note}</span>
       </div>
       <div class="stage">
-        ${cardHtml(v, { design: 'foilticket', shape: 'ticket', art: SAMPLES[sample].art })
+        ${cardHtml(v, { design: 'foilticket', shape: SHAPE, art: SAMPLES[sample].art })
           .replace('<div class="vk-voucher"', `<div class="vk-voucher"${r.face ? ` data-numface="${r.face}"` : ''}`)}
       </div>
     </section>`).join('');

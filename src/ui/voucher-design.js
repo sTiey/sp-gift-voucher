@@ -48,7 +48,7 @@ export const DESIGNS = [
     blurb: 'ตัวหนังสือนำ · ชื่อคูปองเอียง 12° พาดขวางใบที่ตรงเป๊ะทั้งใบ' },
 
   /* ทิศทางที่ไท้เคาะเอง 2026-08-17 จากภาพอ้างอิงที่ส่งมา */
-  { id: 'foilticket', name: 'ตั๋วฟอยล์ทอง', family: 'modern', photo: false, shapes: ['ticket'],
+  { id: 'foilticket', name: 'ตั๋วฟอยล์ทอง', family: 'modern', photo: false, shapes: ['ticket', 'compact'],
     blurb: 'กระดาษงาช้าง ตัวหนังสือน้ำตาล · ตัวเลขปั๊มฟอยล์ทองเป็นของมันวาวชิ้นเดียวในใบ · ก้านฉีก 30%' },
 ];
 

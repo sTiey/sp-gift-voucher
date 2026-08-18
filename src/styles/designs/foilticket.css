@@ -102,6 +102,7 @@
   --ft-mark: 32;                /* ลายน้ำ — ใหญ่จนกรอบสี่เหลี่ยมโดนก้านตัดหมด เหลือแค่หัวอักษร */
   --ft-notch: 0.85;             /* รัศมีรอยบากครึ่งวงกลม */
   --ft-scallop: 0.4;            /* รัศมีคลื่นขอบขวา */
+  --ft-stub-c: 30;              /* ทรงกระทัดรัด: ก้านฉีก = 34% ของความสูงใบ */
 }
 
 [data-design='foilticket'][data-numface='serif'] {
@@ -810,15 +811,15 @@
 
 /* ตัวเลขใหญ่ขึ้นมากเมื่อได้ความกว้างเต็มใบ
    ⚠️ ค่าชุดนี้ถูกจำกัดด้วย **ความสูงของแถวที่เหลือ** ไม่ใช่ความกว้าง — แก้แล้วต้องวัดใหม่ */
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 9.6); }
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 8.8); }
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 8); }
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 6.9); }
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-text='true'][data-len] {
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 9.6); }
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 8.8); }
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 8); }
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 6.9); }
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__num[data-text='true'][data-len] {
   font-size: calc(var(--vk-u) * 6.4);
 }
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__lead,
-[data-design='foilticket'] .vk-card[data-numshape='wide'] .vk-card__unit {
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__lead,
+[data-design='foilticket'][data-shape='ticket'] .vk-card[data-numshape='wide'] .vk-card__unit {
   font-size: calc(var(--vk-u) * 2.9);
   margin-block-start: calc(var(--vk-u) * 0.8);
 }
@@ -834,4 +835,224 @@
   background-repeat: no-repeat;
   background-size: calc(var(--vk-u) * 2.2) 2px;
   background-position: left bottom calc(var(--vk-u) * 0.3);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ทรงกระทัดรัด — แนวตั้ง ก้านฉีกอยู่ด้านล่าง (2026-08-18)
+   สำหรับมือถือตอนถือตั้ง / ในกระเป๋าคูปอง — ทรงยาวต้องหมุนเครื่องถึงจะเห็นเต็มใบ
+
+   🔑 ใช้วัสดุชุดเดียวกับทรงยาวทุกอย่าง (กระดาษ · เคลือบมัน · ฟอยล์ · ชิปสี · ภาพสินค้า)
+      ไม่มีภาพใหม่ ไม่มีฟอนต์ใหม่ ไม่มีงานวาดต่อเฟรมเพิ่ม — เปลี่ยนแค่การจัดวาง
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-design='foilticket'][data-shape='compact'] { contain-intrinsic-inline-size: 23.75rem; }
+
+/* รูปทรง: รอยบากซ้าย-ขวาตรงแนวฉีก + ขอบล่างสุดเป็นคลื่นแบบขอบแสตมป์
+   ⚠️ mask-composite ต้องอยู่หลัง mask เสมอ — mask เป็นคำสั่งรวบ มันล้างค่านี้กลับเป็น add */
+[data-design='foilticket'][data-shape='compact'] .vk-card {
+  aspect-ratio: 0.82 / 1;
+  --ft-perf-c: calc(100% - var(--ft-stub-c) * 1%);
+  -webkit-mask:
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at 0 var(--ft-perf-c),
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at 100% var(--ft-perf-c),
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-scallop)) at 50% 100%,
+      transparent 96%, #000 100%) 0 0 / calc(var(--vk-u) * var(--ft-scallop) * 2.5) 100% repeat-x;
+  mask:
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at 0 var(--ft-perf-c),
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-notch)) at 100% var(--ft-perf-c),
+      transparent 97%, #000 100%) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle calc(var(--vk-u) * var(--ft-scallop)) at 50% 100%,
+      transparent 96%, #000 100%) 0 0 / calc(var(--vk-u) * var(--ft-scallop) * 2.5) 100% repeat-x;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto calc(var(--ft-stub-c) * 1%);
+  grid-template-areas:
+    'head'
+    'num'
+    'title'
+    'cond'
+    'stub';
+}
+
+[data-design='foilticket'][data-shape='compact'] .vk-card__main { display: contents; }
+
+/* ภาพสินค้า: ทรงนี้เส้นปรุอยู่แนวนอน → ไล่จากข้างบนลงล่างแทนซ้ายไปขวา
+   และต้องจางก่อนถึงแถวตัวเลข — ทองต้องมีพื้นสะอาดของตัวเอง (บทเรียนจากทรงยาว) */
+[data-design='foilticket'][data-shape='compact'] .vk-card {
+  background:
+    url('../../../assets/textures/paper-grain.webp') 0 0 / 100px 100px repeat,
+    linear-gradient(to bottom,
+      rgba(247, 243, 234, 0.8) 0%,
+      rgba(247, 243, 234, 0.93) 22%,
+      var(--ft-paper) 40%),
+    var(--ft-art, none) center top / cover no-repeat,
+    var(--ft-paper);
+  background-blend-mode: normal, normal, multiply, normal;
+}
+
+/* ── หัวใบ ── */
+[data-design='foilticket'][data-shape='compact'] .vk-card__head {
+  margin: calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad)) 0;
+}
+
+/* ── ชิปหมวด · ตัวเลข · หัวข้อ · เงื่อนไข — ชิดซ้ายทั้งหมด ขอบเส้นเดียว ── */
+/* ชิปหมวดขึ้นไปอยู่แถวเดียวกับโลโก้ ชิดขวา (ไท้สั่ง) — คืนความสูงทั้งแถวให้ตัวเลข
+   ระยะขอบบน = ขอบใบ + ครึ่งส่วนต่างความสูงโลโก้กับชิป — คำนวณไว้ให้กึ่งกลางเส้นเดียวกันจริง */
+[data-design='foilticket'][data-shape='compact'] .vk-card__kicker {
+  grid-area: head;
+  align-self: start;
+  justify-self: end;
+  margin: calc(var(--vk-u) * 2.3) calc(var(--vk-u) * var(--ft-pad)) 0 0;
+}
+
+/* โลโก้ใหญ่ขึ้นอีกนิด (ไท้สั่ง) */
+[data-design='foilticket'][data-shape='compact'] .vk-card__logo {
+  height: calc(var(--vk-u) * 2.6);
+}
+
+[data-design='foilticket'][data-shape='compact'] .vk-card__value {
+  grid-area: num;
+  position: relative;
+  z-index: 3;
+  align-self: center;
+  justify-self: start;
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--vk-u) * 0.16);
+  margin: calc(var(--vk-u) * 0.5) calc(var(--vk-u) * var(--ft-pad));
+  padding: 0;
+  background: none;
+  pointer-events: none;
+}
+
+[data-design='foilticket'][data-shape='compact'] .vk-card__num { font-size: calc(var(--vk-u) * 10.4); }
+[data-design='foilticket'][data-shape='compact'] .vk-card__num[data-len='3'] { font-size: calc(var(--vk-u) * 10); }
+[data-design='foilticket'][data-shape='compact'] .vk-card__num[data-len='4'] { font-size: calc(var(--vk-u) * 8.4); }
+[data-design='foilticket'][data-shape='compact'] .vk-card__num[data-len='5'] { font-size: calc(var(--vk-u) * 6.85); }
+[data-design='foilticket'][data-shape='compact'] .vk-card__num[data-len='6'] { font-size: calc(var(--vk-u) * 5.65); }
+[data-design='foilticket'][data-shape='compact'] .vk-card__num[data-text='true'][data-len] {
+  font-size: calc(var(--vk-u) * 7.2);
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__lead,
+[data-design='foilticket'][data-shape='compact'] .vk-card__unit {
+  font-size: calc(var(--vk-u) * 2.2);
+  margin-block-start: calc(var(--vk-u) * 0.5);
+}
+
+[data-design='foilticket'][data-shape='compact'] .vk-card__title {
+  grid-area: title;
+  font-size: calc(var(--vk-u) * 1.12);
+  -webkit-line-clamp: 2;
+  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * 0.2);
+  padding-bottom: calc(var(--vk-u) * 0.8);
+  background-size: calc(var(--vk-u) * 2) 2px;
+  background-position: left bottom calc(var(--vk-u) * 0.26);
+}
+/* ⚠️ ใบที่ไม่มีเงื่อนไข — แถวเงื่อนไขหายไปทั้งแถว แล้วแถวตัวเลขซึ่งเป็น 1fr ก็ยืดมากินแทน
+   ผลคือทั้งก้อน ตัวเลข+หัวข้อ ตกลงมาเกือบชนก้านฉีก — ใบนั้นเลยดูต่ำกว่าเพื่อน (ไท้ทัก)
+   จองที่ของแถวที่หายไปคืน — วัดมาแล้วแถวเงื่อนไขกินที่ 2.62u บวกของตัวมันเอง 0.2u */
+[data-design='foilticket'][data-shape='compact'] .vk-card__title:last-child {
+  margin-bottom: calc(var(--vk-u) * 2.82);
+}
+
+[data-design='foilticket'][data-shape='compact'] .vk-card__cond {
+  grid-area: cond;
+  margin: 0 calc(var(--vk-u) * var(--ft-pad)) calc(var(--vk-u) * var(--ft-pad));
+  font-size: calc(var(--vk-u) * 0.66);
+}
+/* ทรงนี้เนื้อที่มีจำกัด — บรรทัดขอบคุณเป็นส่วนที่ตัดได้ก่อนเพื่อน */
+[data-design='foilticket'][data-shape='compact'] .vk-card__note { display: none; }
+
+/* ── เส้นปรุแนวนอน ── */
+[data-design='foilticket'][data-shape='compact'] .vk-card::before {
+  content: '';
+  position: absolute;
+  inset-inline: calc(var(--vk-u) * 1.2);
+  inset-block-start: var(--ft-perf-c);
+  height: 2px;
+  width: auto;
+  z-index: 4;
+  background-image: linear-gradient(to right, var(--ft-perf-line) 46%, transparent 0);
+  background-size: calc(var(--vk-u) * 0.5) 2px;
+}
+/* ทรงนี้ไม่มีเส้นคาดในก้านแบบทรงยาว */
+[data-design='foilticket'][data-shape='compact'] .vk-card::after { display: none; }
+
+/* ── ก้านฉีกด้านล่าง: QR ซ้าย · รหัสกับวันหมดอายุขวา ── */
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub { display: contents; }
+[data-design='foilticket'][data-shape='compact'] .vk-card__spine { display: none; }
+
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body {
+  grid-area: stub;
+  position: relative; z-index: 1;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: calc(var(--vk-u) * 0.1);
+  margin: 0;
+  padding: 0 calc(var(--vk-u) * var(--ft-pad)) 0
+             calc(var(--vk-u) * (var(--ft-pad) + 5.6));
+  overflow: hidden;
+  background:
+    url('../../../assets/textures/paper-grain.webp') 0 0 / 100px 100px repeat,
+    var(--ft-stub-bg);
+  color: var(--ft-stub-ink);
+  text-align: start;
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body::before {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 88%;
+  transform: translate(-50%, -50%);
+  height: calc(var(--vk-u) * 14);
+  aspect-ratio: 151 / 320;
+  background: var(--ft-stub-ink);
+  opacity: var(--ft-mark-op);
+  -webkit-mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
+  mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
+  pointer-events: none;
+}
+
+/* ⚠️ ยึดจาก "ขอบบนของก้าน" แล้วคำนวณระยะเอง — จัดกึ่งกลางแล้วใส่ระยะขอบ
+   จะโดนนับระยะขอบเข้าไปในการกึ่งกลางด้วย ของเลยไม่ไปอยู่ตรงที่คิด
+   คู่ QR + คำกำกับสูงรวม 5.14u ในก้านสูง 10.8u → เริ่มที่ 2.83u จึงอยู่กึ่งกลางพอดี */
+[data-design='foilticket'][data-shape='compact'] .vk-card__qr {
+  grid-area: stub;
+  position: relative; z-index: 2;
+  align-self: start; justify-self: start;
+  width: calc(var(--vk-u) * 4.4);
+  margin: calc(var(--vk-u) * 1.68) 0 0 calc(var(--vk-u) * var(--ft-pad));
+  color: var(--ft-stub-ink);
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__scan {
+  display: block;
+  grid-area: stub;
+  position: relative; z-index: 2;
+  align-self: start; justify-self: start;
+  margin: calc(var(--vk-u) * 6.38) 0 0 calc(var(--vk-u) * var(--ft-pad));
+  font-family: var(--ft-mono); font-weight: 400;
+  font-size: calc(var(--vk-u) * 0.44); letter-spacing: 0.08em;
+  color: var(--ft-stub-ink-2); white-space: nowrap;
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body .vk-card__label {
+  color: var(--ft-stub-ink-2);
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body .vk-card__code,
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body .vk-card__date {
+  color: var(--ft-stub-ink);
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body .vk-card__code {
+  font-size: calc(var(--vk-u) * 0.82);
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body .vk-card__code + .vk-card__label {
+  margin-top: calc(var(--vk-u) * 0.36);
+}
+[data-design='foilticket'][data-shape='compact'] .vk-card__stub-body .vk-card__date {
+  font-size: calc(var(--vk-u) * 0.84);
 }
