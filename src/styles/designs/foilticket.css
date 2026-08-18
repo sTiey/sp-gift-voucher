@@ -18,10 +18,20 @@
 
 [data-design='foilticket'] {
   --ft-paper: #f7f3ea;          /* กระดาษงาช้าง */
-  --ft-paper-2: #f1ece0;        /* ก้านฉีก เข้มกว่านิดเดียวให้เห็นรอยแบ่ง */
+  --ft-paper-2: #f1ece0;        /* สำรอง เผื่อทรงอื่นที่ยังใช้ก้านสีอ่อน */
   --ft-ink: #7a5c34;            /* น้ำตาลอุ่น — ตัวหนังสือทั้งใบ ไม่ใช้ดำ */
   --ft-ink-2: #a08a68;          /* น้ำตาลอ่อน สำหรับบรรทัดรอง */
   --ft-line: rgba(122, 92, 52, 0.24);
+
+  /* ── ก้านฉีกสีเข้ม ──────────────────────────────────────
+     ก้านเข้ม → ตัวหนังสือกับ QR ต้องพลิกเป็นสีอ่อนทั้งชุด ไม่งั้นอ่านไม่ออก
+     ⚠️ QR วาดด้วย currentColor พื้นโปร่ง พอเป็นสีอ่อนบนพื้นเข้ม = QR กลับสี
+        กล้องส่วนใหญ่อ่านได้ แต่ไม่ใช่ทุกตัว — ยังไม่ได้ลองกับกล้องจริง */
+  --ft-stub-bg: #263243;                        /* น้ำเงินหมึก — ไท้เลือกเอง ทองเด่นที่สุดบนนี้ */
+  --ft-stub-ink: #f4ecdb;                       /* ตัวหนังสือ + QR บนก้าน */
+  --ft-stub-ink-2: rgba(244, 236, 219, 0.58);   /* บรรทัดรองบนก้าน */
+  --ft-perf-line: rgba(244, 236, 219, 0.5);    /* รอยปรุ — เส้นอยู่ฝั่งเข้ม ต้องสว่าง */
+  --ft-mark-op: 0.13;                           /* ความจางลายน้ำ */
 
   /* ฟอยล์ทอง — ไล่จากบรอนซ์เข้มในร่อง ไปเกือบขาวตรงสัน แล้วกลับลงเข้มอีก
      ตำแหน่งที่หยิบแผนที่ห้องมาใช้ผูกกับ --ft-ex / --ft-ey ซึ่งตัวเอียงการ์ดเป็นคนขยับ */
@@ -82,7 +92,7 @@
   --ft-stub: 30;                /* ก้านฉีก = 30% ของความกว้างใบ */
   --ft-pad: 1.7;                /* ระยะขอบเนื้อหา */
   --ft-text: 13.4;              /* ความกว้างคอลัมน์ตัวหนังสือ — ที่เหลือยกให้ตัวเลข */
-  --ft-mark: 13.6;              /* ความสูงลายน้ำโลโก้ */
+  --ft-mark: 32;                /* ลายน้ำ — ใหญ่จนกรอบสี่เหลี่ยมโดนก้านตัดหมด เหลือแค่หัวอักษร */
   --ft-notch: 0.85;             /* รัศมีรอยบากครึ่งวงกลม */
   --ft-scallop: 0.4;            /* รัศมีคลื่นขอบขวา */
 }
@@ -165,28 +175,27 @@
   position: absolute;
   inset-block: calc(var(--vk-u) * 1.2);
   inset-inline-start: var(--ft-perf);
-  width: 1px;
+  width: 2px;
   z-index: 4;
-  background-image: linear-gradient(var(--ft-line) 46%, transparent 0);
-  background-size: 1px calc(var(--vk-u) * 0.5);
+  background-image: linear-gradient(var(--ft-perf-line) 46%, transparent 0);
+  background-size: 2px calc(var(--vk-u) * 0.5);
 }
 
-/* ── ลายน้ำโลโก้ SP — อยู่ในชั้นกระดาษ หลังข้อความทุกตัว ────────────────
+/* ── ลายน้ำโลโก้ SP — อยู่บนก้านฉีก หลัง QR กับรหัส (ไท้สั่งย้ายมาจากฝั่งซ้าย)
    ⚠️ ใช้ "หน้ากาก" ไม่ใช่วางไฟล์ภาพตรง ๆ เพราะไฟล์โลโก้เป็นหมึกดำ
-      ถ้าวางตรง ๆ แล้วหรี่ความทึบจะได้สีเทา ไม่ใช่น้ำตาลของใบ
-      หน้ากาก = ตัดรูปทรงโลโก้ออกมาจากแผ่นสีน้ำตาล → ได้สีเดียวกับตัวหนังสือเป๊ะ
-   z-index 0 + ลูกทุกตัวอยู่ชั้น 2 ขึ้นไป → ไม่มีทางบังข้อความได้เลย            */
+      วางตรง ๆ แล้วหรี่ความทึบจะได้สีเทา — หน้ากาก = ตัดรูปทรงโลโก้ออกจากแผ่นสีที่เราเลือก
+   ทำเป็น ::before ของกล่องก้าน ไม่ใช่ของใบ — เพราะกล่องก้านเป็นคนทาพื้นสีเข้ม
+   ::before = ลูกคนแรกของกล่อง → ทับพื้นสีเข้ม แต่อยู่ใต้ QR/รหัสเสมอ          */
 
-[data-design='foilticket'][data-shape='ticket'] .vk-card::after {
+[data-design='foilticket'][data-shape='ticket'] .vk-card__stub-body::before {
   content: '';
   position: absolute;
-  z-index: 0;
-  inset: 50% auto auto calc(var(--vk-u) * 0.6);
-  transform: translateY(-50%);
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
   height: calc(var(--vk-u) * var(--ft-mark));
   aspect-ratio: 151 / 320;      /* สัดส่วนจริงของไฟล์มอโนแกรม ห้ามยืดผิดส่วน */
-  background: var(--ft-ink);
-  opacity: 0.07;
+  background: var(--ft-stub-ink);
+  opacity: var(--ft-mark-op);
   -webkit-mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
   mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
   pointer-events: none;
@@ -453,8 +462,20 @@
   gap: calc(var(--vk-u) * 0.12);
   margin: 0;
   padding: 0 calc(var(--vk-u) * 1) calc(var(--vk-u) * 1.5);
-  background: var(--ft-paper-2);
+  background: var(--ft-stub-bg);
+  color: var(--ft-stub-ink);
   text-align: center;
+  /* ลายน้ำใหญ่กว่าก้าน — กล่องนี้เป็นคนตัด ไม่มีอะไรเลื่อนในนี้จึงปลอดภัย */
+  overflow: hidden;
+}
+
+/* กฎสีตัวหนังสือทั้งใบเป็นน้ำตาล — บนก้านสีเข้มต้องทับเฉพาะที่นี่ */
+[data-design='foilticket'][data-shape='ticket'] .vk-card__stub-body .vk-card__label {
+  color: var(--ft-stub-ink-2);
+}
+[data-design='foilticket'][data-shape='ticket'] .vk-card__stub-body .vk-card__code,
+[data-design='foilticket'][data-shape='ticket'] .vk-card__stub-body .vk-card__date {
+  color: var(--ft-stub-ink);
 }
 [data-design='foilticket'] .vk-card__stub-body .vk-card__label:first-child { display: none; }
 
@@ -484,7 +505,7 @@
   align-self: start; justify-self: center;
   width: calc(var(--vk-u) * 5.2);
   margin-top: calc(var(--vk-u) * 1.5);
-  color: var(--ft-ink);
+  color: var(--ft-stub-ink);
 }
 
 /* ── ใบที่ใช้แล้ว — ถอดทองออก เหลือเงินหม่น ยังอ่านครบ ─────────────────── */
@@ -496,6 +517,10 @@
   --ft-ink: #8b857a;
   --ft-ink-2: #a8a297;
   --ft-line: rgba(139, 133, 122, 0.26);
+  --ft-stub-bg: #4f4c46;
+  --ft-stub-ink: #e6e3dc;
+  --ft-stub-ink-2: rgba(230, 227, 220, 0.58);
+  --ft-perf-line: rgba(230, 227, 220, 0.32);
   /* เปลี่ยนแค่พื้นใต้แผนที่ห้อง — แผนที่เดิมยังทำงาน ได้ฟอยล์เงินหม่นแทนทอง */
   --ft-foil-base: linear-gradient(176deg, #a9a49a 0%, #918c83 54%, #9c968c 100%);
 }
