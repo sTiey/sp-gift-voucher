@@ -162,17 +162,20 @@ export function cardHtml(v, opt = {}) {
      ยัดทั้งคู่เข้าผังเดียว = ใบหนึ่งตัวเลขเล็กเกินไป อีกใบชนเส้นปรุ — เป็นสิ่งที่เจอมาจริง */
   const numShape = (v.kind === 'percent' || parts.main.length <= 2) ? 'tall' : 'wide';
 
+  /* ⚠️ ดีไซน์ที่ไม่ใช้ภาพสินค้า ต้อง **ไม่สร้างแท็ก <img> เลย** ไม่ใช่แค่ซ่อนด้วย CSS
+     เพราะ `display: none` **ไม่หยุดการดาวน์โหลดภาพ** — วัดจริงแล้วเสียเปล่า 105 KB ต่อใบ
+     มากกว่าภาพพื้นหลังที่ใช้จริง (14 KB) เจ็ดเท่า · งานนี้เน้นมือถือ จึงเป็นเรื่อใหญ่ */
+  const usesPhoto = (DESIGNS.find((d) => d.id === design) || {}).photo !== false;
+  const art = usesPhoto
+    ? `<figure class="vk-card__art"><img src="${esc(artFile)}" alt="" decoding="async"></figure>`
+    : '';
+
   const variant = opt.variant ? ` data-variant="${esc(opt.variant)}"` : '';
 
   return `<div class="vk-voucher" data-design="${esc(design)}" data-shape="${esc(shape)}"${variant}>
   <article class="vk-card" data-status="${esc(status)}" data-kind="${esc(v.kind)}" data-numshape="${numShape}" data-code="${esc(v.code)}" style="${artBg}">
 
-    <figure class="vk-card__art">
-      <!-- ⚠️ ห้ามใส่ loading="lazy" ที่นี่
-           ภาพที่ยังไม่ถูกเลื่อนไปถึงจะไม่โหลด → ตอนแคปหน้าจอตรวจงาน
-           ดีไซน์ที่ใช้ภาพจะกลายเป็นช่องว่างเปล่า แล้วเข้าใจผิดว่าดีไซน์พัง -->
-      <img src="${esc(artFile)}" alt="" decoding="async">
-    </figure>
+    ${art}
 
     <div class="vk-card__main">
       <header class="vk-card__head">
