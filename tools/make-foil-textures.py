@@ -23,7 +23,12 @@ import numpy as np
 from PIL import Image
 
 OUT = 'D:/Gift vocher/assets/textures/'
-SIZE = 384   # 512 ให้ไฟล์ 87KB ซึ่งหนักเกินจำเป็น — ตอนแสดงผลย่อลงอยู่แล้ว
+# ⚠️ เคยเข้าใจผิดว่า "อยากได้ลายละเอียดขึ้น = ต้องขยายกระเบื้อง" → ไฟล์พุ่งไป 367KB
+#    จริง ๆ ความละเอียดที่ตาเห็นขึ้นกับ **ขนาดที่เอาไปแสดง** ไม่ใช่ขนาดไฟล์
+#    กระเบื้อง 448 ย่อลงแสดงที่ 168px = บีบ 2.7 เท่า ได้ลายละเอียดกว่า 640 ที่แสดงเต็ม
+#    และไฟล์เล็กกว่าครึ่ง · ตัวที่เคยผูกให้ขยายไม่ได้คือ "ระยะเลื่อนตอนพลิก"
+#    ซึ่งย้ายไปใช้หน่วยพิกเซลแทนเปอร์เซ็นต์แล้ว จึงไม่ผูกกับขนาดกระเบื้องอีก
+SIZE = 448
 rng = np.random.default_rng(20260818)
 
 
@@ -55,7 +60,7 @@ w = rng.normal(size=(SIZE, SIZE))
 # หลุมใหญ่ = รอยทุบ · หลุมกลาง = รอยยับซ้อน · ละเอียด = ผิวหยาบของแผ่น
 # ⚠️ เคยใช้ 5-13 ซึ่งให้หลุมกว้างราว 30-77px บนภาพ = ก้อนใหญ่เหมือนกระดาษยับ
 #    ฟอยล์ทุบจริงรอยถี่กว่านั้นมาก · ดันขึ้นทั้งสามชั้นให้เหลือรอยละเอียด 2-17px
-height = 1.0 * band(w, 45, 95) + 0.68 * band(w, 105, 165) + 0.34 * band(w, 172, 190)
+height = 1.0 * band(w, 58, 118) + 0.7 * band(w, 130, 190) + 0.36 * band(w, 200, 220)
 height = norm(height)
 # ทำให้ยอดแหลมและก้นแบน เหมือนโลหะที่ถูกทุบจริง (ไม่ใช่คลื่นไซน์นุ่ม ๆ)
 height = np.sign(height) * np.abs(height) ** 0.78
@@ -69,38 +74,39 @@ ln = np.sqrt(nx ** 2 + ny ** 2 + nz ** 2)
 L = np.array([0.45, -0.55, 0.70])
 L = L / np.linalg.norm(L)
 diff = (nx * L[0] + ny * L[1] + nz * L[2]) / ln
-spec = np.clip(diff, 0, 1) ** 22          # ไฮไลต์แคบ ๆ ตรงสันที่หันเข้าหาแสงพอดี
-shade = norm(diff) * 0.62 + spec * 2.2
-hammer = np.clip(128 + norm(shade) * 30, 0, 255).astype(np.uint8)
+spec = np.clip(diff, 0, 1) ** 15          # ไฮไลต์แคบ ๆ ตรงสันที่หันเข้าหาแสงพอดี
+shade = norm(diff) * 0.7 + spec * 3.1
+# ⚠️ ไท้ขอให้ "เป็นเงา" มากขึ้น = ต่างระหว่างมืดกับสว่างต้องแรงขึ้น ไม่ใช่สว่างขึ้นเฉย ๆ
+hammer = np.clip(128 + norm(shade) * 46, 0, 255).astype(np.uint8)
 seam(hammer, 'hammer')
-Image.fromarray(hammer, 'L').save(OUT + 'foil-hammer.webp', 'WEBP', quality=76, method=6)
+Image.fromarray(hammer, 'L').save(OUT + 'foil-hammer.webp', 'WEBP', quality=52, method=6)
 
 # ── 2. กลิตเตอร์ ───────────────────────────────────────────────────────────
 g = np.full((SIZE, SIZE), 128.0)
 # ⚠️ เกล็ดต้องเห็นชัด — เพิ่มจำนวนและดันความสว่างขึ้น
-n_small = 11000
+n_small = 15000
 ys = rng.integers(0, SIZE, n_small)
 xs = rng.integers(0, SIZE, n_small)
 g[ys, xs] = rng.uniform(215, 255, n_small)
 # เกล็ดใหญ่กว่าเล็กน้อย 2x2 — ขยายด้วยการเลื่อนแบบวนขอบ จึงไม่ทำขอบภาพเสีย
-n_big = 2000
+n_big = 2600
 yb = rng.integers(0, SIZE, n_big)
 xb = rng.integers(0, SIZE, n_big)
 for dy in (0, 1):
     for dx in (0, 1):
         g[(yb + dy) % SIZE, (xb + dx) % SIZE] = rng.uniform(235, 255, n_big)
 # เกล็ดจมเงาบ้าง เพื่อให้เห็นเป็น "เกล็ด" ไม่ใช่แค่จุดขาว
-n_dark = 3400
+n_dark = 4500
 g[rng.integers(0, SIZE, n_dark), rng.integers(0, SIZE, n_dark)] = rng.uniform(40, 84, n_dark)
 glitter = np.clip(g, 0, 255).astype(np.uint8)
 seam(glitter, 'glitter')
-Image.fromarray(glitter, 'L').save(OUT + 'foil-glitter.webp', 'WEBP', quality=82, method=6)
+Image.fromarray(glitter, 'L').save(OUT + 'foil-glitter.webp', 'WEBP', quality=58, method=6)
 
 # ── 3. แผนที่ห้อง (โซนสว่าง-มืดกว้าง ๆ) ────────────────────────────────────
 e = norm(1.0 * band(rng.normal(size=(SIZE, SIZE)), 2, 6)
          + 0.6 * band(rng.normal(size=(SIZE, SIZE)), 7, 18))
 yy = np.arange(SIZE)[:, None] / SIZE
 e = norm(e + 0.3 * np.sin(2 * np.pi * yy) * np.ones((1, SIZE)))
-env = np.clip(128 + np.where(e > 0, e * 26, e * 10), 0, 255).astype(np.uint8)
+env = np.clip(128 + np.where(e > 0, e * 36, e * 17), 0, 255).astype(np.uint8)
 seam(env, 'env')
-Image.fromarray(env, 'L').save(OUT + 'foil-env.webp', 'WEBP', quality=76, method=6)
+Image.fromarray(env, 'L').save(OUT + 'foil-env.webp', 'WEBP', quality=52, method=6)

@@ -126,6 +126,10 @@ export async function attachFoilTilt(card, opt = {}) {
     lastY = y;
     card.style.setProperty('--ft-ex', `${x.toFixed(1)}%`);
     card.style.setProperty('--ft-ey', `${y.toFixed(1)}%`);
+    /* ระยะเลื่อนพื้นผิวเป็นพิกเซล — ไม่ผูกกับขนาดกระเบื้อง จึงย่อกระเบื้องให้
+       ลายละเอียดขึ้นได้โดยไม่เสียระยะเลื่อน */
+    card.style.setProperty('--ft-px', `${((0.5 - cx) * 150).toFixed(1)}px`);
+    card.style.setProperty('--ft-py', `${((0.5 - cy) * 150).toFixed(1)}px`);
     card.style.setProperty('--ft-bx', `${((cx - 0.5) * 2 * BEV_X).toFixed(2)}px`);
     /* ⚠️ ต้องเป็นบวกเสมอ = เงาทอดลงล่างเสมอ = ตัวอักษรนูนเสมอ
        ปล่อยให้ติดลบเมื่อไหร่ ตัวอักษรจะพลิกเป็นบุ๋มลงไปทันที */
@@ -142,7 +146,7 @@ export async function attachFoilTilt(card, opt = {}) {
     setSpot((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
   };
   const onLeave = () => {
-    for (const v of ['--ft-ex', '--ft-ey', '--ft-bx', '--ft-by']) card.style.removeProperty(v);
+    for (const v of ['--ft-ex', '--ft-ey', '--ft-px', '--ft-py', '--ft-bx', '--ft-by']) card.style.removeProperty(v);
     lastX = lastY = -999;
   };
 

@@ -64,10 +64,12 @@
   /* ⚠️ หัวไล่เฉดเคยเริ่มที่ #f0dc9e ซึ่งอ่อนเกิน พอบวกฝ้าแสงแล้วครึ่งบนขาวจนหลุดจากทอง
      ทองต้องยังเป็นทองแม้ตรงที่สว่างที่สุด */
   --ft-foil-base: linear-gradient(174deg,
-    #e7ca7c 0%, #dbb85f 22%, #caa348 44%, #b58b30 68%, #a37923 86%, #b68b30 100%);
+    #f2dc9a 0%, #e2bf66 20%, #cda344 42%, #ab801f 66%, #8e6614 85%, #a87d24 100%);
 
   /* ค่าที่ตัวเอียงการ์ดเขียนทับทุกครั้งที่เมาส์/เครื่องขยับ */
   --ft-ex: 50%;             /* ตำแหน่งที่หยิบแผนที่ห้องมาใช้ */
+  --ft-px: 0px;             /* ระยะเลื่อนพื้นผิวตอนพลิก (พิกเซล) */
+  --ft-py: 0px;
   --ft-ey: 50%;
   --ft-bx: 1.2px;           /* ทิศเงาที่ทอดลงกระดาษ — ต้องลงล่างเสมอ ไม่งั้นกลายเป็นบุ๋ม */
   --ft-by: 1.8px;
@@ -329,10 +331,16 @@
       rgba(255, 240, 190, 0) 100%),
     var(--ft-foil-env),
     var(--ft-foil-base);
-  background-size: 118% 118%, 150% 150%, 100% 100%, 166% 166%, 100% 100%;
+    /* ⚠️ ขนาดพื้นผิวเป็น px คงที่ ไม่ใช่ % ของตัวอักษร — วัสดุจริงไม่ได้ขยายตามป้าย
+     และการเลื่อนก็เป็น px เช่นกัน จึงคุมความละเอียดกับระยะเลื่อนแยกกันได้
+     คูณคนละตัวเลข = แต่ละชั้นเลื่อนคนละความเร็ว → เกล็ดติด-ดับตอนพลิก */
+  background-size: 132px 132px, 168px 168px, 100% 100%, 166% 166%, 100% 100%;
   background-position:
-    var(--ft-ex) var(--ft-ey), var(--ft-ex) var(--ft-ey), 0 0,
-    var(--ft-ex) var(--ft-ey), 0 0;
+    calc(var(--ft-px) * 0.55) calc(var(--ft-py) * 0.55),
+    calc(var(--ft-px) * 1.7) calc(var(--ft-py) * 1.7),
+    0 0,
+    var(--ft-ex) var(--ft-ey),
+    0 0;
   background-repeat: repeat, repeat, no-repeat, repeat, no-repeat;
   background-blend-mode: overlay, overlay, screen, soft-light, normal;
   -webkit-background-clip: text;
@@ -405,10 +413,16 @@
       rgba(255, 240, 190, 0) 100%),
     var(--ft-foil-env),
     var(--ft-foil-base);
-  background-size: 118% 118%, 150% 150%, 100% 100%, 166% 166%, 100% 100%;
+    /* ⚠️ ขนาดพื้นผิวเป็น px คงที่ ไม่ใช่ % ของตัวอักษร — วัสดุจริงไม่ได้ขยายตามป้าย
+     และการเลื่อนก็เป็น px เช่นกัน จึงคุมความละเอียดกับระยะเลื่อนแยกกันได้
+     คูณคนละตัวเลข = แต่ละชั้นเลื่อนคนละความเร็ว → เกล็ดติด-ดับตอนพลิก */
+  background-size: 132px 132px, 168px 168px, 100% 100%, 166% 166%, 100% 100%;
   background-position:
-    var(--ft-ex) var(--ft-ey), var(--ft-ex) var(--ft-ey), 0 0,
-    var(--ft-ex) var(--ft-ey), 0 0;
+    calc(var(--ft-px) * 0.55) calc(var(--ft-py) * 0.55),
+    calc(var(--ft-px) * 1.7) calc(var(--ft-py) * 1.7),
+    0 0,
+    var(--ft-ex) var(--ft-ey),
+    0 0;
   background-repeat: repeat, repeat, no-repeat, repeat, no-repeat;
   background-blend-mode: overlay, overlay, screen, soft-light, normal;
   -webkit-background-clip: text;
