@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ทดสอบบัตรกำนัลบนมือถือ</title>
+<!--
+  หน้าทดสอบสำหรับ "เครื่องจริง" โดยเฉพาะ — ไม่ใช่หน้าดูดีไซน์บนคอม
+  ทีละใบเต็มจอ ไม่ต้องเลื่อน บอกเป็นขั้น ๆ ว่าต้องทำอะไร
+  แล้วเก็บผลให้เองทั้งหมด จบด้วยปุ่มคัดลอกปุ่มเดียว
+
+  ⚠️ ห้ามใช้ position: fixed คลุมเต็มจอในหน้านี้เด็ดขาด
+     บน iOS มันวาดไม่ถึงก้นจอ ไม่ว่าจะสั่งความสูงเท่าไหร่ → เกิดแถบว่างใต้จอ
+     (บทเรียนเก่าที่แก้กันมาหลายรอบ) ใช้บล็อกในสายเนื้อหา + 100dvh เท่านั้น
+-->
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
+<style>
+  :root { color-scheme: light; --pad: 16px; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100dvh;
+    background: #b4ada0;
+    color: #2b2419;
+    font: 400 16px/1.45 'Noto Sans Thai', system-ui, sans-serif;
+    overflow: hidden;                 /* ไม่ให้เลื่อน — ทุกขั้นต้องพอดีจอ */
+  }
+  .screen {
+    /* ⚠️ ต้องเป็น height ไม่ใช่ min-height — หน้านี้เลื่อนไม่ได้ (overflow: hidden)
+       ถ้าปล่อยให้กล่องสูงเกินจอได้ ส่วนที่เกินจะถูกตัดหายโดยไม่มีทางเลื่อนไปดู
+       ล็อกความสูงไว้เท่าจอ แล้วให้แถวกลาง (minmax(0,1fr)) เป็นตัวยุบรับแทน
+       บรรทัด 100vh ข้างบนไว้เผื่อ iOS เก่าที่ยังไม่รู้จัก dvh */
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    /* ⚠️ ต้องเป็น minmax(0, 1fr) ไม่ใช่ 1fr เฉย ๆ
+       1fr เท่ากับ minmax(auto, 1fr) ซึ่ง "ย่อต่ำกว่าเนื้อหาข้างในไม่ได้"
+       พอเนื้อหาสูงเกินจอ แถวกลางจะดันจนปุ่มตกจอ — และหน้านี้เลื่อนไม่ได้ = ค้าง
+       วัดจริง: หน้าเริ่มต้น (ไม่มีบัตรเลย) ยังล้น 21px ตอนหมุนแนวนอน */
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: max(var(--pad), env(safe-area-inset-top)) var(--pad)
+             max(var(--pad), env(safe-area-inset-bottom));
+  }
+  .hd { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #5b5040; }
+  .hd b { color: #26313f; }
+    /* ⚠️ ต้องมี minmax(0, 1fr) ด้วยเหมือนแถว — คอลัมน์อัตโนมัติของกริดจะกาง
+     ตามความกว้างต่ำสุดของบัตร (วัดได้ 720px) แม้กล่องแม่จะกว้างแค่ 538px
+     ผลคือ width:100% ของบัตรไปอ้างอิง 720px แล้วบัตรล้นไปทับคอลัมน์ขวา */
+  .mid {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    align-content: center; justify-items: center; gap: 14px; min-height: 0; overflow: hidden;
+  }
+  .say { font-size: 17px; text-align: center; max-width: 30ch; }
+  .say small { display: block; margin-top: 6px; font-size: 14px; color: #5b5040; }
+  /* ⚠️ บัตรมี "ความสูงต่ำสุด" ของมันเอง (เนื้อหาในก้านฉีกบีบต่อไม่ได้) วัดได้ 159px
+     ต่อให้บีบความกว้างเหลือ 174px มันก็ยังสูง 159px อยู่ดี
+     → บนจอแนวนอนที่เตี้ย วางซ้อนกันแนวตั้งยังไงก็ไม่พอ ปุ่มตกจอเสมอ
+     ทางแก้คือ **เปลี่ยนเป็นสองคอลัมน์** ตอนแนวนอน: บัตรอยู่ซ้าย คำสั่ง+ปุ่มอยู่ขวา
+     ซึ่งเป็นการใช้จอแนวนอนอย่างที่ควรเป็นอยู่แล้ว */
+  .card-box { width: min(86vw, 380px, calc((100dvh - 15rem) * 0.82)); }
+
+  .land .screen {
+    grid-template-columns: 1fr clamp(180px, 32%, 280px);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  .land .hd { grid-column: 1 / -1; }
+  .land .mid { grid-column: 1; grid-row: 2; }
+  .land .foot { grid-column: 2; grid-row: 2; align-self: center; display: grid; gap: 9px; }
+  .land .card-box { width: min(100%, 640px, calc((100dvh - 6rem) * 2.6)); }
+  .land .say { font-size: 15px; text-align: left; }
+  .land .say small { margin-top: 3px; font-size: 13px; }
+  button {
+    font: 600 17px/1.2 inherit; color: #f7f3ea; background: #26313f;
+    border: 0; border-radius: 6px; padding: 15px 20px; min-height: 52px; width: 100%;
+  }
+  button.ghost { background: #f7f3ea; color: #26313f; }
+  .row { display: grid; grid-auto-flow: column; gap: 10px; }
+  .live {
+    font: 500 14px/1.4 ui-monospace, monospace; background: #f7f3ea; color: #3b342a;
+    border-radius: 5px; padding: 8px 11px; text-align: center;
+  }
+  .live b { color: #1d6b3a; }
+  .live[data-bad="true"] b { color: #a4331f; }
+  .rotate { font-size: clamp(30px, 9vh, 54px); }
+  #out {
+    width: 100%; height: 100%; min-height: 0; font: 400 11px/1.45 ui-monospace, monospace;
+    border: 0; border-radius: 6px; padding: 10px; background: #f7f3ea; color: #2b2419; resize: none;
+  }
+  #note { width: 100%; font: inherit; font-size: 15px; padding: 11px; border: 0; border-radius: 6px; }
+  .ok { color: #1d6b3a; font-weight: 700; }
+  .bad { color: #a4331f; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="screen" id="screen"><div class="hd">กำลังเตรียม…</div><div class="mid"></div><div class="foot"></div></div>
+
+<script type="module">
+import { cardHtml } from '../src/ui/voucher-design.js';
+import { createVoucher } from '../src/index.js';
+import { attachFoilTilt, requestGyro, gyroStatus, recalibrateGyro } from '../src/ui/foil-tilt.js';
+import { deviceInfo, loadInfo, frameProbe, foilCheck, formatReport, copyText } from '../src/ui/device-report.js';
+
+const screen_ = document.getElementById('screen');
+const probe = frameProbe();
+const state = { frames: {}, answers: {}, foil: null, tilts: [] };
+
+const SAMPLES = {
+  ticket: { kind: 'percent', value: 15, title: 'ส่วนลดพาร์ทเนอร์ ไตรมาส 3', code: 'SPE-7K4M-92XH', minSpend: 10000, maxDiscount: 2000, art: 'fence' },
+  compact: { kind: 'amount', value: 1500, title: 'บัตรกำนัลลูกค้าประจำ', code: 'VIP-3H8N-5TQA', minSpend: 8000, art: 'stair' },
+};
+
+function render(hd, mid, foot) {
+  screen_.innerHTML = `<div class="hd">${hd}</div><div class="mid">${mid}</div><div class="foot">${foot}</div>`;
+}
+
+const isLandscape = () => window.innerWidth > window.innerHeight;
+
+/* ── ขั้นที่ 0 · เริ่ม ─────────────────────────────────────────────────
+   ⚠️ ปุ่มนี้ทำสองหน้าที่ — เริ่มการทดสอบ **และเป็นการแตะที่ iOS ต้องการ**
+      เพื่อขอสิทธิ์อ่านการเอียง ขอนอกการแตะไม่ได้ กฎของเครื่องเอง */
+function stepStart() {
+  render('ทดสอบบัตรกำนัล · <b>ขั้นที่ 1 จาก 4</b>',
+    `<div class="rotate">📱</div>
+     <div class="say">จะพาดูบัตร 2 แบบ แบบละ 1 หน้าจอ<br>แล้วสรุปผลให้เอง
+       <small>ใช้เวลาประมาณ 1 นาที · ตอนกดปุ่ม เครื่องจะถามขออนุญาตอ่านการเอียง ให้กด “อนุญาต”</small></div>`,
+    '<button id="go">เริ่มทดสอบ</button>');
+  document.getElementById('go').onclick = async () => {
+    await requestGyro();
+    state.gyroAsked = gyroStatus();
+    stepCard('ticket');
+  };
+}
+
+/* ── ขั้นที่ 1-2 · ดูบัตรทีละใบ ───────────────────────────────────────── */
+function stepCard(shape) {
+  const nth = shape === 'ticket' ? 2 : 3;
+  const name = shape === 'ticket' ? 'ใบแนวยาว' : 'ใบกระทัดรัด';
+
+  /* ทรงบัตรกำหนดว่าต้องถือเครื่องท่าไหน — ใบยาว 2.6:1 ต้องแนวนอน ใบกระทัดรัดต้องแนวตั้ง
+     ยัดผิดท่าแล้วบัตรเล็กจนดูผิวทองไม่ออก · และการหมุนเครื่องระหว่างทาง
+     ยังได้ทดสอบไปในตัวว่าไจโรสลับแกนตามการหมุนจอถูกไหม */
+  const wantLand = shape === 'ticket';
+  if (isLandscape() !== wantLand) {
+    render(`ทดสอบบัตรกำนัล · <b>ขั้นที่ ${nth} จาก 4</b>`,
+      `<div class="rotate">🔄</div><div class="say"><b>หมุนเครื่องเป็น${wantLand ? 'แนวนอน' : 'แนวตั้ง'}</b>
+        <small>${name}ต้องดู${wantLand ? 'แนวนอน' : 'แนวตั้ง'}ถึงจะเห็นผิวทองชัด</small></div>`, '');
+    document.body.classList.remove('land');
+    const again = () => { window.removeEventListener('resize', again); stepCard(shape); };
+    window.addEventListener('resize', again, { passive: true });
+    return;
+  }
+
+  document.body.classList.toggle('land', wantLand);
+  const v = createVoucher(SAMPLES[shape]);
+  render(`${name} · <b>ขั้นที่ ${nth} จาก 4</b>`,
+    `<div class="card-box">${cardHtml(v, { design: 'foilticket', shape, art: SAMPLES[shape].art })}</div>`,
+    `<div class="live" id="live">กำลังอ่านการเอียง…</div>
+     <div class="say"><b>เอียงเครื่องซ้าย-ขวา ช้า ๆ</b><small>ดูว่าตัวเลขเป็นสีทองมีประกาย และใบขยับตามการเอียงไหม</small></div>
+     <button id="next">ดูแล้ว · ไปต่อ</button>`);
+
+  const card = screen_.querySelector('.vk-card');
+  recalibrateGyro();
+  probe.start();
+  attachFoilTilt(card, {}).then((r) => { state['attach_' + shape] = r.state; });
+
+  const live = document.getElementById('live');
+  const tick = setInterval(() => {
+    const g = gyroStatus();
+    live.dataset.bad = String(g.state === 'denied' || !g.secure);
+    live.innerHTML = g.state === 'live'
+      ? `เอียงอยู่ <b>${g.angle ? g.angle[0] + '°, ' + g.angle[1] + '°' : '—'}</b> · รับสัญญาณ ${g.events} ครั้ง`
+      : g.state === 'denied' ? 'เครื่อง<b>ไม่อนุญาต</b>ให้อ่านการเอียง'
+        : g.state === 'unsupported' ? 'เครื่องนี้<b>ไม่มีเซนเซอร์</b>การเอียง'
+          : !g.secure ? '<b>หน้านี้ไม่ได้เปิดผ่าน https</b> เซนเซอร์จะเงียบเสมอ'
+            : 'ยังไม่มีสัญญาณการเอียงเข้ามา — ลองขยับเครื่องดู';
+  }, 300);
+
+  document.getElementById('next').onclick = () => {
+    clearInterval(tick);
+    probe.stop();
+    state.frames[name] = probe.result();
+    state.tilts.push(gyroStatus());
+    document.body.classList.remove('land');
+    if (shape === 'ticket') stepCard('compact'); else stepAsk();
+  };
+}
+
+/* ── ขั้นที่ 3 · ถามสิ่งที่เครื่องตอบแทนคนไม่ได้ ─────────────────────── */
+function stepAsk() {
+  render('ตอบ 2 ข้อ · <b>ขั้นที่ 4 จาก 4</b>',
+    `<div class="say" id="q">ตัวเลขบนบัตร <b>เป็นสีทองมีประกาย</b> ไหม
+       <small>ถ้าออกมาเป็นสีเงิน สีเทา หรือด้าน ๆ ให้ตอบ “ไม่ใช่”</small></div>`,
+    '<div class="row"><button id="yes">ใช่</button><button id="no" class="ghost">ไม่ใช่</button></div>');
+  const ask2 = () => {
+    document.getElementById('q').innerHTML =
+      'เอียงเครื่องแล้ว <b>บัตรขยับตาม</b> ไหม<small>ไม่นับการลากนิ้ว — หมายถึงเอียงเครื่องเฉย ๆ</small>';
+    document.getElementById('yes').onclick = () => { state.answers.tilt = true; stepDone(); };
+    document.getElementById('no').onclick = () => { state.answers.tilt = false; stepDone(); };
+  };
+  document.getElementById('yes').onclick = () => { state.answers.gold = true; ask2(); };
+  document.getElementById('no').onclick = () => { state.answers.gold = false; ask2(); };
+}
+
+/* ── ขั้นสุดท้าย · สรุป + คัดลอก ─────────────────────────────────────── */
+async function stepDone() {
+  state.foil = await foilCheck();
+  /* เอาสถานะไจโรตอนที่ "ดีที่สุด" ที่เคยเห็น — ถ้าครั้งหนึ่งเคยมีสัญญาณ ถือว่าเซนเซอร์ใช้ได้ */
+  const g = state.tilts.reduce((a, b) => (b.events > (a?.events ?? -1) ? b : a), null) || gyroStatus();
+  const report = {
+    at: new Date().toLocaleString('th-TH'),
+    device: deviceInfo(),
+    load: loadInfo(),
+    gyro: g,
+    foil: state.foil,
+    frames: state.frames,
+    answers: state.answers,
+  };
+  const text = formatReport(report);
+  const pass = state.foil.ok && state.answers.gold && state.answers.tilt;
+
+  render('เสร็จแล้ว · <b>ส่งผลกลับ</b>',
+    `<div class="say">${pass ? '<span class="ok">ผ่านทุกข้อ</span>' : '<span class="bad">มีข้อที่ไม่ผ่าน</span>'}
+       <small>กดปุ่มข้างล่างแล้ววางในแชตได้เลย</small></div>
+     <textarea id="out" readonly>${text.replace(/</g, '&lt;')}</textarea>
+     <input id="note" placeholder="อยากบอกอะไรเพิ่ม พิมพ์ตรงนี้ (ไม่พิมพ์ก็ได้)">`,
+    '<button id="copy">คัดลอกผลทดสอบ</button>');
+
+  document.getElementById('note').oninput = (e) => {
+    state.answers.note = e.target.value;
+    document.getElementById('out').value = formatReport({ ...report, answers: { ...state.answers } });
+  };
+  document.getElementById('copy').onclick = async (e) => {
+    const ok = await copyText(document.getElementById('out').value);
+    e.target.textContent = ok ? '✅ คัดลอกแล้ว — วางในแชตได้เลย' : 'คัดลอกอัตโนมัติไม่ได้ · กดค้างที่กล่องข้อความแล้วเลือกทั้งหมด';
+    if (!ok) document.getElementById('out').select();
+  };
+  window.TEST_REPORT = report;
+  console.log('MEASURE ' + JSON.stringify({ pass, foilOk: state.foil.ok, frames: state.frames, gyro: g.state, events: g.events }));
+}
+
+/* ?jump=ticket|compact|ask — ข้ามไปดูขั้นนั้นเลย มีไว้ตรวจหน้าตาตอนพัฒนา
+   ไม่ใช่ทางที่ผู้ทดสอบใช้ (ข้ามการขอสิทธิ์ไป ผลจึงไม่ครบ) */
+const JUMP = new URLSearchParams(location.search).get('jump');
+if (JUMP === 'ticket' || JUMP === 'compact') stepCard(JUMP);
+else if (JUMP === 'ask') stepAsk();
+else stepStart();
+
+/* ?fit=1 — เขียนผลวัดว่า "พอดีจอไหม" ลงบน <html> ให้เครื่องมือตรวจอ่านได้
+   มีไว้ตรวจตอนพัฒนาเท่านั้น ไม่กระทบผู้ทดสอบ */
+if (new URLSearchParams(location.search).has('fit')) {
+  setTimeout(() => {
+    const de = document.documentElement;
+    const btn = document.querySelector('button');
+    const over = de.scrollHeight - window.innerHeight;
+    const box = document.querySelector('.card-box');
+    document.documentElement.dataset.fit =
+      `จอจริง ${window.innerWidth}×${window.innerHeight} · สูงเกิน ${over}px · ` +
+      (btn ? `ปุ่มล่าง ${Math.round(btn.getBoundingClientRect().bottom)}/${window.innerHeight}` : 'ไม่มีปุ่ม') +
+      ` · land=${document.body.classList.contains('land')}` +
+      (box ? ` · บัตรกว้าง ${Math.round(box.getBoundingClientRect().width)} สูง ${Math.round(box.getBoundingClientRect().height)}` : '');
+  }, 900);
+}
+</script>
+</body>
+</html>

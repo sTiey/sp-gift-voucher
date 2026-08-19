@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ตรวจหน้าทดสอบมือถืออัตโนมัติ</title>
+<!--
+  เดินหน้าทดสอบมือถือให้ครบทุกขั้นแทนคน แล้วตรวจว่าได้รายงานออกมาจริงและมีค่าครบ
+  เปิดของจริงใน iframe (โดเมนเดียวกัน จึงกดปุ่มและยิงสัญญาณเซนเซอร์ปลอมเข้าไปได้)
+  → หน้าทดสอบตัวจริงไม่ต้องมีโค้ดทดสอบปนอยู่ข้างใน
+-->
+<style>
+  body { margin: 0; font: 13px/1.5 ui-monospace, monospace; background: #eee; }
+  #log { padding: 12px 16px; background: #fff; white-space: pre-wrap; }
+  iframe { width: 900px; height: 460px; border: 2px solid #999; }
+</style>
+</head>
+<body>
+<div id="log">กำลังตรวจ…</div>
+<iframe id="f" src="mobile-test.html"></iframe>
+
+<script type="module">
+const f = document.getElementById('f');
+const results = [];
+const check = (name, pass, detail = '') => results.push({ name, pass: Boolean(pass), detail: String(detail) });
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function tilt(w, beta, gamma) {
+  const ev = new w.DeviceOrientationEvent('deviceorientation', { alpha: 0, beta, gamma });
+  w.dispatchEvent(ev);
+}
+
+/** เอียงไปมาหลายรอบ เลียนแบบคนถือเครื่องแล้วโยกซ้าย-ขวา */
+async function shake(w, n = 26) {
+  for (let i = 0; i < n; i++) {
+    tilt(w, 45 + Math.sin(i / 2) * 14, Math.sin(i / 3) * 20);
+    await wait(28);
+  }
+}
+
+const q = (sel) => f.contentDocument.querySelector(sel);
+
+(async function run() {
+  await new Promise((r) => (f.contentWindow.document.readyState === 'complete' ? r() : (f.onload = r)));
+  await wait(400);
+  const w = f.contentWindow;
+
+  check('ขั้นเริ่มมีปุ่ม', q('#go'), q('#go')?.textContent || 'ไม่เจอ');
+  q('#go').click();
+  await wait(500);
+
+  check('เข้าหน้าใบแนวยาวแล้ว (จอกว้างกว่าสูง)', q('.vk-card'), q('.hd')?.textContent || '');
+  check('ใบแนวยาวใช้กล่องกว้าง', w.document.body.classList.contains('land'), 'land=' + w.document.body.classList.contains('land'));
+
+  await shake(w);
+  const live1 = q('#live')?.textContent || '';
+  check('ตัวเลขสัญญาณเดินจริงระหว่างเอียง', /รับสัญญาณ [1-9]/.test(live1), live1.trim());
+  check('แนวนอนใช้สองคอลัมน์ ปุ่มไม่ตกจอ',
+        q('#next').getBoundingClientRect().bottom <= w.innerHeight + 1,
+        `ปุ่มล่าง ${Math.round(q('#next').getBoundingClientRect().bottom)}/${w.innerHeight}`);
+
+  q('#next').click();
+  await wait(400);
+  /* ใบกระทัดรัดขอจอแนวตั้ง — ต้องเจอหน้า "หมุนเครื่อง" ก่อน แล้วค่อยผ่านเมื่อย่อ iframe ให้สูงกว่ากว้าง */
+  check('ขอให้หมุนเป็นแนวตั้งก่อนดูใบกระทัดรัด', /หมุนเครื่องเป็นแนวตั้ง/.test(f.contentDocument.body.textContent),
+        f.contentDocument.querySelector('.say')?.textContent.trim().slice(0, 28) || '');
+  f.style.width = '420px'; f.style.height = '780px';
+  await wait(600);
+  check('พอหมุนแล้วเข้าหน้าใบกระทัดรัดเอง', q('.vk-card') && !w.document.body.classList.contains('land'), q('.hd')?.textContent || '');
+  await shake(w);
+  q('#next').click();
+  await wait(300);
+
+  check('เข้าหน้าคำถาม', q('#yes'), q('#q')?.textContent.slice(0, 30) || 'ไม่เจอ');
+  q('#yes').click();
+  await wait(120);
+  q('#yes').click();
+  await wait(1200);
+
+  const out = q('#out');
+  check('มีรายงานออกมา', out && out.value.length > 200, out ? out.value.length + ' ตัวอักษร' : 'ไม่เจอ');
+  const txt = out ? out.value : '';
+
+  /* รายงานต้องมีของครบทุกหมวด ไม่ใช่แค่มีข้อความ */
+  for (const [name, re] of [
+    ['บอกเครื่อง/เบราว์เซอร์', /เครื่อง\s+\S+/],
+    ['บอกขนาดจอ', /จอ\s+\d+×\d+/],
+    ['บอกผลตรวจผิวทอง', /ตรวจอัตโนมัติ\s+(ผ่าน|❌)/],
+    ['บอกสถานะไจโร', /สถานะ\s+\S+/],
+    ['นับสัญญาณไจโรได้จริง', /สัญญาณ\s+[1-9]\d*\s+ครั้ง/],
+    ['บอกความลื่นของใบแนวยาว', /ใบแนวยาว\s+กลาง [\d.]+ ms/],
+    ['บอกความลื่นของใบกระทัดรัด', /ใบกระทัดรัด\s+กลาง [\d.]+ ms/],
+    ['บอกน้ำหนักที่โหลด', /โหลดจริง \d+ KB/],
+    ['บอกเวลาโหลด', /พร้อมใช้ \d+ ms/],
+    ['บอกคำตอบของคน', /คนดูแล้วเป็นสีทอง\s+ใช่/],
+  ]) check(name, re.test(txt), (txt.match(re) || ['ไม่เจอ'])[0]);
+
+  const rep = w.TEST_REPORT;
+  check('ตรวจผิวฟอยล์ผ่าน (ช่องโปร่งใสอ่านได้จริง)', rep?.foil?.ok,
+        rep ? rep.foil.layers.map((l) => `${l.file.replace('foil-', '').replace('-a.webp', '')} ${l.alphaMin}-${l.alphaMax}`).join(' · ') : '—');
+
+  /* พิมพ์ช่องหมายเหตุแล้วรายงานต้องอัปเดตตาม */
+  const note = q('#note');
+  note.value = 'ทดสอบข้อความเพิ่มเติม';
+  note.dispatchEvent(new w.Event('input', { bubbles: true }));
+  await wait(120);
+  check('พิมพ์หมายเหตุแล้วรายงานอัปเดต', q('#out').value.includes('ทดสอบข้อความเพิ่มเติม'), '');
+
+  const pass = results.filter((r) => r.pass).length;
+  document.getElementById('log').textContent =
+    results.map((r) => `${r.pass ? 'OK  ' : 'FAIL'}  ${r.name}  —  ${r.detail}`).join('\n') +
+    `\n\nผ่าน ${pass} / ${results.length}\n\n----- ตัวอย่างรายงานที่ได้ -----\n` + txt;
+  console.log('CHECKED ' + JSON.stringify({ pass, fail: results.length - pass, results, sample: txt }));
+})();
+</script>
+</body>
+</html>
