@@ -63,17 +63,28 @@ const toDevice = (sx, sy) => {
   const c = Math.cos(th), s = Math.sin(th);
   return { g: sx * c - sy * s, b: sx * s + sy * c };
 };
+/* ⚠️ ท่าต้องถูกคำนวณ "ในลูปที่ยิงสัญญาณ" ตามเวลาจริง ไม่ใช่ให้ลูปอื่นมาแก้ตัวแปรค้างไว้
+   ถ้าแยกลูป จังหวะสองลูปจะเหลื่อมกัน แล้วบางครั้งยิงท่าเดิมซ้ำสองที
+   ของจริงมองว่า "เครื่องหยุดนิ่ง" แล้วเริ่มไล่ศูนย์กลางคันที่กำลังเอียงอยู่
+   ผลคือวัดระยะประกายได้แค่ครึ่งเดียว ทั้งที่โค้ดจริงไม่ได้ผิด */
+let move = null;   /* {from, to, t0, ms} */
 (async function pump() {
-  while (pumping) { const d = toDevice(want.sx, want.sy); fire(d.b, d.g); await wait(30); }
+  while (pumping) {
+    if (move) {
+      const k = Math.min(1, (performance.now() - move.t0) / move.ms);
+      want = { sx: move.from.sx + (move.to.sx - move.from.sx) * k,
+               sy: move.from.sy + (move.to.sy - move.from.sy) * k };
+      if (k >= 1) move = null;
+    }
+    const d = toDevice(want.sx, want.sy);
+    fire(d.b, d.g);
+    await wait(25);
+  }
 })();
 
-async function moveTo(sx, sy, ms = 700) {
-  const from = { ...want };
-  const n = Math.max(1, Math.round(ms / 30));
-  for (let i = 1; i <= n; i++) {
-    want = { sx: from.sx + (sx - from.sx) * i / n, sy: from.sy + (sy - from.sy) * i / n };
-    await wait(30);
-  }
+function moveTo(sx, sy, ms = 700) {
+  move = { from: { ...want }, to: { sx, sy }, t0: performance.now(), ms };
+  return wait(ms + 120);
 }
 
 /** ปลอมมุมจอ แล้วอ่านกลับมาตรวจว่าติดจริง + ยิง orientationchange เหมือนเครื่องจริง */
@@ -116,22 +127,21 @@ async function waitButton(re, ms = 20000) {
 const ACTS = {
   '2': { after: async () => { await moveTo(6, REST.sy, 400); await moveTo(0, REST.sy, 400); } },
   '3': { after: async () => wait(6500) },
-  '4': { after: async () => moveTo(-26, REST.sy, 1100) },
-  '5': { after: async () => moveTo(26, REST.sy, 1300) },
-  '6': { after: async () => { await moveTo(0, REST.sy - 26, 1200); await wait(400); await moveTo(0, REST.sy + 26, 1300); } },
-  '7': { after: async () => { await moveTo(0, REST.sy, 400); fakeScreen(90); await wait(900); } },
-  '8': { after: async () => { await moveTo(0, REST.sy, 900); await moveTo(-28, REST.sy, 1200); } },
-  '9': { before: async () => { fakeScreen(0); await moveTo(0, REST.sy, 600); },
+  /* ข้อเดียวจบทั้งซ้ายและขวา — เอียงไปสุดข้างหนึ่งแล้วกวาดกลับไปอีกข้าง */
+  '4': { after: async () => { await moveTo(-26, REST.sy, 1100); await moveTo(26, REST.sy, 1500); } },
+  '5': { after: async () => { await moveTo(0, REST.sy - 26, 1200); await moveTo(0, REST.sy + 26, 1500); } },
+  '6': { after: async () => { await moveTo(0, REST.sy, 400); fakeScreen(90); await wait(900); } },
+  '7': { after: async () => { await moveTo(0, REST.sy, 900); await moveTo(-28, REST.sy, 1200); } },
+  '8': { before: async () => { fakeScreen(0); await moveTo(0, REST.sy, 600); },
          after: async () => { await wait(1900); await moveTo(28, REST.sy, 1400); } },
-  '10': { before: async () => moveTo(0, 0, 900),          /* วางราบก่อนค่อยกด */
+  '9': { before: async () => moveTo(0, 0, 900),          /* วางราบก่อนค่อยกด */
+         after: async () => wait(13000) },
+  '10': { before: async () => moveTo(0, 48, 1100),       /* ยกขึ้นถือก่อนค่อยกด */
           after: async () => wait(13000) },
-  '11': { before: async () => moveTo(0, 48, 1100),        /* ยกขึ้นถือก่อนค่อยกด */
-          after: async () => wait(13000) },
-  '12': { before: async () => {
+  '11': { before: async () => {
             /* ⚠️ ห้ามเขียน new win().Event(...) — JS อ่านว่า (new win()).Event(...)
                คือพยายามสร้าง object จากฟังก์ชัน win แล้วพังว่า "win is not a constructor"
-               ต้องดึง window ออกมาเก็บก่อนเสมอ · บั๊กนี้ซ่อนอยู่ใน try/catch มาหลายรอบ
-               จึงเป็นสาเหตุที่ข้อ "สลับแอป" ไม่เคยผ่านเลยตั้งแต่ต้น */
+               บั๊กนี้ซ่อนอยู่ใน try/catch มาหลายรอบ จึงเป็นสาเหตุที่ข้อ "สลับแอป" ไม่เคยผ่าน */
             const W = win();
             const D = W.document;
             const setHidden = (v) => {
@@ -149,8 +159,8 @@ const ACTS = {
           },
           after: async () => wait(2200) },
   /* ข้อที่คนต้องตอบ — ปุ่มไม่ได้ชื่อ "พร้อมแล้ว" จึงต้องบอกให้กดปุ่มแรกแทน */
+  '12': { pick: true },
   '13': { pick: true },
-  '14': { pick: true },
 };
 
 (async function run() {
@@ -197,7 +207,7 @@ const ACTS = {
      เพราะคำว่า "ไม่ผ่าน" มีคำว่า "ผ่าน" อยู่ข้างใน → ข้อที่ตกจะถูกนับว่าผ่านหมด */
   const byName = (s) => (lab?.results || []).find((r) => r.name.includes(s));
   for (const [label, key] of [
-    ['ข้อทิศประกายแนวนอนผ่าน', 'เอียงขวา'],
+    ['ข้อทิศประกายแนวนอนผ่าน', 'เอียงซ้าย-ขวา'],
     ['ข้อทิศประกายแนวตั้งผ่าน', 'เงย-ก้ม'],
     ['ข้อแกนสลับตอนจอแนวนอนผ่าน', 'แนวนอน · แกนสลับ'],
     ['ข้อแกนหมุนตามบัตรในโหมดเต็มจอผ่าน', 'เต็มจอ'],
