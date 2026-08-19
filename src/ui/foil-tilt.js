@@ -81,10 +81,29 @@ function screenAngle() {
   return typeof a === 'number' ? a : (window.orientation || 0);
 }
 
+/* ช่องดูค่าดิบสำหรับหน้าตรวจ — ต้องเกาะ "ตัวจริง" ตัวนี้ ไม่ใช่เขียนตัวฟังใหม่ซ้อน
+   ไม่งั้นหน้าตรวจจะทดสอบโค้ดคนละชุดกับที่ลูกค้าใช้จริง = ผ่านไปก็ไม่ได้พิสูจน์อะไร */
+const rawSubs = new Set();
+
+/** ดูค่าดิบทุกสัญญาณที่เข้ามา (รวมสัญญาณค่าว่าง) · คืนฟังก์ชันไว้เลิกดู */
+export function subscribeGyroRaw(fn) {
+  rawSubs.add(fn);
+  return () => rawSubs.delete(fn);
+}
+
+function emitRaw(o) {
+  for (const fn of rawSubs) { try { fn(o); } catch { /* หน้าตรวจพังต้องไม่ลาก effect ตาย */ } }
+}
+
 function onOrientation(ev) {
+  const at = performance.now();
   /* เครื่องที่ไม่มีเซนเซอร์ยังยิง event มาได้ แต่ค่าเป็น null ทั้งหมด — ต้องแยกให้ออก
      ไม่งั้นจะรายงานว่า "ทำงานอยู่" ทั้งที่ไม่มีอะไรเลย */
-  if (ev.gamma === null || ev.beta === null || ev.gamma === undefined) { gyro.nulls += 1; return; }
+  if (ev.gamma === null || ev.beta === null || ev.gamma === undefined) {
+    gyro.nulls += 1;
+    emitRaw({ at, type: ev.type, empty: true });
+    return;
+  }
   /* ⚠️ แอนดรอยด์บางรุ่นเงียบสนิทกับ 'deviceorientation' แต่ส่ง 'deviceorientationabsolute' มาแทน
      จึงฟังทั้งสองทาง แล้ว **ยึดทางที่ส่งมาก่อนเป็นทางเดียว** ปล่อยฟังทั้งคู่ไว้
      เครื่องที่ส่งทั้งสองทางจะขยับเป็นสองเท่าและกระตุก */
@@ -110,12 +129,20 @@ function onOrientation(ev) {
     gyro.zero = gyro.zero
       ? { x: (gyro.zero.x + sx) / 2, y: (gyro.zero.y + sy) / 2 }
       : { x: sx, y: sy };
+    emitRaw({ at, type: ev.type, empty: false, calibrating: true, beta: ev.beta, gamma: ev.gamma, screen: screenAngle(), sx, sy });
     return;
   }
 
   const fx = 0.5 + (sx - gyro.zero.x) / (GYRO_RANGE * 2);
   const fy = 0.5 + (sy - gyro.zero.y) / (GYRO_RANGE * 2);
   gyro.angle = [Math.round(sx - gyro.zero.x), Math.round(sy - gyro.zero.y)];
+  emitRaw({
+    at, type: ev.type, empty: false,
+    beta: ev.beta, gamma: ev.gamma, alpha: ev.alpha,
+    screen: screenAngle(),
+    sx, sy, dx: sx - gyro.zero.x, dy: sy - gyro.zero.y,
+    fx: Math.min(Math.max(fx, 0), 1), fy: Math.min(Math.max(fy, 0), 1),
+  });
   for (const fn of gyro.subs) fn(Math.min(Math.max(fx, 0), 1), Math.min(Math.max(fy, 0), 1));
 }
 
@@ -167,6 +194,8 @@ export function gyroStatus() {
     nulls: gyro.nulls,
     angle: gyro.angle,
     source: gyro.source,
+    calibrated: gyro.seen >= GYRO_CALIBRATE,
+    range: GYRO_RANGE,
     needsPermission: typeof window.DeviceOrientationEvent?.requestPermission === 'function',
     listening: Boolean(gyro.bound),
     cards: gyro.subs.size,

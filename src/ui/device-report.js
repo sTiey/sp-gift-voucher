@@ -30,6 +30,13 @@ function guessDevice() {
   return { os, osVersion: ver ? ver[1].replace(/_/g, '.') : null, browser: br, ua };
 }
 
+/** เบราว์เซอร์ในแอป (LINE / เฟซบุ๊ก) — ช่องทางหลักที่ลูกค้าจริงเปิดลิงก์
+    มักไม่ยอมให้อ่านการเอียงเครื่องบน iOS จึงต้องแยกออกมารายงานให้ชัด
+    ไม่งั้นจะอ่านผลผิดว่า "ไจโรพัง" ทั้งที่เป็นข้อจำกัดของเบราว์เซอร์นั้น */
+export function isInAppBrowser() {
+  return /Line\/|FBAN|FBAV|Instagram|Messenger/.test(navigator.userAgent);
+}
+
 export function deviceInfo() {
   const d = guessDevice();
   const c = navigator.connection || {};
@@ -40,6 +47,7 @@ export function deviceInfo() {
     memoryGB: navigator.deviceMemory ?? null,
     cores: navigator.hardwareConcurrency ?? null,
     network: c.effectiveType || null,
+    inApp: isInAppBrowser(),
     reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     secure: window.isSecureContext !== false,
   };

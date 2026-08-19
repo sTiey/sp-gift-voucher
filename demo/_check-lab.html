@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ตรวจว่าห้องแล็บไจโรเองไม่พัง</title>
+<!--
+  เดินห้องแล็บให้ครบทุกข้อแทนคน ด้วยสัญญาณเซนเซอร์ปลอม
+  จุดประสงค์: ยืนยันว่า **ตัวแบบทดสอบเอง** ไม่ค้าง ไม่ข้ามข้อ และตัดสินผลถูก
+  ก่อนส่งให้ไท้ไปเทสจริง — ไม่งั้นไท้เสียเวลาฟรีถ้าแล็บพังเอง
+
+  โครง: มี "ปั๊ม" ยิงสัญญาณตลอดเวลาที่ 30 ครั้ง/วินาที เหมือนเซนเซอร์จริง
+  แล้วสั่งเปลี่ยน "ท่าถือ" เอา · ไม่ยิงเป็นช่วง ๆ เพราะแล็บต้องการสัญญาณต่อเนื่อง
+  และรอให้แต่ละข้อ "ตัดสินเสร็จ" ก่อนไปข้อถัดไปเสมอ ไม่เดาเวลา
+-->
+<style>
+  body { margin: 0; font: 13px/1.6 ui-monospace, monospace; background: #eee; }
+  #log { padding: 12px 16px; background: #fff; white-space: pre-wrap; }
+  iframe { width: 420px; height: 900px; border: 2px solid #999; }
+</style>
+</head>
+<body>
+<div id="log">กำลังตรวจ…</div>
+<iframe id="f" src="gyro-lab.html"></iframe>
+
+<script type="module">
+const f = document.getElementById('f');
+const R = [];
+const check = (n, pass, d = '') => {
+  R.push({ name: n, pass: Boolean(pass), detail: String(d) });
+  console.log(`STEPLOG ${R.length} ${pass ? 'OK' : 'FAIL'} ${n} :: ${d}`.slice(0, 160));
+};
+/* กันแล็บค้างแล้วไม่ได้ผลอะไรเลย — ครบ 150 วินาทีก็ส่งเท่าที่มี */
+setTimeout(() => {
+  if (!window.__done) {
+    const pl = JSON.stringify({ pass: R.filter(r => r.pass).length, fail: R.filter(r => !r.pass).length, results: R, sample: '', stalled: true });
+    console.log('LAB64 ' + btoa(String.fromCharCode(...new TextEncoder().encode(pl))));
+  }
+}, 150000);
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const doc = () => f.contentDocument;
+const win = () => f.contentWindow;
+
+let sent = 0;
+function fire(beta, gamma) {
+  const W = win();
+  if (!W) return;
+  const ev = new W.DeviceOrientationEvent('deviceorientation', { alpha: 0, beta, gamma });
+  /* ⚠️ บางเบราว์เซอร์สร้าง event แล้ว beta/gamma กลายเป็น null ทั้งที่ใส่ค่าไป
+     ต้องเขียนทับให้แน่ ไม่งั้นแล็บเห็นเป็น "สัญญาณค่าว่าง" แล้วตัดสินว่าไม่มีเซนเซอร์ */
+  if (ev.beta !== beta) Object.defineProperty(ev, 'beta', { value: beta, configurable: true });
+  if (ev.gamma !== gamma) Object.defineProperty(ev, 'gamma', { value: gamma, configurable: true });
+  W.dispatchEvent(ev);
+  sent += 1;
+}
+
+/* ⚠️ ต้องสั่งท่าเป็น "แกนของจอ" ไม่ใช่ "แกนของเครื่อง"
+   พอจอหมุนไปแนวนอน คำว่า "เอียงซ้าย-ขวาที่ตาเห็น" เปลี่ยนไปใช้แกน beta แทน gamma
+   ถ้าไดรฟ์ด้วย gamma ต่อไปเรื่อย ๆ แล็บจะไม่เห็นการเอียงเลยแล้วค้าง
+   (เจอจริงตอนทดสอบ: ข้อ 8 ค้างเพราะเหตุนี้ — เป็นบั๊กของตัวไดรฟ์ ไม่ใช่ของแล็บ) */
+let screenDeg = 0;
+const REST_SX = 0, REST_SY = 45;
+let want = { sx: REST_SX, sy: REST_SY };
+let pumping = true;
+
+function toDevice(sx, sy) {
+  const th = (screenDeg * Math.PI) / 180;
+  const c = Math.cos(th), s2 = Math.sin(th);
+  return { g: sx * c - sy * s2, b: sx * s2 + sy * c };
+}
+(async function pump() {
+  while (pumping) { const d = toDevice(want.sx, want.sy); fire(d.b, d.g); await wait(30); }
+})();
+
+/** ค่อย ๆ ย้ายท่าถือในแกนของจอ เหมือนคนเอียงเครื่องจริง ไม่กระโดดทีเดียว */
+async function moveTo(sx, sy, ms = 520) {
+  const from = { ...want };
+  const n = Math.max(1, Math.round(ms / 30));
+  for (let i = 1; i <= n; i++) {
+    want = { sx: from.sx + (sx - from.sx) * i / n, sy: from.sy + (sy - from.sy) * i / n };
+    await wait(30);
+  }
+}
+
+const steps = () => [...doc().querySelectorAll('.step')];
+const stepText = (i) => steps()[i]?.querySelector('.res')?.textContent?.trim() || '';
+
+/** รอจนกว่าข้อที่ i จะ "ตัดสินเสร็จ" (มีข้อความผลแล้ว) */
+async function waitDone(i, ms = 25000) {
+  const t = Date.now();
+  while (Date.now() - t < ms) {
+    if (stepText(i)) return true;
+    await wait(120);
+  }
+  /* ⚠️ ข้อไหนค้าง ให้กด "ข้ามข้อนี้" ต่อ เหมือนที่คนทดสอบจะทำ
+     ไม่งั้นข้อเดียวที่ค้างจะทำให้ตรวจข้อที่เหลือกับตัวรายงานไม่ได้เลย */
+  const skip = [...doc().querySelectorAll('#foot button')].find((b) => /ข้าม/.test(b.textContent));
+  if (skip) { skip.click(); await wait(400); }
+  return false;
+}
+/** รอจนกว่าจะมีข้อที่ i โผล่มา */
+async function waitStep(i, ms = 20000) {
+  const t = Date.now();
+  while (Date.now() - t < ms) {
+    if (steps()[i]) return true;
+    await wait(120);
+  }
+  return false;
+}
+
+/** ปลอมมุมจอ แล้ว **อ่านกลับมาตรวจว่าปลอมติดจริง** ไม่งั้นข้อ 7 จะค้างโดยไม่รู้สาเหตุ */
+function fakeScreen(deg) {
+  const W = win();
+  const tries = [];
+  try { Object.defineProperty(W.screen.orientation, 'angle', { value: deg, configurable: true }); tries.push('instance'); } catch { /* ต่อไป */ }
+  if (W.screen.orientation?.angle !== deg) {
+    try { Object.defineProperty(Object.getPrototypeOf(W.screen.orientation), 'angle', { get: () => deg, configurable: true }); tries.push('prototype'); } catch { /* ต่อไป */ }
+  }
+  try { Object.defineProperty(W, 'orientation', { value: deg, configurable: true }); tries.push('window'); } catch { /* ต่อไป */ }
+  /* ⚠️ เครื่องจริงยิง orientationchange ทุกครั้งที่หมุน ซึ่งเป็นตัวสั่งให้โมดูล "จำท่าถือใหม่"
+     ถ้าปลอมแต่มุมโดยไม่ยิง event ค่าอ้างอิงเดิมจะค้าง แล้วค่าเอียงจะกระโดดทันที
+     ทำให้ข้อถัดไปผ่านเงื่อนไขทันทีทั้งที่ยังไม่ได้เอียงจริง */
+  W.dispatchEvent(new W.Event('orientationchange'));
+  return { got: W.screen.orientation?.angle, how: tries.join('+') };
+}
+
+(async function run() {
+  await new Promise((r) => (win().document.readyState === 'complete' ? r() : (f.onload = r)));
+  await wait(500);
+
+  check('มีปุ่มเริ่มตรวจ', doc().querySelector('#go'), doc().querySelector('#go')?.textContent || 'ไม่เจอ');
+  doc().querySelector('#go').click();
+
+  /* ข้อ 1 สิทธิ์ · ข้อ 2 มีสัญญาณ */
+  await waitDone(0);
+  check('ข้อ 1 สิทธิ์ตัดสินได้', /ผ่าน/.test(stepText(0)), stepText(0).slice(0, 60));
+  await waitDone(1, 15000);
+  check('ข้อ 2 จับสัญญาณได้', /ผ่าน/.test(stepText(1)), `ยิงไป ${sent} ครั้ง · ` + stepText(1).slice(0, 50));
+
+  /* ข้อ 3 ถือนิ่ง 5 วินาที */
+  await waitDone(2, 20000);
+  check('ข้อ 3 วัดความสั่น/ความถี่ได้', /ครั้ง\/วินาที/.test(stepText(2)), stepText(2).slice(0, 80));
+
+  /* ข้อ 4 เอียงซ้าย */
+  await waitStep(3);
+  await moveTo(-28, REST_SY, 900);
+  await waitDone(3);
+  check('ข้อ 4 จับการเอียงซ้ายได้', /ผ่าน/.test(stepText(3)), stepText(3).slice(0, 70));
+
+  /* ข้อ 5 เอียงขวา */
+  await waitStep(4);
+  await moveTo(28, REST_SY, 1100);
+  await waitDone(4);
+  check('ข้อ 5 ตรวจทิศประกายแนวนอนได้', /ผ่าน/.test(stepText(4)), stepText(4).slice(0, 95));
+
+  /* ข้อ 6 เงยแล้วก้ม */
+  await waitStep(5);
+  await moveTo(0, REST_SY - 28, 1100);
+  await wait(500);
+  await moveTo(0, REST_SY + 28, 1200);
+  await waitDone(5);
+  check('ข้อ 6 ตรวจทิศประกายแนวตั้งได้', /ผ่าน/.test(stepText(5)), stepText(5).slice(0, 95));
+
+  /* ข้อ 7 หมุนจอ */
+  await waitStep(6);
+  await moveTo(0, REST_SY, 400);
+  const fake = fakeScreen(90);
+  screenDeg = fake.got === 90 ? 90 : 0;
+  check('ปลอมมุมจอได้จริง', fake.got === 90, `อ่านกลับได้ ${fake.got}° (วิธี ${fake.how})`);
+  await wait(1200);
+
+  /* ข้อ 7ก โผล่มาเฉพาะเมื่อจอหมุนสำเร็จ */
+  if (await waitStep(7, 8000)) {
+    await moveTo(0, REST_SY, 900);          // ให้จำท่าถือใหม่หลัง recalibrate
+    await moveTo(-30, REST_SY, 1000);
+    await waitDone(7, 34000);
+    check('ข้อ 7ก ตรวจแกนตอนแนวนอนได้', /ผ่าน/.test(stepText(7)), stepText(7).slice(0, 95));
+  } else {
+    check('ข้อ 7ก ตรวจแกนตอนแนวนอนได้', false, 'ไม่มีข้อ 7ก โผล่มา');
+  }
+  await waitDone(6);
+  check('ข้อ 7 รู้ว่าจอหมุนแล้ว', /ผ่าน/.test(stepText(6)), stepText(6).slice(0, 60));
+
+  /* ข้อ 8 โหมดเต็มจอ — หมุนจอกลับเป็นแนวตั้งก่อน จะได้ทดสอบเส้นทาง "บัตรหมุน 90°"
+     ซึ่งเป็นของใหม่และสำคัญกว่าเส้นทางไม่หมุน */
+  await waitStep(8);
+  const back = fakeScreen(0);
+  screenDeg = back.got === 0 ? 0 : screenDeg;
+  /* ⚠️ อย่ารอเป็นเวลาตายตัวแล้วเช็ค — ให้รอจนกล่องเต็มจอโผล่จริง
+     เวลาตายตัวคือการเดา พอเครื่องช้ากว่าที่เดาก็ฟ้องผิดว่า "ไม่เปิด" ทั้งที่เปิดทีหลัง */
+  const tFs = Date.now();
+  while (!doc().querySelector('.vk-fs') && Date.now() - tFs < 8000) await wait(100);
+  check('ข้อ 8 เปิดโหมดเต็มจอจริง', doc().querySelector('.vk-fs'),
+        doc().querySelector('.vk-fs') ? `เปิดหลัง ${Date.now() - tFs} ms` : 'ไม่เปิดเลยใน 8 วินาที');
+  await wait(1800);          /* ให้จำท่าถือใหม่ + ติดตัวเอียงให้ใบในโหมดเต็มจอ */
+  await moveTo(30, REST_SY, 1200);
+  await waitDone(8, 34000);
+  check('ข้อ 8 ตัดสินแกนในโหมดเต็มจอได้', /แกนนอน .* แกนตั้ง/.test(stepText(8)), stepText(8).slice(0, 115));
+  await wait(500);
+  check('ข้อ 8 ปิดโหมดเต็มจอคืนแล้ว', !doc().querySelector('.vk-fs'), '');
+
+  /* ข้อ 9 วางราบ */
+  await waitStep(9);
+  await moveTo(2, 3, 700);
+  await waitDone(9, 30000);
+  check('ข้อ 9 จับท่าวางราบได้', /β/.test(stepText(9)), stepText(9).slice(0, 75));
+
+  /* ข้อ 10 สลับแอปแล้วกลับมา — ตอนนี้เป็นปุ่ม จึงจำลองได้ตรงไปตรงมา */
+  await waitStep(10);
+  await moveTo(0, REST_SY, 400);
+  let visOk = false;
+  const setHidden = (v) => {
+    const D = win().document;
+    for (const t of [D, Object.getPrototypeOf(D), win().Document?.prototype]) {
+      if (!t) continue;
+      try { Object.defineProperty(t, 'hidden', { get: () => v, configurable: true }); if (D.hidden === v) return true; } catch { /* ลองตัวถัดไป */ }
+    }
+    return D.hidden === v;
+  };
+  try {
+    visOk = setHidden(true);
+    win().document.dispatchEvent(new win().Event('visibilitychange'));
+    await wait(500);
+    setHidden(false);
+    win().document.dispatchEvent(new win().Event('visibilitychange'));
+  } catch { /* เบราว์เซอร์ไม่ให้เขียนทับ */ }
+  const t10 = Date.now();
+  while (Date.now() - t10 < 8000) {
+    const b = [...doc().querySelectorAll('#foot button')].find((x) => /กลับมาแล้ว/.test(x.textContent));
+    if (b) { b.click(); break; }
+    await wait(150);
+  }
+  await waitDone(10, 12000);
+  check('ข้อ 10 รู้ว่ากลับมาแล้วสัญญาณยังมา', /ผ่าน/.test(stepText(10)), `ปลอมสลับแอป ${visOk ? 'ได้' : 'ไม่ได้'} · ` + stepText(10).slice(0, 70));
+
+  /* ข้อ 11-12 คำถามที่คนต้องตอบ */
+  const btns = () => [...doc().querySelectorAll('#foot button')];
+  for (const i of [11, 12]) {
+    await waitStep(i, 12000);
+    const t = Date.now();
+    while (!btns()[0] && Date.now() - t < 6000) await wait(120);
+    if (btns()[0]) btns()[0].click();
+    await waitDone(i, 8000);
+    check(`ข้อ ${i} ตอบคำถามคนได้`, /ผ่าน/.test(stepText(i)), stepText(i).slice(0, 50));
+  }
+
+  /* สรุป */
+  pumping = false;
+  await wait(700);
+  const out = doc().querySelector('#out');
+  check('มีรายงานสรุปออกมา', out && out.value.length > 300, out ? out.value.length + ' ตัวอักษร' : 'ไม่เจอ');
+  const txt = out ? out.value : '';
+  for (const [n, re] of [
+    ['รายงานบอกเครื่อง', /เครื่อง \S+/],
+    ['รายงานมีผลรายข้อ', /--- ผลรายข้อ ---/],
+    ['รายงานมีจังหวะสัญญาณ', /จังหวะสัญญาณ กลาง [\d.]+ ms/],
+    ['รายงานมีช่วงค่าที่เจอ', /ช่วงค่าที่เจอ β/],
+    ['รายงานมีความละเอียดค่า', /ความละเอียดค่าที่เล็กที่สุด [\d.]+/],
+    ['รายงานนับสัญญาณได้', /ทั้งหมด [1-9]\d* ครั้ง/],
+    ['รายงานบอกมุมจอที่ผ่านมา', /มุมจอที่ผ่านมา .*90/],
+  ]) check(n, re.test(txt), (txt.match(re) || ['ไม่เจอ'])[0]);
+
+  const lab = win().GYRO_LAB;
+  const passed = lab ? lab.results.filter((r) => r.verdict === 'ผ่าน').length : 0;
+  check('แล็บตัดสินว่าผ่านหลายข้อ', passed >= 8, `${passed} ข้อผ่าน จาก ${lab ? lab.results.length : 0}`);
+  check('ไม่มีข้อไหนค้างไม่ตัดสิน', lab && lab.results.length >= 12 && lab.results.every((r) => r.verdict), `${lab ? lab.results.length : 0} ข้อ`);
+
+  const ok = R.filter((r) => r.pass).length;
+  document.getElementById('log').textContent =
+    R.map((r) => `${r.pass ? 'OK  ' : 'FAIL'}  ${r.name}  —  ${r.detail}`).join('\n') +
+    `\n\nผ่าน ${ok} / ${R.length}\n\n----- รายงานที่แล็บออกให้ -----\n` + txt;
+  window.__done = true;
+  /* ส่งเป็น base64 — ข้อความมีทั้งไทย อัญประกาศ และขึ้นบรรทัดใหม่
+     ดักจาก console ตรง ๆ แล้วเครื่องหมาย escape ชนกันจนอ่านกลับไม่ได้ */
+  const payload = JSON.stringify({ pass: ok, fail: R.length - ok, results: R, sample: txt });
+  console.log('LAB64 ' + btoa(String.fromCharCode(...new TextEncoder().encode(payload))));
+})();
+</script>
+</body>
+</html>
