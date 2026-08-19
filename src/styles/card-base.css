@@ -108,3 +108,59 @@
 @media (prefers-reduced-motion: reduce) {
   .vk-card, .vk-card * { animation: none !important; transition: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   โหมดเต็มจอ — แบบแอปบัตรประชาชน/บัตรเครดิต
+   ──────────────────────────────────────────────────────────────────────────
+   ⚠️ ห้ามใช้ position: fixed คลุมเต็มจอ — บน iOS วาดไม่ถึงก้นจอไม่ว่าสั่งเท่าไหร่
+      จึงเป็นบล็อกในสายเนื้อหา แล้ว "ซ่อนพี่น้องทุกตัว" ตอนเปิดแทน
+   ══════════════════════════════════════════════════════════════════════════ */
+
+body[data-vk-fullscreen] { overflow: hidden; }
+/* ซ่อนทุกอย่างที่ไม่ใช่ตัวโหมดเต็มจอ — ตัวมันเองจึงได้อยู่ชิดมุมบนซ้ายของจอพอดี */
+body[data-vk-fullscreen] > :not(.vk-fs) { display: none !important; }
+
+.vk-fs {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  display: block;
+  overflow: hidden;
+  background: var(--vk-fs-bg, #b4ada0);
+}
+
+/* กล่องหมุน — วางกลางจอด้วย absolute เพราะการหมุนไม่เปลี่ยนพื้นที่ที่ layout จองไว้
+   ถ้าปล่อยให้อยู่ในสายปกติ กล่องจะยังกินที่เท่าตอนไม่หมุน แล้วจัดกลางไม่ตรง */
+.vk-fs__rot {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+.vk-fs__card { width: 100%; }
+/* ⚠️ ปกติใบมีเพดานความกว้าง (--vk-card-width) ไว้กันบานบนจอคอม
+   ในโหมดเต็มจอต้องปลดทิ้ง ไม่งั้นใบจะยาวไม่ถึงขอบจอ เหลือช่องว่างค้างไว้
+   (วัดได้: จอสูง 844 แต่ใบยาวได้แค่ 720 = ขาดไป 124px) */
+.vk-fs .vk-voucher { max-width: none; }
+
+.vk-fs__close {
+  position: absolute;
+  inset: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) auto auto;
+  width: 42px; height: 42px;
+  border: 0; border-radius: 50%;
+  background: rgba(20, 24, 30, 0.55);
+  color: #fff; font: 600 17px/1 system-ui, sans-serif;
+  display: grid; place-items: center;
+}
+
+/* ปุ่มเปิดโหมดเต็มจอบนหน้าใช้งานจริง */
+.vk-fs-open {
+  display: block; width: 100%;
+  margin-block-start: calc(var(--vk-u, 16px) * 0.7);
+  padding: 12px 16px; min-height: 46px;
+  border: 0; border-radius: 5px;
+  background: var(--vk-fs-open-bg, #26313f);
+  color: var(--vk-fs-open-ink, #f7f3ea);
+  font: 600 15px/1.2 inherit;
+}

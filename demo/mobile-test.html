@@ -63,7 +63,9 @@
      → บนจอแนวนอนที่เตี้ย วางซ้อนกันแนวตั้งยังไงก็ไม่พอ ปุ่มตกจอเสมอ
      ทางแก้คือ **เปลี่ยนเป็นสองคอลัมน์** ตอนแนวนอน: บัตรอยู่ซ้าย คำสั่ง+ปุ่มอยู่ขวา
      ซึ่งเป็นการใช้จอแนวนอนอย่างที่ควรเป็นอยู่แล้ว */
-  .card-box { width: min(86vw, 380px, calc((100dvh - 15rem) * 0.82)); }
+  /* --ratio = กว้างหารสูงของใบ (ตั๋ว 2.6 · กระทัดรัด 0.82) ใส่มาจากตอนวาด
+     คุมด้วยความสูงที่เหลือด้วย ไม่งั้นบนจอเตี้ยใบจะโดนตัด */
+  .card-box { width: min(86vw, 380px, calc((100dvh - 15rem) * var(--ratio, 0.82))); }
 
   .land .screen {
     grid-template-columns: 1fr clamp(180px, 32%, 280px);
@@ -72,8 +74,10 @@
   }
   .land .hd { grid-column: 1 / -1; }
   .land .mid { grid-column: 1; grid-row: 2; }
-  .land .foot { grid-column: 2; grid-row: 2; align-self: center; display: grid; gap: 9px; }
-  .land .card-box { width: min(100%, 640px, calc((100dvh - 6rem) * 2.6)); }
+  .land .foot { grid-column: 2; grid-row: 2; align-self: center; display: grid; gap: 7px; }
+  .land .foot button { min-height: 44px; padding: 10px 14px; font-size: 15px; }
+  .land .live { padding: 6px 9px; font-size: 13px; }
+  .land .card-box { width: min(100%, 640px, calc((100dvh - 7rem) * var(--ratio, 2.6))); }
   .land .say { font-size: 15px; text-align: left; }
   .land .say small { margin-top: 3px; font-size: 13px; }
   button {
@@ -106,6 +110,7 @@ import { cardHtml } from '../src/ui/voucher-design.js';
 import { createVoucher } from '../src/index.js';
 import { attachFoilTilt, requestGyro, gyroStatus, recalibrateGyro } from '../src/ui/foil-tilt.js';
 import { deviceInfo, loadInfo, frameProbe, foilCheck, formatReport, copyText } from '../src/ui/device-report.js';
+import { openCardFullscreen } from '../src/ui/card-fullscreen.js';
 
 const screen_ = document.getElementById('screen');
 const probe = frameProbe();
@@ -120,7 +125,14 @@ function render(hd, mid, foot) {
   screen_.innerHTML = `<div class="hd">${hd}</div><div class="mid">${mid}</div><div class="foot">${foot}</div>`;
 }
 
+/* ⚠️ ไม่ได้ "ขอ" ให้ผู้ใช้หมุนเครื่องแล้ว แต่เขาหมุนเองได้เสมอ (บางคนไม่ได้ล็อกจอ)
+   จอเตี้ยลงเมื่อไหร่ต้องสลับเป็นสองคอลัมน์ทันที ไม่งั้นปุ่มตกจอบนหน้าที่เลื่อนไม่ได้
+   วัดแล้วตอนเป็นแถวเดียวบนจอแนวนอน เนื้อหาสูง 536px ในจอสูง 390px */
 const isLandscape = () => window.innerWidth > window.innerHeight;
+const syncOrientation = () => document.body.classList.toggle('land', isLandscape());
+syncOrientation();
+addEventListener('resize', syncOrientation, { passive: true });
+addEventListener('orientationchange', syncOrientation, { passive: true });
 
 /* ── ขั้นที่ 0 · เริ่ม ─────────────────────────────────────────────────
    ⚠️ ปุ่มนี้ทำสองหน้าที่ — เริ่มการทดสอบ **และเป็นการแตะที่ iOS ต้องการ**
@@ -139,36 +151,43 @@ function stepStart() {
 }
 
 /* ── ขั้นที่ 1-2 · ดูบัตรทีละใบ ───────────────────────────────────────── */
+const v0 = (shape) => createVoucher(SAMPLES[shape]);
+
 function stepCard(shape) {
   const nth = shape === 'ticket' ? 2 : 3;
   const name = shape === 'ticket' ? 'ใบแนวยาว' : 'ใบกระทัดรัด';
 
-  /* ทรงบัตรกำหนดว่าต้องถือเครื่องท่าไหน — ใบยาว 2.6:1 ต้องแนวนอน ใบกระทัดรัดต้องแนวตั้ง
-     ยัดผิดท่าแล้วบัตรเล็กจนดูผิวทองไม่ออก · และการหมุนเครื่องระหว่างทาง
-     ยังได้ทดสอบไปในตัวว่าไจโรสลับแกนตามการหมุนจอถูกไหม */
-  const wantLand = shape === 'ticket';
-  if (isLandscape() !== wantLand) {
-    render(`ทดสอบบัตรกำนัล · <b>ขั้นที่ ${nth} จาก 4</b>`,
-      `<div class="rotate">🔄</div><div class="say"><b>หมุนเครื่องเป็น${wantLand ? 'แนวนอน' : 'แนวตั้ง'}</b>
-        <small>${name}ต้องดู${wantLand ? 'แนวนอน' : 'แนวตั้ง'}ถึงจะเห็นผิวทองชัด</small></div>`, '');
-    document.body.classList.remove('land');
-    const again = () => { window.removeEventListener('resize', again); stepCard(shape); };
-    window.addEventListener('resize', again, { passive: true });
-    return;
-  }
-
-  document.body.classList.toggle('land', wantLand);
-  const v = createVoucher(SAMPLES[shape]);
+  /* ⚠️ เลิกสั่งให้หมุนเครื่องแล้ว (ไท้ทดสอบบน iPhone จริงแล้วทักมา 2026-08-19)
+     พอหมุนเป็นแนวนอน Safari หดพื้นที่จนเหลือเตี้ยมาก และคนส่วนใหญ่ล็อกจอแนวตั้งไว้อยู่แล้ว
+     → ใช้ "โหมดเต็มจอ" แทน ซึ่งหมุน **ตัวบัตร** ให้เอง เหมือนแอปบัตรประชาชน */
+  const html = cardHtml(v0(shape), { design: 'foilticket', shape, art: SAMPLES[shape].art });
   render(`${name} · <b>ขั้นที่ ${nth} จาก 4</b>`,
-    `<div class="card-box">${cardHtml(v, { design: 'foilticket', shape, art: SAMPLES[shape].art })}</div>`,
+    `<div class="card-box" style="--ratio:${shape === 'ticket' ? 2.6 : 0.82}">${html}</div>`,
     `<div class="live" id="live">กำลังอ่านการเอียง…</div>
-     <div class="say"><b>เอียงเครื่องซ้าย-ขวา ช้า ๆ</b><small>ดูว่าตัวเลขเป็นสีทองมีประกาย และใบขยับตามการเอียงไหม</small></div>
+     <div class="say"><b>กด “ดูเต็มจอ” แล้วเอียงเครื่องซ้าย-ขวา ช้า ๆ</b><small>ดูว่าตัวเลขเป็นสีทองมีประกาย และใบขยับตามการเอียงไหม</small></div>
+     <button id="full" class="ghost">ดูเต็มจอ</button>
      <button id="next">ดูแล้ว · ไปต่อ</button>`);
 
   const card = screen_.querySelector('.vk-card');
   recalibrateGyro();
   probe.start();
   attachFoilTilt(card, {}).then((r) => { state['attach_' + shape] = r.state; });
+
+  /* เปิดเต็มจอ — ใบข้างในเป็น element คนละตัว จึงต้องติดตัวเอียงให้มันเองอีกที
+     และต้องบอกด้วยว่าถูกหมุนกี่องศา ไม่งั้นเอียงซ้ายแล้วประกายวิ่งขึ้น-ลง */
+  let fsTilt = null;
+  document.getElementById('full').onclick = () => {
+    state.usedFullscreen = true;
+    const fs = openCardFullscreen(html, {
+      shape,
+      onReady: (c, rotated) => {
+        if (fsTilt) { fsTilt.setRotate?.(rotated ? 90 : 0); return; }
+        attachFoilTilt(c, { rotate: rotated ? 90 : 0 }).then((r) => { fsTilt = r; });
+      },
+      onClose: () => { fsTilt?.destroy?.(); fsTilt = null; },
+    });
+    state.fsShape = fs.el.dataset.rotated;
+  };
 
   const live = document.getElementById('live');
   const tick = setInterval(() => {
@@ -187,7 +206,6 @@ function stepCard(shape) {
     probe.stop();
     state.frames[name] = probe.result();
     state.tilts.push(gyroStatus());
-    document.body.classList.remove('land');
     if (shape === 'ticket') stepCard('compact'); else stepAsk();
   };
 }
@@ -248,7 +266,11 @@ async function stepDone() {
 /* ?jump=ticket|compact|ask — ข้ามไปดูขั้นนั้นเลย มีไว้ตรวจหน้าตาตอนพัฒนา
    ไม่ใช่ทางที่ผู้ทดสอบใช้ (ข้ามการขอสิทธิ์ไป ผลจึงไม่ครบ) */
 const JUMP = new URLSearchParams(location.search).get('jump');
-if (JUMP === 'ticket' || JUMP === 'compact') stepCard(JUMP);
+if (JUMP === 'full' || JUMP === 'full-compact') {
+  const shape = JUMP === 'full' ? 'ticket' : 'compact';
+  const html = cardHtml(v0(shape), { design: 'foilticket', shape, art: SAMPLES[shape].art });
+  openCardFullscreen(html, { shape, onReady: (c, r) => attachFoilTilt(c, { rotate: r ? 90 : 0 }) });
+} else if (JUMP === 'ticket' || JUMP === 'compact') stepCard(JUMP);
 else if (JUMP === 'ask') stepAsk();
 else stepStart();
 

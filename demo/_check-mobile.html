@@ -58,14 +58,17 @@ const q = (sel) => f.contentDocument.querySelector(sel);
         q('#next').getBoundingClientRect().bottom <= w.innerHeight + 1,
         `ปุ่มล่าง ${Math.round(q('#next').getBoundingClientRect().bottom)}/${w.innerHeight}`);
 
+  check('มีปุ่มดูเต็มจอให้กด', q('#full'), q('#full')?.textContent || 'ไม่เจอ');
   q('#next').click();
-  await wait(400);
-  /* ใบกระทัดรัดขอจอแนวตั้ง — ต้องเจอหน้า "หมุนเครื่อง" ก่อน แล้วค่อยผ่านเมื่อย่อ iframe ให้สูงกว่ากว้าง */
-  check('ขอให้หมุนเป็นแนวตั้งก่อนดูใบกระทัดรัด', /หมุนเครื่องเป็นแนวตั้ง/.test(f.contentDocument.body.textContent),
-        f.contentDocument.querySelector('.say')?.textContent.trim().slice(0, 28) || '');
+  await wait(500);
+  /* ⚠️ ต้อง **ไม่มี** การสั่งให้หมุนเครื่องอีกแล้ว — ใช้โหมดเต็มจอแทน (ไท้สั่ง 2026-08-19) */
+  check('ไปใบกระทัดรัดทันที ไม่สั่งให้หมุนเครื่อง',
+        /* ⚠️ อ่านจาก .screen ไม่ใช่ body — body.textContent รวมโค้ดใน <script> มาด้วย
+           ซึ่งมีคำว่า "หมุนเครื่อง" อยู่ในคอมเมนต์ ทำให้ตรวจเจอทั้งที่หน้าจอไม่มี */
+        q('.vk-card') && !/หมุนเครื่อง/.test(q('.screen').textContent),
+        q('.hd')?.textContent || '');
   f.style.width = '420px'; f.style.height = '780px';
-  await wait(600);
-  check('พอหมุนแล้วเข้าหน้าใบกระทัดรัดเอง', q('.vk-card') && !w.document.body.classList.contains('land'), q('.hd')?.textContent || '');
+  await wait(500);
   await shake(w);
   q('#next').click();
   await wait(300);

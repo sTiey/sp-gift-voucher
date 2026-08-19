@@ -286,10 +286,16 @@ export async function attachFoilTilt(card, opt = {}) {
      เคยพลาด: พึ่ง event ของไลบรารีอย่างเดียว ซึ่งมันยิงจากลูปวาดภาพ
      ลูปนั้นหยุดเดินเมื่อแท็บ/พาเนลไม่ได้แสดงผล → ดวงแสงนิ่งสนิทโดยไม่มี error
      อ่านเองแบบนี้ทำงานทันทีที่เมาส์ขยับ ไม่ขึ้นกับจังหวะวาดภาพเลย */
+  /* ⚠️ ในโหมดเต็มจอ ใบแนวยาวถูกหมุน 90° แต่เซนเซอร์กับนิ้วยังรายงานตามแกน "จอ"
+     ถ้าไม่หมุนกลับ เอียงเครื่องไปซ้ายแล้วประกายจะวิ่งขึ้น-ลงแทนที่จะวิ่งซ้าย-ขวา
+     opt.rotate เป็นองศาที่ตัวใบถูกหมุนอยู่ (0 หรือ 90) — เรียก setRotate() เปลี่ยนกลางคันได้ */
+  let turn = opt.rotate || 0;
+  const toLocal = (fx, fy) => (turn === 90 ? [fy, 1 - fx] : [fx, fy]);
+
   const onPointer = (ev) => {
     const r = card.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    setSpot((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
+    setSpot(...toLocal((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height));
   };
   const onLeave = () => {
     /* ⚠️ ตอนไจโรทำงานอยู่ ห้ามล้าง — บนมือถือ การยกนิ้วขึ้นยิง pointerleave ทุกครั้ง
@@ -314,9 +320,10 @@ export async function attachFoilTilt(card, opt = {}) {
         · ไลบรารียิง tiltChange ต่อให้เอง → ผิวฟอยล์ขยับตามโดยไม่ต้องเขียนซ้ำ
      ต้องส่ง mouseenter นำก่อนหนึ่งครั้ง เพราะไลบรารีวัดตำแหน่ง/ขนาดใบตอนนั้น */
   let entered = false;
-  const onGyro = (fx, fy) => {
+  const onGyro = (sx, sy) => {
     const r = card.getBoundingClientRect();
     if (!r.width || !r.height) return;
+    const [fx, fy] = toLocal(sx, sy);
     if (!entered) {
       entered = true;
       card.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
@@ -355,6 +362,8 @@ export async function attachFoilTilt(card, opt = {}) {
 
   return {
     state: 'on',
+    /** บอกว่าตอนนี้ใบถูกหมุนกี่องศา (โหมดเต็มจอสลับไปมาได้ตอนผู้ใช้หมุนเครื่อง) */
+    setRotate(deg) { turn = deg || 0; lastX = lastY = -999; },
     /** ให้หน้าเว็บอ่านสถานะแสงปัจจุบันไปแสดงได้ ตอนไล่หาสาเหตุ */
     spot: () => [card.style.getPropertyValue('--ft-ex'), card.style.getPropertyValue('--ft-ey')],
     destroy() {
