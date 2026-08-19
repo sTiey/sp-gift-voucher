@@ -174,12 +174,17 @@ const ACTS = {
   let guard = 0;
   let stuck = null;
   while (step() !== 'done' && guard++ < 40) {
+    /* รอ "ปุ่มโผล่" ก่อน แล้วค่อยดูว่าตอนนี้เป็นข้อไหน — ห้ามสลับลำดับ
+       เดิมอ่านเลขข้อก่อนแล้วค่อยรอปุ่ม ซึ่งพลาดเมื่อแล็บเดินไปข้อถัดไประหว่างที่ตัวขับทำท่าอยู่
+       ผลคือตัวขับไปรอปุ่มของข้อที่ "เริ่มวัดไปแล้ว" (เหลือแต่ปุ่มข้าม) → รอเปล่า 20 วินาที
+       แล้วไม่เอียงเครื่องเลยทั้งข้อ → รายงานว่าประกายกวาด 0% ทั้งที่โค้ดจริงกวาดเต็ม
+       (หลงคิดว่าเป็นบั๊กของตัวเอียงอยู่หลายรอบ — เป็นบั๊กของตัวขับล้วน ๆ) */
+    const b = (ACTS[step()] || {}).pick
+      ? await waitButton(/./, 12000)
+      : await waitButton(READY, 30000);
     const now = step();
     const act = ACTS[now] || {};
     if (act.before) await act.before();
-    const b = act.pick
-      ? await waitButton(/./, 8000)
-      : await waitButton(READY, now === '1' ? 3000 : 20000);
     if (b) {
       b.click();
       if (act.after) await act.after();

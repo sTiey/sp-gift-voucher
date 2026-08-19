@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- เบราว์เซอร์ในแอป (LINE) เก็บแคชแรงมาก — รอบ 19 ส.ค. ไท้ได้ของเก่าไปทดสอบโดยไม่มีใครรู้ -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>ห้องแล็บตรวจไจโรสโคป</title>
 <!--
   ตรวจ "ไจโรสโคป" อย่างเดียว แต่ลงลึกทุกทางที่มันพังได้บนมือถือจริง
@@ -48,7 +51,11 @@
   .mid { display: grid; align-content: center; justify-items: center; gap: 10px; min-height: 0;
          overflow: hidden; grid-template-columns: minmax(0, 1fr); }
   /* บัตรอยู่กลางจอเสมอ — ผู้ทดสอบต้องเห็นมันขณะเอียงโดยไม่ต้องเลื่อนหา */
-  #card { width: min(80vw, 300px, calc((100dvh - 23rem) * 0.82)); }
+  /* ต้องมี max(120px, ...) กันพื้นไว้ — สูตรนี้ติดลบได้เมื่อจอเตี้ยกว่า 23rem
+     ความกว้างติดลบ = ใช้จริงเป็น 0 = บัตรหายไปทั้งใบเงียบ ๆ
+     แล้วตัวเอียงจะข้ามใบที่ไม่มีขนาดทิ้ง → ผลวัดออกมา 0% เหมือนของจริงพัง
+     ไท้เจอจริงบน LINE 2026-08-19 ตอนหมุนเป็นแนวนอน "บัตรมองไม่เจอ มันซ่อนอยู่" */
+  #card { width: max(120px, min(80vw, 300px, calc((100dvh - 23rem) * 0.82))); }
   .live { font: 500 13px/1.4 ui-monospace, monospace; background: #26313f; color: #dfe6ee;
           border-radius: 6px; padding: 8px 11px; text-align: center; }
   .live b { color: #7fd4a0; }
@@ -68,6 +75,28 @@
   details { background: #f7f3ea; border-radius: 8px; padding: 9px 13px; font-size: 13.5px; }
   details summary { font-weight: 700; }
   details p { color: #5b5040; line-height: 1.55; margin: 7px 0 2px; }
+  .build { font: 500 11px/1.45 ui-monospace, monospace; color: #7a6f5c; text-align: center; margin-top: 7px; }
+
+  /* จอแนวนอนของมือถือสูงแค่ราว 340px หลังหักแถบเบราว์เซอร์ — เรียงลงล่างไม่มีทางพอ
+     บัตรโดนบีบจนหาย ปุ่มหลุดจอ · แนวนอนจึงต้องเป็นสองคอลัมน์
+     บัตรอยู่ซ้าย คำสั่งกับปุ่มอยู่ขวา แบบเดียวกับหน้าเทสรวมที่พิสูจน์แล้วว่าใช้ได้ */
+  @media (orientation: landscape) and (max-height: 560px) {
+    .screen {
+      max-width: none;
+      grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-areas: 'hd hd' 'mid foot';
+      column-gap: 16px;
+      align-items: center;
+    }
+    .hd { grid-area: hd; }
+    .mid { grid-area: mid; }
+    .foot { grid-area: foot; overflow-y: auto; }
+    #card { width: max(96px, min(34vw, 210px, calc((100dvh - 6.5rem) * 0.82))); }
+    .say { font-size: 15px; }
+    .live { font-size: 12px; padding: 6px 9px; }
+    button { min-height: 44px; padding: 10px 14px; margin-top: 6px; }
+  }
 </style>
 </head>
 <body>
@@ -86,11 +115,18 @@
 </div>
 
 <script type="module">
-import { cardHtml } from '../src/ui/voucher-design.js';
-import { createVoucher } from '../src/index.js';
-import { attachFoilTilt, requestGyro, gyroStatus, recalibrateGyro, subscribeGyroRaw } from '../src/ui/foil-tilt.js';
-import { openCardFullscreen } from '../src/ui/card-fullscreen.js';
-import { deviceInfo, loadInfo, frameProbe, copyText, isInAppBrowser } from '../src/ui/device-report.js';
+/* เลขรุ่นของหน้าเทส — ต้องขึ้นให้เห็นบนจอและติดไปในรายงานเสมอ
+   รอบ 19 ส.ค. ไท้ทดสอบไปทั้งชุด แล้วมารู้ทีหลังว่าเครื่องหยิบของเก่าที่ค้างในแคชให้
+   (ดูจากรูป: หน้าจอบอก 14 ข้อ แต่ของที่ปล่อยไปมี 13 ข้อ) = ตีความผลผิดทั้งรอบโดยไม่มีใครรู้
+   ต่อท้าย ?v= ทุกไฟล์ที่ดึง เพื่อบังคับให้โหลดของใหม่จริง
+   แก้หน้านี้หรือแก้ตัวเอียงทีไร ให้ขยับเลขรุ่นนี้ด้วยทุกครั้ง */
+const BUILD = '19ส.ค.-4';
+const VER = `?v=${encodeURIComponent(BUILD)}`;
+const { cardHtml } = await import(`../src/ui/voucher-design.js${VER}`);
+const { createVoucher } = await import(`../src/index.js${VER}`);
+const { attachFoilTilt, requestGyro, gyroStatus, subscribeGyroRaw } = await import(`../src/ui/foil-tilt.js${VER}`);
+const { openCardFullscreen } = await import(`../src/ui/card-fullscreen.js${VER}`);
+const { deviceInfo, loadInfo, frameProbe, copyText, isInAppBrowser } = await import(`../src/ui/device-report.js${VER}`);
 
 const V = { kind: 'percent', value: 15, title: 'ตรวจไจโรสโคป', code: 'SPE-7K4M-92XH', minSpend: 10000, maxDiscount: 2000 };
 document.getElementById('card').innerHTML = cardHtml(createVoucher(V), { design: 'foilticket', shape: 'compact', art: 'stair' });
@@ -104,6 +140,8 @@ const barEl = gaugeEl.querySelector('i');
 const liveEl = document.getElementById('live');
 const doneEl = document.getElementById('done');
 const midEl = document.getElementById('mid');
+/* ป้ายบอกรุ่น — เห็นบนจอตลอด จะได้รู้ทันทีว่ากำลังทดสอบของใหม่จริงหรือของค้างในแคช */
+doneEl.insertAdjacentHTML('afterend', `<div class="build">แล็บรุ่น ${BUILD}</div>`);
 
 /* ── เก็บค่าดิบทุกสัญญาณตลอดการทดสอบ ──────────────────────────────────── */
 const raw = { n: 0, empty: 0, last: null, gaps: [], samples: [], sources: new Set(), screens: new Set() };
@@ -169,11 +207,22 @@ function ready(label = 'พร้อมแล้ว · เริ่มวัด'
 /* ⚠️ ต้องเก็บ "ช่วงกว้างสุดที่ประกายวิ่งไปถึง" ระหว่างข้อนั้น ไม่ใช่ค่าตอนจบข้อ
    เพราะพอผู้ทดสอบเอียงถึงแล้วถือค้างไว้ ตัวไล่ศูนย์จะค่อย ๆ ดึงประกายกลับเข้ากลาง
    วัดตอนจบข้อจึงได้ตัวเลขต่ำกว่าที่ตาเห็นจริง (วัดได้ 51% ทั้งที่ของจริงวิ่งเต็ม 100%) */
+/* ใบที่ถูกย่อจนไม่มีขนาดจะไม่ได้รับการเอียงเลย (ตัวเอียงข้ามใบขนาด 0 ทิ้ง)
+   ผลจะออกมา 0% หน้าตาเหมือนของจริงพัง ทั้งที่หน้าเทสเองต่างหากที่พัง — ต้องแยกให้ออก */
+const cardSeen = (el) => {
+  const r = (el || card).getBoundingClientRect();
+  return r.width > 24 && r.height > 24;
+};
+
 let peak = null;
-const resetPeak = () => { peak = { xlo: 999, xhi: -999, ylo: 999, yhi: -999 }; };
+let peakRead = () => foil();
+const resetPeak = (reader) => {
+  peakRead = reader || (() => foil());
+  peak = { xlo: 999, xhi: -999, ylo: 999, yhi: -999 };
+};
 function notePeak() {
   if (!peak) return;
-  const [x, y] = foil();
+  const [x, y] = peakRead();
   peak.xlo = Math.min(peak.xlo, x); peak.xhi = Math.max(peak.xhi, x);
   peak.ylo = Math.min(peak.ylo, y); peak.yhi = Math.max(peak.yhi, y);
 }
@@ -291,8 +340,13 @@ async function runAll(granted) {
     const jy = sd(still.map((s) => s.dy));
     const hz = still.length / ((performance.now() - t0) / 1000);
     const fr = probe.result();
-    record('ถือนิ่ง', jx < 1.5 && jy < 1.5 ? 'ผ่าน' : 'ไม่ผ่าน',
-      `สั่น ${fmt(jx)}° / ${fmt(jy)}° · ${fmt(hz, 0)} ครั้ง/วินาที · ประกายไหว ${fmt(sd(still.map((s) => s.fx * 100)))}%`);
+    /* ตัดสินจาก "ประกายไหวกี่ %" ไม่ใช่องศาดิบ — องศาดิบสั่นเป็นเรื่องปกติของเซนเซอร์
+       รอบที่แล้วตกทั้งที่ประกายไหวแค่ 0.2% (คือนิ่งมาก) เพราะไปตัดสินที่องศา
+       สิ่งที่ลูกค้าเห็นคือประกาย ไม่ใช่ตัวเลของศา */
+    const wx = sd(still.map((s) => s.fx * 100));
+    const wy = sd(still.map((s) => s.fy * 100));
+    record('ถือนิ่ง', wx < 2 && wy < 2 ? 'ผ่าน' : 'ไม่ผ่าน',
+      `ประกายไหว ${fmt(wx)}% / ${fmt(wy)}% · องศาดิบสั่น ${fmt(jx)}° / ${fmt(jy)}° · ${fmt(hz, 0)} ครั้ง/วินาที`);
     record('ความลื่นตอนถือนิ่ง', 'ข้อมูล', fr ? `กลาง ${fr.medianMs} ms · แย่สุด ${fr.worst5pctMs} ms` : 'เก็บไม่พอ');
   }
 
@@ -339,12 +393,16 @@ async function runAll(granted) {
   if (!rotated || rotated === 'timeout') record('แนวนอน · แกนสลับถูก', 'ข้าม', 'ไม่ได้หมุนจอ');
   else if (await ready() === null) record('แนวนอน · แกนสลับถูก', 'ข้าม', '');
   else {
-    recalibrateGyro();
-    const a = foil();
+    /* ห้ามสั่งจำท่าถือใหม่ตรงนี้ — ของจริงไม่ได้ทำ ถ้าทำจะบังบั๊กที่ตั้งใจตรวจพอดี */
+    const seen = cardSeen();
+    resetPeak();
     const RL = await waitFor((o) => Math.abs(o.dx) > 20, { onTick: (o) => (Math.abs(o.dx) / 20) * 100 });
-    const moved = Math.abs(foil()[0] - a[0]);
-    record('แนวนอน · แกนสลับถูก', RL && RL !== 'timeout' && moved > 20 ? 'ผ่าน' : RL === null ? 'ข้าม' : 'ไม่ผ่าน',
-      `จอ ${rotated.screen}° · เอียงซ้าย-ขวาแล้วประกายเลื่อน ${fmt(moved, 0)}%`);
+    const moved = peakX();
+    peak = null;
+    record('แนวนอน · แกนสลับถูก',
+      !seen ? 'ไม่ผ่าน' : RL && RL !== 'timeout' && moved > 20 ? 'ผ่าน' : RL === null ? 'ข้าม' : 'ไม่ผ่าน',
+      seen ? `จอ ${rotated.screen}° · เอียงซ้าย-ขวาแล้วประกายกวาด ${fmt(moved, 0)}%`
+           : 'บัตรบนหน้าเทสถูกย่อจนไม่มีขนาด วัดไม่ได้ (เป็นบั๊กของหน้าเทสเอง ไม่ใช่ตัวเอียง)');
   }
 
   /* ── 9 · โหมดเต็มจอ ─────────────────────────────────────────────── */
@@ -362,17 +420,20 @@ async function runAll(granted) {
     });
     const fsFoil = () => [parseFloat(fs.card.style.getPropertyValue('--ft-ex')) || 50,
                           parseFloat(fs.card.style.getPropertyValue('--ft-ey')) || 50];
-    recalibrateGyro();
     await wait(1500);
-    const fa = fsFoil();
+    /* ห้ามจำท่าถือใหม่เหมือนกัน · และต้องวัด "ช่วงกว้างสุด" ไม่ใช่หัวเทียบท้าย
+       วัดหัวเทียบท้ายได้ 18%/24% ต่ำกว่าที่ตาเห็นจริง เพราะตัวไล่ศูนย์ดึงกลับไปแล้ว */
+    const seenFs = cardSeen(fs.card);
+    resetPeak(fsFoil);
     const FL = await waitFor((o) => Math.abs(o.dx) > 20, { onTick: (o) => (Math.abs(o.dx) / 20) * 100 });
-    const fb = fsFoil();
     const wasRot = fs.el.dataset.rotated === 'true';
-    const dEx = Math.abs(fb[0] - fa[0]);
-    const dEy = Math.abs(fb[1] - fa[1]);
+    const dEx = peakX();
+    const dEy = peakY();
+    peak = null;
     record('เต็มจอ · แกนหมุนตามบัตร',
-      FL && FL !== 'timeout' && (wasRot ? dEy > dEx : dEx > dEy) ? 'ผ่าน' : FL === null ? 'ข้าม' : 'ไม่ผ่าน',
-      `บัตร${wasRot ? 'หมุน 90°' : 'ไม่หมุน'} · เอียงซ้าย-ขวา → แกนนอน ${fmt(dEx, 0)}% แกนตั้ง ${fmt(dEy, 0)}%`);
+      !seenFs ? 'ไม่ผ่าน' : FL && FL !== 'timeout' && (wasRot ? dEy > dEx : dEx > dEy) ? 'ผ่าน' : FL === null ? 'ข้าม' : 'ไม่ผ่าน',
+      seenFs ? `บัตร${wasRot ? 'หมุน 90°' : 'ไม่หมุน'} · เอียงซ้าย-ขวา → แกนนอน ${fmt(dEx, 0)}% แกนตั้ง ${fmt(dEy, 0)}%`
+             : 'บัตรเต็มจอไม่มีขนาด วัดไม่ได้ (บั๊กของหน้าเทสเอง)');
     fs.close();
     await wait(300);
   }
@@ -463,6 +524,7 @@ function report() {
   const L = [];
   L.push('===== ผลตรวจไจโรสโคปแบบละเอียด =====');
   L.push(`เวลา ${new Date().toLocaleString('th-TH')}`);
+  L.push(`หน้าเทสรุ่น ${BUILD}`);
   L.push(`เครื่อง ${d.os}${d.osVersion ? ' ' + d.osVersion : ''} · ${d.browser} · จอ ${d.screen}`);
   if (d.inApp) L.push('⚠️ เปิดจากเบราว์เซอร์ในแอป (LINE/เฟซบุ๊ก) — ช่องทางหลักของลูกค้าจริง');
   L.push(`สเปก ${d.cores ?? '—'} คอร์ · เน็ต ${d.network || '—'} · ลดแอนิเมชัน ${d.reducedMotion ? 'เปิด' : 'ปิด'}${d.secure ? '' : ' · ⚠️ ไม่ใช่ https'}`);
