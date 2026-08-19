@@ -83,6 +83,10 @@ async function moveTo(sx, sy, ms = 520) {
 
 const steps = () => [...doc().querySelectorAll('.step')];
 const stepText = (i) => steps()[i]?.querySelector('.res')?.textContent?.trim() || '';
+/* ⚠️ ห้ามเช็คด้วยการหาคำว่า "ผ่าน" ในข้อความ — คำว่า "ไม่ผ่าน" มีคำว่า "ผ่าน" อยู่ข้างใน
+   เช็คแบบนั้นแล้วข้อที่ตกจะถูกนับว่าผ่านหมด (เจอจริง: รายงาน 28/28 ทั้งที่แล็บบอกว่าตก 2 ข้อ)
+   อ่านจากคลาสของป้ายผลแทน ซึ่งเป็นค่าเดียวไม่กำกวม */
+const passed = (i) => steps()[i]?.querySelector('.res span')?.className === 'ok';
 
 /** รอจนกว่าข้อที่ i จะ "ตัดสินเสร็จ" (มีข้อความผลแล้ว) */
 async function waitDone(i, ms = 25000) {
@@ -123,7 +127,18 @@ function fakeScreen(deg) {
   return { got: W.screen.orientation?.angle, how: tries.join('+') };
 }
 
+const emit = (extra = {}) => {
+  const ok = R.filter((r) => r.pass).length;
+  const pl = JSON.stringify({ pass: ok, fail: R.length - ok, results: R, sample: '', ...extra });
+  console.log('LAB64 ' + btoa(String.fromCharCode(...new TextEncoder().encode(pl))));
+};
+/* ⚠️ ถ้าตัวขับพังเอง ต้องบอกมาว่าพังตรงไหน ไม่ใช่เงียบแล้วปล่อยให้ตีความเอง
+   (เจอจริง: มันตายเงียบหลังข้อแรก แล้วผมเดาสาเหตุอยู่หลายรอบ) */
+window.addEventListener('error', (e) => emit({ crash: `${e.message} @ ${e.lineno}` }));
+window.addEventListener('unhandledrejection', (e) => emit({ crash: 'reject: ' + (e.reason?.message || e.reason) }));
+
 (async function run() {
+ try {
   await new Promise((r) => (win().document.readyState === 'complete' ? r() : (f.onload = r)));
   await wait(500);
 
@@ -132,9 +147,9 @@ function fakeScreen(deg) {
 
   /* ข้อ 1 สิทธิ์ · ข้อ 2 มีสัญญาณ */
   await waitDone(0);
-  check('ข้อ 1 สิทธิ์ตัดสินได้', /ผ่าน/.test(stepText(0)), stepText(0).slice(0, 60));
+  check('ข้อ 1 สิทธิ์ตัดสินได้', passed(0), stepText(0).slice(0, 60));
   await waitDone(1, 15000);
-  check('ข้อ 2 จับสัญญาณได้', /ผ่าน/.test(stepText(1)), `ยิงไป ${sent} ครั้ง · ` + stepText(1).slice(0, 50));
+  check('ข้อ 2 จับสัญญาณได้', passed(1), `ยิงไป ${sent} ครั้ง · ` + stepText(1).slice(0, 50));
 
   /* ข้อ 3 ถือนิ่ง 5 วินาที */
   await waitDone(2, 20000);
@@ -144,13 +159,13 @@ function fakeScreen(deg) {
   await waitStep(3);
   await moveTo(-28, REST_SY, 900);
   await waitDone(3);
-  check('ข้อ 4 จับการเอียงซ้ายได้', /ผ่าน/.test(stepText(3)), stepText(3).slice(0, 70));
+  check('ข้อ 4 จับการเอียงซ้ายได้', passed(3), stepText(3).slice(0, 70));
 
   /* ข้อ 5 เอียงขวา */
   await waitStep(4);
   await moveTo(28, REST_SY, 1100);
   await waitDone(4);
-  check('ข้อ 5 ตรวจทิศประกายแนวนอนได้', /ผ่าน/.test(stepText(4)), stepText(4).slice(0, 95));
+  check('ข้อ 5 ตรวจทิศประกายแนวนอนได้', passed(4), stepText(4).slice(0, 95));
 
   /* ข้อ 6 เงยแล้วก้ม */
   await waitStep(5);
@@ -158,7 +173,7 @@ function fakeScreen(deg) {
   await wait(500);
   await moveTo(0, REST_SY + 28, 1200);
   await waitDone(5);
-  check('ข้อ 6 ตรวจทิศประกายแนวตั้งได้', /ผ่าน/.test(stepText(5)), stepText(5).slice(0, 95));
+  check('ข้อ 6 ตรวจทิศประกายแนวตั้งได้', passed(5), stepText(5).slice(0, 95));
 
   /* ข้อ 7 หมุนจอ */
   await waitStep(6);
@@ -173,12 +188,12 @@ function fakeScreen(deg) {
     await moveTo(0, REST_SY, 900);          // ให้จำท่าถือใหม่หลัง recalibrate
     await moveTo(-30, REST_SY, 1000);
     await waitDone(7, 34000);
-    check('ข้อ 7ก ตรวจแกนตอนแนวนอนได้', /ผ่าน/.test(stepText(7)), stepText(7).slice(0, 95));
+    check('ข้อ 7ก ตรวจแกนตอนแนวนอนได้', passed(7), stepText(7).slice(0, 95));
   } else {
     check('ข้อ 7ก ตรวจแกนตอนแนวนอนได้', false, 'ไม่มีข้อ 7ก โผล่มา');
   }
   await waitDone(6);
-  check('ข้อ 7 รู้ว่าจอหมุนแล้ว', /ผ่าน/.test(stepText(6)), stepText(6).slice(0, 60));
+  check('ข้อ 7 รู้ว่าจอหมุนแล้ว', passed(6), stepText(6).slice(0, 60));
 
   /* ข้อ 8 โหมดเต็มจอ — หมุนจอกลับเป็นแนวตั้งก่อน จะได้ทดสอบเส้นทาง "บัตรหมุน 90°"
      ซึ่งเป็นของใหม่และสำคัญกว่าเส้นทางไม่หมุน */
@@ -198,15 +213,20 @@ function fakeScreen(deg) {
   await wait(500);
   check('ข้อ 8 ปิดโหมดเต็มจอคืนแล้ว', !doc().querySelector('.vk-fs'), '');
 
-  /* ข้อ 9 วางราบ */
+  /* ข้อ 9 วางราบ — ต้องคลายกลับเข้ากลางเอง (บั๊กที่ไท้เจอ) */
   await waitStep(9);
-  await moveTo(2, 3, 700);
-  await waitDone(9, 30000);
-  check('ข้อ 9 จับท่าวางราบได้', /β/.test(stepText(9)), stepText(9).slice(0, 75));
+  await moveTo(0, 0, 900);
+  await waitDone(9, 40000);
+  check('ข้อ 9 วางราบแล้วคลายกลับเข้ากลาง', passed(9), stepText(9).slice(0, 95));
 
-  /* ข้อ 10 สลับแอปแล้วกลับมา — ตอนนี้เป็นปุ่ม จึงจำลองได้ตรงไปตรงมา */
+  /* ข้อ 9ก ยกขึ้นมาถือใหม่ — ต้องไม่ค้าง */
   await waitStep(10);
-  await moveTo(0, REST_SY, 400);
+  await moveTo(0, 48, 1100);
+  await waitDone(10, 40000);
+  check('ข้อ 9ก ยกขึ้นถือใหม่แล้วไม่ค้าง', passed(10), stepText(10).slice(0, 95));
+
+  /* ข้อ 10 สลับแอปแล้วกลับมา (ตอนนี้เป็นปุ่ม) */
+  await waitStep(11);
   let visOk = false;
   const setHidden = (v) => {
     const D = win().document;
@@ -229,18 +249,18 @@ function fakeScreen(deg) {
     if (b) { b.click(); break; }
     await wait(150);
   }
-  await waitDone(10, 12000);
-  check('ข้อ 10 รู้ว่ากลับมาแล้วสัญญาณยังมา', /ผ่าน/.test(stepText(10)), `ปลอมสลับแอป ${visOk ? 'ได้' : 'ไม่ได้'} · ` + stepText(10).slice(0, 70));
+  await waitDone(11, 12000);
+  check('ข้อ 10 รู้ว่ากลับมาแล้วสัญญาณยังมา', passed(11), `ปลอมสลับแอป ${visOk ? 'ได้' : 'ไม่ได้'} · ` + stepText(11).slice(0, 70));
 
   /* ข้อ 11-12 คำถามที่คนต้องตอบ */
   const btns = () => [...doc().querySelectorAll('#foot button')];
-  for (const i of [11, 12]) {
+  for (const i of [12, 13]) {
     await waitStep(i, 12000);
     const t = Date.now();
     while (!btns()[0] && Date.now() - t < 6000) await wait(120);
     if (btns()[0]) btns()[0].click();
     await waitDone(i, 8000);
-    check(`ข้อ ${i} ตอบคำถามคนได้`, /ผ่าน/.test(stepText(i)), stepText(i).slice(0, 50));
+    check(`ข้อ ${i - 1} ตอบคำถามคนได้`, passed(i), stepText(i).slice(0, 50));
   }
 
   /* สรุป */
@@ -254,15 +274,18 @@ function fakeScreen(deg) {
     ['รายงานมีผลรายข้อ', /--- ผลรายข้อ ---/],
     ['รายงานมีจังหวะสัญญาณ', /จังหวะสัญญาณ กลาง [\d.]+ ms/],
     ['รายงานมีช่วงค่าที่เจอ', /ช่วงค่าที่เจอ β/],
-    ['รายงานมีความละเอียดค่า', /ความละเอียดค่าที่เล็กที่สุด [\d.]+/],
+    ['รายงานมีความละเอียดค่า', /ความละเอียดค่าที่เล็กที่สุด \S+/],
     ['รายงานนับสัญญาณได้', /ทั้งหมด [1-9]\d* ครั้ง/],
     ['รายงานบอกมุมจอที่ผ่านมา', /มุมจอที่ผ่านมา .*90/],
   ]) check(n, re.test(txt), (txt.match(re) || ['ไม่เจอ'])[0]);
 
   const lab = win().GYRO_LAB;
-  const passed = lab ? lab.results.filter((r) => r.verdict === 'ผ่าน').length : 0;
-  check('แล็บตัดสินว่าผ่านหลายข้อ', passed >= 8, `${passed} ข้อผ่าน จาก ${lab ? lab.results.length : 0}`);
-  check('ไม่มีข้อไหนค้างไม่ตัดสิน', lab && lab.results.length >= 12 && lab.results.every((r) => r.verdict), `${lab ? lab.results.length : 0} ข้อ`);
+  /* ⚠️ ห้ามตั้งชื่อ passed ซ้ำกับ helper ข้างบน — const ที่ประกาศทีหลังในฟังก์ชันเดียวกัน
+     จะบัง helper ตลอดทั้งฟังก์ชัน แล้วบรรทัดที่เรียกก่อนหน้าจะพังว่า
+     "Cannot access before initialization" ทั้งที่มองเผิน ๆ ลำดับถูกทุกอย่าง */
+  const labPassed = lab ? lab.results.filter((r) => r.verdict === 'ผ่าน').length : 0;
+  check('แล็บตัดสินว่าผ่านหลายข้อ', labPassed >= 10, `${labPassed} ข้อผ่าน จาก ${lab ? lab.results.length : 0}`);
+  check('ไม่มีข้อไหนค้างไม่ตัดสิน', lab && lab.results.length >= 14 && lab.results.every((r) => r.verdict), `${lab ? lab.results.length : 0} ข้อ`);
 
   const ok = R.filter((r) => r.pass).length;
   document.getElementById('log').textContent =
@@ -273,6 +296,7 @@ function fakeScreen(deg) {
      ดักจาก console ตรง ๆ แล้วเครื่องหมาย escape ชนกันจนอ่านกลับไม่ได้ */
   const payload = JSON.stringify({ pass: ok, fail: R.length - ok, results: R, sample: txt });
   console.log('LAB64 ' + btoa(String.fromCharCode(...new TextEncoder().encode(payload))));
+ } catch (err) { emit({ crash: (err && err.message) || String(err) }); }
 })();
 </script>
 </body>

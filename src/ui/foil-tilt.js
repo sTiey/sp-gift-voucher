@@ -62,6 +62,21 @@ const GYRO_RANGE = 30;
    ถ้าไม่จำท่าตั้งต้น การ์ดจะค้างสุดทางตั้งแต่ยังไม่ขยับ แล้วเอียงยังไงก็ไม่กลับ */
 const GYRO_CALIBRATE = 8;
 
+/* ══ ปรับศูนย์ตามท่าถือตลอดเวลา — แก้อาการ "ค้างเหมือนกำลังเอียงอยู่" ══
+   ⚠️ ไท้เจอจริงบน iPhone 2026-08-19 — วางเครื่องราบนิ่งสนิท แต่ประกายค้างสุดขอบ
+      วัดได้จริง: β0 γ0 นิ่งสนิท แต่ประกายอยู่ที่ 123% คือสุดขอบ
+   ต้นเหตุ: ท่าถือตั้งต้นจำแค่ครั้งเดียวตอนเริ่ม แล้วไม่เคยอัปเดตอีกเลย
+      คนใช้มือถือเปลี่ยนท่าตลอด (นั่ง นอน วางโต๊ะ หยิบขึ้นมาใหม่) ค่าอ้างอิงเดิมจึงผิดทันที
+   ทางแก้: เลื่อนศูนย์ไล่ตามท่าปัจจุบันช้า ๆ ตลอดเวลา
+     · ช้ามาก (ราว 11 วินาที) ตอนอยู่ในช่วงปกติ — เอียงแล้วประกายยังค้างตามที่ควร
+     · เร็วขึ้น (ราว 1.7 วินาที) เมื่อค่าชนขอบ — อาการค้างจึงหายเองในไม่กี่วินาที */
+/* หน่วยเป็น "ต่อวินาที" ไม่ใช่ "ต่อสัญญาณ"
+   ⚠️ เครื่องส่งสัญญาณไม่เท่ากัน: iPhone 60 ครั้ง/วินาที แอนดรอยด์บางรุ่นเหลือ 10
+   ถ้าคิดเป็นต่อสัญญาณ เครื่องช้าจะคลายตัวช้ากว่าหกเท่า = ค้างนานมาก
+   คิดเป็นวินาทีแล้วทุกเครื่องรู้สึกเหมือนกัน */
+const GYRO_FOLLOW_SLOW = 0.09;   /* ต่อวินาที — ตัวคงเวลาราว 11 วินาที */
+const GYRO_FOLLOW_EDGE = 0.75;   /* ตอนค้างสุดขอบ — ราว 1.3 วินาที */
+
 const gyro = {
   /* idle = ยังไม่ขอ · unsupported = เครื่องไม่มี · denied = ถูกปฏิเสธ/ปิดไว้
      granted = ได้สิทธิ์แล้วแต่ยังไม่มีสัญญาณ · live = มีสัญญาณเข้ามาจริง */
@@ -74,6 +89,7 @@ const gyro = {
   seen: 0,
   bound: null,
   source: null,
+  lastAt: 0,
 };
 
 function screenAngle() {
@@ -133,14 +149,27 @@ function onOrientation(ev) {
     return;
   }
 
-  const fx = 0.5 + (sx - gyro.zero.x) / (GYRO_RANGE * 2);
-  const fy = 0.5 + (sy - gyro.zero.y) / (GYRO_RANGE * 2);
-  gyro.angle = [Math.round(sx - gyro.zero.x), Math.round(sy - gyro.zero.y)];
+  const dx = sx - gyro.zero.x;
+  const dy = sy - gyro.zero.y;
+  /* ค้างสุดขอบเมื่อไหร่ ไล่ศูนย์กลับเร็วขึ้น — จุดนี้แหละที่เคยค้าง */
+  /* ไล่เร็วขึ้นตามระยะที่ห่างศูนย์ (กำลังสอง) — ไม่ใช่เปิด/ปิดทีเดียว
+     เอียงนิดหน่อยแล้วค้างไว้ ไล่ช้า ๆ · เปลี่ยนท่าถือทั้งที ไล่กลับในราว 3-4 วินาที
+     ถ้าใช้ความเร็วเดียวทั้งหมด: เร็วไปการเอียงค้างไม่อยู่ · ช้าไปก็ค้างสุดขอบเหมือนเดิม */
+  const r = Math.min(1, Math.max(Math.abs(dx), Math.abs(dy)) / GYRO_RANGE);
+  const dt = Math.min(0.2, gyro.lastAt ? (at - gyro.lastAt) / 1000 : 0.016);
+  gyro.lastAt = at;
+  const k = 1 - Math.exp(-(GYRO_FOLLOW_SLOW + (GYRO_FOLLOW_EDGE - GYRO_FOLLOW_SLOW) * r * r) * dt);
+  gyro.zero.x += dx * k;
+  gyro.zero.y += dy * k;
+
+  const fx = 0.5 + dx / (GYRO_RANGE * 2);
+  const fy = 0.5 + dy / (GYRO_RANGE * 2);
+  gyro.angle = [Math.round(dx), Math.round(dy)];
   emitRaw({
     at, type: ev.type, empty: false,
     beta: ev.beta, gamma: ev.gamma, alpha: ev.alpha,
     screen: screenAngle(),
-    sx, sy, dx: sx - gyro.zero.x, dy: sy - gyro.zero.y,
+    sx, sy, dx, dy, zx: gyro.zero.x, zy: gyro.zero.y,
     fx: Math.min(Math.max(fx, 0), 1), fy: Math.min(Math.max(fy, 0), 1),
   });
   for (const fn of gyro.subs) fn(Math.min(Math.max(fx, 0), 1), Math.min(Math.max(fy, 0), 1));

@@ -172,6 +172,17 @@ function waitButton(el, label) {
     skip.onclick = () => stop(null);
   });
 }
+
+/** รอจนประกายคลายกลับเข้าใกล้กลาง · คืนเวลาที่ใช้ (วินาที) หรือ null ถ้าไม่กลับ */
+async function waitCentred(limit = 24, ms = 12000) {
+  const t0 = performance.now();
+  while (performance.now() - t0 < ms) {
+    const [x, y] = foil();
+    if (Math.abs(x - 50) < limit && Math.abs(y - 50) < limit) return (performance.now() - t0) / 1000;
+    await wait(120);
+  }
+  return null;
+}
 const fmt = (n, d = 1) => (n === null || n === undefined || Number.isNaN(n) ? '—' : n.toFixed(d));
 
 /* ── สถานะสดด้านบน ────────────────────────────────────────────────────── */
@@ -292,8 +303,14 @@ async function runAll(granted) {
   }
 
   /* ── 8 · โหมดเต็มจอ — บัตรหมุนอีก 90° แกนต้องหมุนตาม ───────────── */
-  el = addStep('8 · โหมดเต็มจอ (บัตรหมุน 90°)', 'ถือเครื่อง<b>แนวตั้ง</b>จะได้เห็นบัตรหมุนเต็มจอ · เปิดให้เอง แล้วเอียงซ้าย-ขวา');
-  await wait(400);
+  el = addStep('8 · โหมดเต็มจอ (บัตรหมุน 90°)', '<b>หมุนเครื่องกลับเป็นแนวตั้งก่อน</b> แล้วจะเปิดให้เอง · จากนั้นเอียงซ้าย-ขวา');
+  /* ⚠️ รอบเทสจริงสองรอบของไท้ได้ "บัตรไม่หมุน" ทั้งคู่ เพราะยังถือแนวนอนค้างจากข้อ 7
+     แปลว่าเส้นทางที่อยากทดสอบที่สุด (บัตรหมุน 90°) ไม่เคยถูกทดสอบเลย → รอให้กลับมาแนวตั้งก่อน */
+  const backUp = await waitFor(el, () => window.innerHeight >= window.innerWidth,
+    { timeout: 20000, onTick: () => (window.innerHeight >= window.innerWidth ? 100 : 15) });
+  if (backUp === null) { finish(el, 'เต็มจอ · แกนหมุนตามบัตร', 'ข้าม', 'ไม่ได้หมุนกลับเป็นแนวตั้ง'); }
+  else { await wait(900); }
+  if (backUp !== null) {
   let fsTilt = null;
   const fs = openCardFullscreen(cardHtml(createVoucher(V), { design: 'foilticket', shape: 'ticket', art: 'fence' }), {
     shape: 'ticket',
@@ -318,17 +335,36 @@ async function runAll(granted) {
     `บัตร${wasRot ? 'หมุน 90°' : 'ไม่หมุน'} · เอียงซ้าย-ขวา → แกนนอน ${fmt(dEx, 0)}% แกนตั้ง ${fmt(dEy, 0)}%`);
   fs.close();
   await wait(300);
+  }
 
-  /* ── 9 · วางราบบนโต๊ะ ───────────────────────────────────────────── */
-  el = addStep('9 · วางเครื่องราบบนโต๊ะ', 'วางแล้วปล่อยมือ 3 วินาที · ดูว่าบัตรค้างท่าประหลาดไหม');
+  /* ── 9 · วางราบบนโต๊ะ แล้วต้องกลับเข้ากลางเอง ────────────────────── */
+  el = addStep('9 · วางเครื่องราบบนโต๊ะ', 'วางแล้วปล่อยมือ · บัตรต้องคลายกลับมากลาง ไม่ค้างเอียง');
   const flatStart = performance.now();
-  const F = await waitFor(el, (o) => Math.abs(o.beta) < 14 && Math.abs(o.gamma) < 14 && performance.now() - flatStart > 3000,
-    { timeout: 20000, onTick: () => Math.min(100, (performance.now() - flatStart) / 30) });
-  const flatFoil = foil();
-  finish(el, 'วางราบ', F === null ? 'ข้าม' : 'ข้อมูล',
-    F && F !== 'timeout' ? `β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → ประกายอยู่ที่ ${fmt(flatFoil[0], 0)}%, ${fmt(flatFoil[1], 0)}%` : 'ทำไม่ได้');
+  const F = await waitFor(el, (o) => Math.abs(o.beta) < 14 && Math.abs(o.gamma) < 14 && performance.now() - flatStart > 2500,
+    { timeout: 25000, onTick: () => Math.min(100, (performance.now() - flatStart) / 25) });
+  /* ⚠️ นี่คือบั๊กที่ไท้เจอเอง: ท่าถือถูกจำครั้งเดียวตอนเริ่ม พอวางราบค่าอ้างอิงผิด
+     แล้วประกายค้างสุดขอบ (วัดได้ 123%) ทั้งที่เครื่องนิ่งสนิท
+     ตอนนี้ศูนย์ไล่ตามท่าปัจจุบันแล้ว จึงต้องกลับเข้ากลางได้เองภายในไม่กี่วินาที */
+  const backIn = F && F !== 'timeout' ? await waitCentred() : null;
+  const fl = foil();
+  finish(el, 'วางราบแล้วคลายกลับเข้ากลาง', F === null ? 'ข้าม' : backIn !== null ? 'ผ่าน' : 'ไม่ผ่าน',
+    F && F !== 'timeout'
+      ? (backIn !== null
+        ? `นิ่งที่ β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → คลายกลับเข้ากลางใน ${fmt(backIn)} วินาที`
+        : `ยังค้างที่ ${fmt(fl[0], 0)}%, ${fmt(fl[1], 0)}% หลังผ่านไป 12 วินาที (กลาง = 50%)`)
+      : 'ทำไม่ได้');
 
-  /* ── 10 · สลับแอปแล้วกลับมา ─────────────────────────────────────── */
+  el = addStep('9ก · ยกขึ้นมาถือใหม่', 'ยกขึ้นมาถือตามปกติ แล้วถือนิ่ง ๆ · บัตรต้องกลับมากลางอีกครั้ง');
+  const U2 = await waitFor(el, (o) => Math.abs(o.beta) > 25, { timeout: 25000, onTick: (o) => (Math.abs(o.beta) / 25) * 100 });
+  const backIn2 = U2 && U2 !== 'timeout' ? await waitCentred() : null;
+  const fu = foil();
+  finish(el, 'ยกขึ้นถือใหม่แล้วไม่ค้าง', U2 === null ? 'ข้าม' : backIn2 !== null ? 'ผ่าน' : 'ไม่ผ่าน',
+    U2 && U2 !== 'timeout'
+      ? (backIn2 !== null
+        ? `ถือที่ β${fmt(U2.beta, 0)} → กลับเข้ากลางใน ${fmt(backIn2)} วินาที`
+        : `ยังค้างที่ ${fmt(fu[0], 0)}%, ${fmt(fu[1], 0)}% หลังผ่านไป 12 วินาที`)
+      : 'ทำไม่ได้');
+
   el = addStep('10 · สลับไปแอปอื่นแล้วกลับมา',
     'เลื่อนขึ้นออกไปหน้าโฮม รอ 2-3 วินาที แล้วกลับมาที่หน้านี้ <b>แล้วกดปุ่มข้างล่าง</b>');
   /* ⚠️ ข้อนี้ใช้ปุ่ม ไม่เดาเองจากสัญญาณของเบราว์เซอร์
@@ -399,7 +435,8 @@ function report() {
   L.push(`สถานะ ${g.state} · มาทาง ${g.source || '—'} · ทั้งหมด ${raw.n} ครั้ง (ค่าว่าง ${raw.empty})`);
   L.push(`จังหวะสัญญาณ กลาง ${fmt(p(0.5))} ms · ช้าสุด 5% ${fmt(p(0.95))} ms · ช่องว่างยาวสุด ${fmt(gaps[gaps.length - 1] || NaN)} ms`);
   L.push(`ช่วงค่าที่เจอ β ${fmt(Math.min(...betas), 0)}…${fmt(Math.max(...betas), 0)} · γ ${fmt(Math.min(...gammas), 0)}…${fmt(Math.max(...gammas), 0)}`);
-  L.push(`ความละเอียดค่าที่เล็กที่สุด ${fmt(stepRes.length ? Math.min(...stepRes) : NaN, 3)}°`);
+  L.push(`ความละเอียดค่าที่เล็กที่สุด ${stepRes.length ? Math.min(...stepRes).toExponential(1) : '—'}°` +
+    ` · ค่าที่ต่างกันจริง ${new Set(betas.map((b) => b.toFixed(4))).size} แบบ`);
   L.push(`มุมจอที่ผ่านมา ${[...raw.screens].join(', ') || '—'}° · องศาที่ถือว่าสุดทาง ±${g.range}°`);
   L.push('');
   const n = loadInfo();
