@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>วัดความลื่นของผิวฟอยล์ · เก่า (ผสมสี) เทียบ ใหม่ (โปร่งใส)</title>
+<!--
+  หน้านี้ไม่ใช่ดีไซน์ — เป็นเครื่องวัดล้วน ๆ
+  ตอบคำถามเดียว: เปลี่ยนจาก "ผสมสีระหว่างชั้น" มาเป็น "วางทับด้วยความโปร่งใส"
+  แล้วเครื่องทำงานหนักขึ้นหรือเบาลง
+
+  วิธี: วาดตัวเลขจำนวนมากพร้อมกัน แล้วขยับตำแหน่งผิวทุกเฟรมเหมือนตอนเอียงการ์ดจริง
+  (การขยับ background-position บังคับให้วาดใหม่จริง ไม่ใช่แค่เลื่อนภาพที่วาดไว้แล้ว)
+  สลับสองแบบไปมาหลายรอบ แล้วเทียบค่ากลาง — สลับเพราะเครื่องร้อน/ลดความเร็วระหว่างทางได้
+-->
+<style>
+  :root {
+    --ft-px: 0px; --ft-py: 0px; --ft-ex: 50%; --ft-ey: 50%;
+
+    --ft-old-hammer:  url('../assets/textures/foil-hammer.webp');
+    --ft-old-glitter: url('../assets/textures/foil-glitter.webp');
+    --ft-old-env:     url('../assets/textures/foil-env.webp');
+    --ft-new-hammer:  url('../assets/textures/foil-hammer-a.webp');
+    --ft-new-glitter: url('../assets/textures/foil-glitter-a.webp');
+    --ft-new-env:     url('../assets/textures/foil-env-a.webp');
+
+    --ft-old-base: linear-gradient(174deg,
+      #f2dc9a 0%, #e2bf66 20%, #cda344 42%, #ab801f 66%, #8e6614 85%, #a87d24 100%);
+    --ft-new-base: linear-gradient(174deg,
+      #ffffbc 0%, #ffde73 20%, #e6b73d 42%, #a57400 66%, #703d00 85%, #a27100 100%);
+  }
+  body { margin: 0; background: #b4ada0; font: 13px/1.5 system-ui, sans-serif; }
+  #out { position: fixed; inset: 0 0 auto 0; z-index: 9; background: #fff; padding: 10px 14px; white-space: pre; }
+  #stage { padding-top: 90px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .n {
+    font: 800 76px/0.86 'Google Sans', system-ui, sans-serif;
+    letter-spacing: -0.03em;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter:
+      drop-shadow(-0.4px -0.5px 0 rgba(255, 250, 226, 0.9))
+      drop-shadow(0.75px 1.05px 0 rgba(116, 80, 12, 0.64))
+      drop-shadow(1.1px 1.6px 1.5px rgba(97, 66, 10, 0.35));
+    background-size: 132px 132px, 168px 168px, 100% 100%, 166% 166%, 100% 100%;
+    background-position:
+      calc(var(--ft-px) * 0.55) calc(var(--ft-py) * 0.55),
+      calc(var(--ft-px) * 1.7) calc(var(--ft-py) * 1.7),
+      0 0,
+      var(--ft-ex) var(--ft-ey),
+      0 0;
+    background-repeat: repeat, repeat, no-repeat, repeat, no-repeat;
+  }
+  /* แบบเก่า — ห้าชั้น บวกการคำนวณผสมสีทุกพิกเซล */
+  .old .n {
+    background-image:
+      var(--ft-old-glitter), var(--ft-old-hammer),
+      radial-gradient(ellipse 128% 44% at var(--ft-ex) var(--ft-ey),
+        rgba(255,252,236,.34) 0%, rgba(255,246,212,.19) 36%,
+        rgba(255,240,190,.05) 68%, rgba(255,240,190,0) 100%),
+      var(--ft-old-env), var(--ft-old-base);
+    background-blend-mode: overlay, overlay, screen, soft-light, normal;
+  }
+  /* แบบใหม่ — ห้าชั้นเท่ากัน แต่วางทับตรง ๆ ไม่มีการผสมสี */
+  .new .n {
+    background-image:
+      var(--ft-new-glitter), var(--ft-new-hammer),
+      radial-gradient(ellipse 128% 44% at var(--ft-ex) var(--ft-ey),
+        rgba(255,252,236,.34) 0%, rgba(255,246,212,.19) 36%,
+        rgba(255,240,190,.05) 68%, rgba(255,240,190,0) 100%),
+      var(--ft-new-env), var(--ft-new-base);
+  }
+</style>
+</head>
+<body>
+<div id="out">กำลังวัด…</div>
+<div id="stage" class="old"></div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const CARDS = Number(Q.get('n') || 40);
+const ROUNDS = Number(Q.get('rounds') || 6);
+const FRAMES = Number(Q.get('frames') || 90);
+const stage = document.getElementById('stage');
+const out = document.getElementById('out');
+for (let i = 0; i < CARDS; i++) {
+  const s = document.createElement('span');
+  s.className = 'n';
+  s.textContent = ['15%', '1,500', '฿500', 'ส่งฟรี'][i % 4];
+  stage.appendChild(s);
+}
+
+/* วัดหนึ่งรอบ: ขยับผิวทุกเฟรม แล้วเก็บระยะเวลาระหว่างเฟรม */
+function runOnce(mode, frames) {
+  return new Promise((resolve) => {
+    stage.className = mode;
+    const times = [];
+    let k = 0, prev = 0;
+    function step(t) {
+      if (prev) times.push(t - prev);
+      prev = t;
+      const a = k * 0.21;
+      document.documentElement.style.setProperty('--ft-px', (Math.sin(a) * 26).toFixed(2) + 'px');
+      document.documentElement.style.setProperty('--ft-py', (Math.cos(a) * 26).toFixed(2) + 'px');
+      document.documentElement.style.setProperty('--ft-ex', (50 + Math.sin(a) * 26).toFixed(1) + '%');
+      document.documentElement.style.setProperty('--ft-ey', (50 + Math.cos(a) * 26).toFixed(1) + '%');
+      if (++k < frames) requestAnimationFrame(step); else resolve(times);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+const median = (a) => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1]; };
+const pct = (a, p) => { const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length * p)]; };
+
+window.PERF = null;
+(async function () {
+  const acc = { old: [], new: [] };
+  await runOnce('old', 40);                       // อุ่นเครื่อง ทิ้งผลทิ้ง
+  for (let round = 0; round < ROUNDS; round++) {
+    for (const mode of ['old', 'new']) {
+      const t = await runOnce(mode, FRAMES);
+      acc[mode].push(...t.slice(10));             // ทิ้ง 10 เฟรมแรกของทุกรอบ
+      window.PROGRESS = round + '/' + ROUNDS + ' ' + mode;
+    }
+  }
+  const r = {
+    cards: CARDS,
+    old: { median: +median(acc.old).toFixed(2), p95: +pct(acc.old, 0.95).toFixed(2), n: acc.old.length },
+    new: { median: +median(acc.new).toFixed(2), p95: +pct(acc.new, 0.95).toFixed(2), n: acc.new.length },
+  };
+  r.verdict = r.new.median <= r.old.median ? 'ใหม่เร็วกว่าหรือเท่า' : 'ใหม่ช้ากว่า';
+  window.PERF = r;
+  out.textContent = 'MEASURE ' + JSON.stringify(r);
+  console.log('MEASURE ' + JSON.stringify(r));
+})();
+</script>
+</body>
+</html>

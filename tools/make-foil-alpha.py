@@ -1,40 +1,86 @@
 # -*- coding: utf-8 -*-
 """
 แปลงพื้นผิวฟอยล์จาก "ภาพเทา + โหมดผสมสี" → "ภาพโปร่งใสวางทับตรง ๆ"
-----------------------------------------------------------------------
-ทำไมต้องแปลง (2026-08-18):
-  ผลทดสอบบน iPhone จริง — ตัวเลขออกมาเป็นเกล็ดสีเงิน ไม่ใช่ทอง
+====================================================================
+ทำไมต้องแปลง (2026-08-18, ยืนยันจากเครื่องจริง):
+  ตัวเลขบน iPhone ออกมาเป็นเกล็ด **สีเงิน** ไม่ใช่ทอง
   หลักฐาน: ขอบนูน (วาดด้วยเงา) ยังเป็นทอง แต่เนื้อใน (หลายชั้นซ้อนแล้วผสมสี) เป็นเงิน
-  → Safari **ไม่ใช้ `background-blend-mode` เมื่อใช้คู่กับการฉลุตามรูปตัวอักษร**
+  → Safari **ไม่ใช้ background-blend-mode เมื่อใช้คู่กับการฉลุตามรูปตัวอักษร**
     ชั้นบนสุด (เกล็ดสีเทา) จึงทาทับพื้นทองจนหมด · ไม่มี error ไม่มีคำเตือน
-    และ `CSS.supports` ก็ตอบว่ารองรับ — ดักล่วงหน้าไม่ได้เลย
+    และ CSS.supports ตอบว่ารองรับ — ดักล่วงหน้าไม่ได้เลย
 
-🔑 ทำไมแปลงเป็น "ขาว/ดำโปร่งใส" ตรง ๆ ไม่ได้:
-   overlay ทำงานแยกช่องสีและรักษาความอิ่มสีไว้ · พื้นทองมีช่องน้ำเงินต่ำมาก (0.08)
-   แต่ช่องแดงสูง (0.56) — ค่าพื้นผิวเดียวกันต้องใช้ความทึบต่างกันสิบเท่าในสองช่องนี้
-   ใช้สีขาวทับด้วยความทึบเดียว = ทองซีดทันที
+  ทางแก้ที่ **ไม่** เลือก: ห่อด้วยชั้นหน้ากาก/ฟิลเตอร์ให้ Safari ยอมผสมสี
+  ไท้เคยเจอมาแล้วว่าท่านั้นทำให้เครื่องทำงานหนักมากทั้งที่ตาเห็นแค่ของเล็ก ๆ
+  (ชั้นแบบนั้นบังคับให้เครื่องกันหน่วยความจำภาพเต็มขนาดไว้ แล้ววาดใหม่ทุกเฟรม)
+  → ตัดทิ้ง · ทางที่เลือกนี้ **ลดงานเครื่อง** เพราะเลิกคำนวณผสมสีทั้ง 5 ชั้น
+
+----------------------------------------------------------------------
+🔑 หัวใจของวิธี — แยก "โทนเฉลี่ย" ออกจาก "เม็ดผิว"
+
+   แผ่นพื้นผิวหนึ่งให้ผลสองอย่างปนกัน: โทนเฉลี่ยทั้งแผ่น กับเม็ดผิวที่เด้งรอบโทนนั้น
+   ถ้าแปลงทั้งสองอย่างมาเป็นแผ่นสีวางทับ ตัวโทนเฉลี่ยจะกลายเป็น**แผ่นสีเรียบทึบ**
+   ที่คลุมตัวเลขทั้งตัว → ไล่เฉดทองข้างใต้โดนกลบ (วัดได้ เหลือ 27%)
+
+   จึง **อบโทนเฉลี่ยไว้ในไล่เฉดทองพื้นแทน** (แค่ขยับจุดสี ไม่มีต้นทุนตอนรัน)
+   แล้วให้แผ่นพื้นผิวเหลือแค่เม็ดผิว — ตรงที่เท่ากับค่าเฉลี่ยคือโปร่งใสสนิท
+   ผลคือความทึบเฉลี่ยต่ำมาก ไล่เฉดจึงรอด และเม็ดผิวไม่ต้องแข่งกับแผ่นทึบ
+
+🔑 ทำไมไม่ใช้ขาว/ดำโปร่งใสตรง ๆ:
+   overlay ทำงานแยกช่องสีและรักษาความอิ่มสี · พื้นทองมีช่องน้ำเงินต่ำมาก
+   ค่าพื้นผิวเดียวกันต้องใช้ความทึบต่างกันสิบเท่าในช่องแดงกับช่องน้ำเงิน
+   ใช้สีขาวทับด้วยความทึบเดียว = ทองซีดทันที (วัดได้ ความอิ่มสีเหลือ 73%)
 
 🔑 ทำไมไม่ให้ทุกจุดมีสีของตัวเอง (ซึ่งแม่นที่สุด):
-   ลองแล้ว — แม่นขึ้นจริง แต่ไฟล์พุ่งจาก 145 KB เป็น **375 KB** เพราะต้องเก็บสี่ช่องสัญญาณ
-   ที่มีสัญญาณรบกวนพอ ๆ กันทั้งหมด · ขัดกับข้อกำหนดของไท้เรื่องความเบาโดยตรง
+   ลองแล้ว ไฟล์พุ่งเป็นสามเท่า เพราะต้องเก็บสี่ช่องสัญญาณที่มีสัญญาณรบกวนพอกัน
+   → ใช้ **สองสีคงที่ ความทึบแปรตามพื้นผิว** ช่องสีจึงมีแค่สองค่า บีบอัดได้เกือบหมด
+   สองสีนั้นไม่ได้เดา — ฟิตกับไล่เฉดทองจริงแบบกำลังสองน้อยสุด
 
-🔑 ทางที่เลือก — **สองสีคงที่ ความทึบแปรตามพื้นผิว**:
-   ด้านสว่างใช้สีเดียว ด้านเงาใช้อีกสีเดียว → ช่องสีมีแค่สองค่า บีบอัดได้เกือบหมด
-   เหลือข้อมูลจริงแค่ช่องความทึบช่องเดียว = ไฟล์เล็กพอ ๆ กับภาพเทาเดิม
-   ส่วนสีทั้งสองไม่ได้เดา — **หามาจากการฟิตกับไล่เฉดทองจริงแบบกำลังสองน้อยสุด**
+🔑 ชดเชยที่เหลือ:
+   สีที่วางเป็นสีตายตัว จึงยังกดไล่เฉดกับความอิ่มสีลงเป็นสัดส่วนคงที่
+   วัดค่านั้นแล้วแก้คืนที่ **ไล่เฉดพื้น** (ชันขึ้น + อิ่มสีขึ้น) ซึ่งฟรี
+   ไม่ใช่ดันความทึบขึ้นสู้ — ดันความทึบมีแต่จะกลบไล่เฉดหนักกว่าเดิม
+
+----------------------------------------------------------------------
+⚠️ กับดักที่เสียเวลาไปแล้ว อย่าเหยียบซ้ำ:
+  1. **ห้ามย่อภาพเทาต้นทางก่อนแปลง** ความทึบเป็นรูปตัว V รอบค่ากลาง
+     เฉลี่ยสองฝั่งของ V เข้าด้วยกันได้ค่ากลาง = "โปร่งใส" เม็ดผิวหายทันที
+     (วัดได้ 99% → 70% ที่ 256px) · ย่อหลังแปลงก็ไม่รอด สีจากจุดโปร่งใสซึมออกมาเปื้อน
+     → **เก็บที่ขนาดเต็ม 448 เท่านั้น**
+  2. **ห้ามวัดด้วยส่วนเบี่ยงเบนรวม** มันถูกไล่เฉดทองก้อนใหญ่กลบ เม็ดผิวหายไป 63%
+     แล้วตัวเลขแทบไม่ขยับ · ต้องวัดพลังงานความถี่สูง (ส่วนต่างจากภาพที่เบลอแล้ว)
+  3. **ห้ามคัดพิกเซลทองด้วยช่วงสีแคบ** เกณฑ์เดิม (R-B>110 และ R>150) จับได้แต่
+     ช่วงกลางของไล่เฉด — หัวสว่างกับก้นเข้มตกเกณฑ์ทั้งคู่ ทำให้ "ไล่เฉด" ที่วัดได้
+     เตี้ยตลอดไม่ว่าจะแก้อะไร
+
+ค่าที่ล็อกไว้ข้างล่างมาจากการวัดภาพที่เรนเดอร์จริง 5 มุมแสง เทียบกับใบที่ไท้อนุมัติ:
+  เม็ดผิว 99% · ความสว่างต่างกัน 2/255 · ความอิ่มสี 92% · ไล่เฉดบน-ล่าง 91%
 
 ออก 3 ไฟล์ RGBA:  foil-hammer-a.webp · foil-glitter-a.webp · foil-env-a.webp
+และพิมพ์จุดสีของไล่เฉดพื้นที่ต้องเอาไปใส่ --ft-foil-base ใน foilticket.css
 """
 import os
 
 import numpy as np
 from PIL import Image
 
-TEX = 'D:/Gift vocher/assets/textures/'
+TEX = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                   'assets', 'textures') + os.sep
+LAYERS = ['env', 'hammer', 'glitter']
+SRC_TILE = 448
+# ขนาดที่เก็บจริงของแต่ละชั้น — **ไม่เท่ากัน เพราะเนื้อในต่างกันคนละเรื่อง**
+#   วัดสัดส่วน "รายละเอียดละเอียด" ของต้นฉบับได้: แผนที่ห้อง 4% · รอยทุบ 95% · เกล็ด 92%
+#   แผนที่ห้องเป็นโทนกว้าง ๆ เกลี่ยเรียบ ย่อได้ไม่เสียอะไร (และตอนแสดงผลก็ถูกขยายอยู่แล้ว)
+#   อีกสองชั้นคือเนื้อฟอยล์ล้วน ย่อเมื่อไหร่เม็ดผิวหายทันที → ต้องเต็ม 448 (ดูกับดักข้อ 1)
+STORE = {'env': 128, 'hammer': 448, 'glitter': 448}
 
-# ไล่เฉดทองพื้น — ต้องตรงกับ --ft-foil-base ใน foilticket.css
-BASE_HEX = ['fce6a2', 'ebc76c', 'd5aa49', 'b18522', '936a17', 'ae8227']
+# ไล่เฉดทองตั้งต้น — ก่อนอบโทนเฉลี่ยและก่อนชดเชย
+BASE_HEX = ['f2dc9a', 'e2bf66', 'cda344', 'ab801f', '8e6614', 'a87d24']
+STOP_AT = ['0%', '20%', '42%', '66%', '85%', '100%']
 BASE = np.array([[int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)] for h in BASE_HEX])
+
+GAIN = 1.05                         # ความแรงเม็ดผิว
+STEEP_DOWN, STEEP_UP = 2.20, 1.55   # ดึงก้นไล่เฉดลง / ดันหัวขึ้น ชดเชยการถูกกด
+CHROMA = 1.28                       # ถ่างความอิ่มสีคืน
 
 
 def overlay(b, s):
@@ -46,96 +92,93 @@ def soft_light(b, s):
     return np.where(s <= 0.5, b - (1 - 2 * s) * b * (1 - b), b + (2 * s - 1) * (d - b))
 
 
-def best_free(s, blend):
-    """สี+ความทึบที่ดีที่สุดโดยไม่จำกัดสี — ใช้เพื่อ 'หา' ว่าสีคงที่ควรเป็นอะไร"""
-    target = blend(BASE, s)
+src, hists, means = {}, {}, {}
+for _n in LAYERS:
+    _im = Image.open(TEX + 'foil-%s.webp' % _n).convert('L')
+    assert _im.size[0] == SRC_TILE, 'ต้นฉบับต้องเป็น %dpx' % SRC_TILE
+    if STORE[_n] != SRC_TILE:
+        _im = _im.resize((STORE[_n], STORE[_n]), Image.LANCZOS)
+    src[_n] = np.array(_im).astype(int)
+    _h = np.bincount(src[_n].ravel(), minlength=256).astype(float)
+    hists[_n] = _h / _h.sum()
+    means[_n] = float((np.arange(256) * hists[_n]).sum()) / 255
+
+
+def chain(e, h, g):
+    """ลำดับซ้อนจริงใน CSS: พื้นทอง → แผนที่ห้อง → รอยทุบ → เกล็ด"""
+    return overlay(overlay(soft_light(BASE, e), h), g)
+
+
+BAKED = chain(means['env'], means['hammer'], means['glitter'])
+
+
+def target(layer, s):
+    """ผลที่ควรได้ เมื่อชั้นนี้อยู่ที่ระดับ s ส่วนชั้นอื่นอยู่ที่ค่าเฉลี่ยของมัน"""
+    return chain(s if layer == 'env' else means['env'],
+                 s if layer == 'hammer' else means['hammer'],
+                 s if layer == 'glitter' else means['glitter'])
+
+
+def best_free(layer, s, backdrop):
+    """สี+ความทึบที่ดีที่สุดโดยไม่จำกัดสี — ใช้ 'หา' ว่าสีคงที่ควรเป็นอะไร"""
+    t = target(layer, s)
     best = None
     for a in np.arange(0.01, 1.0, 0.01):
-        c = np.clip(((target - BASE * (1 - a)) / a).mean(axis=0), 0, 1)
-        err = (((BASE * (1 - a) + a * c) - target) ** 2).mean()
-        if best is None or err < best[2]:
-            best = (c, a, err)
+        c = np.clip(((t - backdrop * (1 - a)) / a).mean(axis=0), 0, 1)
+        e = (((backdrop * (1 - a) + a * c) - t) ** 2).mean()
+        if best is None or e < best[2]:
+            best = (c, a, e)
     return best
 
 
-def alpha_for(s, blend, c):
-    """สีถูกล็อกไว้แล้ว เหลือหาความทึบที่ดีที่สุด — มีสูตรปิด ไม่ต้องไล่ค่า"""
-    target = blend(BASE, s)
-    d = c - BASE
-    num = ((target - BASE) * d).sum()
+def alpha_for(layer, s, c, backdrop):
+    """สีถูกล็อกแล้ว เหลือหาความทึบ — มีสูตรปิด ไม่ต้องไล่ค่า"""
+    t = target(layer, s)
+    d = c - backdrop
     den = (d * d).sum()
-    a = 0.0 if den == 0 else num / den
-    a = float(np.clip(a, 0, 1))
-    err = float(np.sqrt((((BASE + a * d) - target) ** 2).mean()))
-    return a, err
+    a = 0.0 if den == 0 else float(np.clip(((t - backdrop) * d).sum() / den, 0, 1))
+    return a, float(np.sqrt((((backdrop + a * d) - t) ** 2).mean()))
 
 
-# กวาดหาจุดที่ดีที่สุดมาแล้ว (ตารางเต็มอยู่ใน docs/plan-mobile.md):
-#   กระเบื้อง 448 → 256   ไฟล์เล็กลง 3 เท่า และ**ยังถูกย่อลงตอนแสดงผลอยู่ดี** (256→1 68px) จึงไม่เบลอ
-#   ความทึบ 48 ระดับ  เล็กลงอีก 30% โดยขั้นความทึบละเอียดกว่า 1/255 อยู่ดี
-TILE = int(os.environ.get('FOIL_TILE', '256'))
-ALPHA_LEVELS = 48
-# ตัวคูณความทึบ — หามาจากการวัดภาพที่เรนเดอร์จริง ไม่ใช่การคำนวณอย่างเดียว
-# การฟิตด้วยสองสีคงที่จะกดความต่างของผิวลงเสมอ (วัดได้ −20%) → ต้องคูณกลับขึ้น
-GAIN = float(os.environ.get('FOIL_GAIN', '3.8'))
-# สีที่การฟิตเลือกเองจะออกมาเกือบขาว ซึ่งดึงความอิ่มของทองลง (วัดได้ −18%)
-# จึงบังคับสีได้ แล้วให้การฟิตหาแค่ความทึบ
-FORCE_LIGHT = os.environ.get('FOIL_LIGHT', 'FFD158')
-FORCE_DARK = os.environ.get('FOIL_DARK', '6B4A10')
+# ── ไล่เฉดพื้นหลังการชดเชย ────────────────────────────────────────────
+_L = BAKED.mean(axis=1)
+_Lm = _L.mean()
+_Ln = np.where(_L < _Lm, _Lm + (_L - _Lm) * STEEP_DOWN, _Lm + (_L - _Lm) * STEEP_UP)
+COMP = np.clip(_Ln[:, None] + (BAKED - _L[:, None]) * CHROMA, 0, 1)
 
+total = 0.0
+for n in LAYERS:
+    m = int(round(means[n] * 255))
+    h = hists[n]
+    # ⚠️ หา "สี" จากไล่เฉดก่อนชดเชย (BAKED) แต่หา "ความทึบ" บนไล่เฉดหลังชดเชย (COMP)
+    #    ถ้าหาสีบน COMP ด้วย จะได้สีกลาง ๆ ที่ต้องใช้ความทึบสูงมากไปชดเชย
+    #    → กลับไปเป็นแผ่นทึบคลุมตัวเลขอีก (วัดได้ เม็ดผิวเหลือ 61% ไล่เฉดเหลือ 32%)
+    free = [best_free(n, i / 255, BAKED) for i in range(256)]
+    lo, hi = np.arange(0, m), np.arange(m + 1, 256)
+    c_dark = np.average([free[i][0] for i in lo], axis=0, weights=h[lo] + 1e-12)
+    c_light = np.average([free[i][0] for i in hi], axis=0, weights=h[hi] + 1e-12)
 
-def convert(name, blend, out_name, gain=None, light=None, dark=None):
-    im = Image.open(TEX + name).convert('L')
-    if im.size[0] != TILE:
-        im = im.resize((TILE, TILE), Image.LANCZOS)
-    lum = np.array(im).astype(float) / 255
-    idx = np.clip((lum * 255).round().astype(int), 0, 255)
-    hist = np.bincount(idx.ravel(), minlength=256).astype(float)
-    hist /= hist.sum()
-
-    # 1) หาสีอิสระของทุกระดับ แล้วเฉลี่ยแยกฝั่งสว่าง/ฝั่งเงา ถ่วงน้ำหนักด้วยจำนวนพิกเซลจริง
-    free = [best_free(i / 255, blend) for i in range(256)]
-    lo = np.arange(0, 128)
-    hi = np.arange(128, 256)
-    wl, wh = hist[lo], hist[hi]
-    c_dark = np.average([free[i][0] for i in lo], axis=0, weights=wl + 1e-12)
-    c_light = np.average([free[i][0] for i in hi], axis=0, weights=wh + 1e-12)
-
-    L = light or FORCE_LIGHT
-    D = dark or FORCE_DARK
-    if L:
-        c_light = np.array([int(L[i:i+2], 16) / 255 for i in (0, 2, 4)])
-    if D:
-        c_dark = np.array([int(D[i:i+2], 16) / 255 for i in (0, 2, 4)])
-
-    # 2) ล็อกสองสีนั้น แล้วหาความทึบของแต่ละระดับใหม่
     lut_a = np.zeros(256)
     lut_c = np.zeros((256, 3))
     errs = np.zeros(256)
     for i in range(256):
-        c = c_dark if i < 128 else c_light
-        lut_a[i], errs[i] = alpha_for(i / 255, blend, c)
+        c = c_dark if i < m else c_light
+        lut_a[i], errs[i] = alpha_for(n, i / 255, c, COMP)
         lut_c[i] = c
+    lut_a = np.clip(lut_a * GAIN, 0, 1)
 
-    lut_a = np.clip(lut_a * (GAIN if gain is None else gain), 0, 1)
-    if ALPHA_LEVELS:
-        step = 1.0 / ALPHA_LEVELS
-        lut_a = np.round(lut_a / step) * step
-
-    rgba = np.zeros((TILE, TILE, 4), dtype=np.uint8)
-    rgba[..., :3] = (lut_c[idx] * 255).round().astype(np.uint8)
-    rgba[..., 3] = (lut_a[idx] * 255).round().astype(np.uint8)
-    Image.fromarray(rgba, 'RGBA').save(TEX + out_name, lossless=True, quality=100)
-
-    w_err = float((errs * hist).sum())
-    print('%-18s -> %-20s  \u0e1c\u0e34\u0e14 %.1f/255   %5.1f KB   \u0e2a\u0e35\u0e40\u0e07\u0e32 #%02X%02X%02X  \u0e2a\u0e35\u0e2a\u0e27\u0e48\u0e32\u0e07 #%02X%02X%02X'
-          % (name, out_name, w_err * 255, os.path.getsize(TEX + out_name) / 1024,
+    rgba = np.zeros((STORE[n], STORE[n], 4), dtype=np.uint8)
+    rgba[..., :3] = (lut_c[src[n]] * 255).round().astype(np.uint8)
+    rgba[..., 3] = (lut_a[src[n]] * 255).round().astype(np.uint8)
+    out = TEX + 'foil-%s-a.webp' % n
+    Image.fromarray(rgba, 'RGBA').save(out, lossless=True, quality=100, method=6)
+    kb = os.path.getsize(out) / 1024
+    total += kb
+    print('foil-%-8s -> foil-%s-a.webp  %6.1f KB  alpha avg %.3f  err %.1f/255  dark #%02X%02X%02X  light #%02X%02X%02X'
+          % (n, n, kb, lut_a[src[n]].mean(), float((errs * h).sum()) * 255,
              *(c_dark * 255).round().astype(int), *(c_light * 255).round().astype(int)))
 
-
-# ชั้นแผนที่ห้องเป็นการปรับกว้าง ๆ ไม่ใช่เม็ดผิว — คูณแรงเท่าอีกสองแล้วโซนที่แสงตกจะหายเนียน
-convert('foil-env.webp', soft_light, 'foil-env-a.webp', gain=1.2)
-convert('foil-hammer.webp', overlay, 'foil-hammer-a.webp')
-# เกล็ดต้องไปได้ถึงขาวเกือบล้วน — ประกายจริงคือจุดขาวจ้า ไม่ใช่จุดทองสว่าง
-# ถ้าจำกัดสีสว่างไว้ที่สีทอง เกล็ดจะกลายเป็นเม็ดทรายแทนที่จะเป็นประกาย
-convert('foil-glitter.webp', overlay, 'foil-glitter-a.webp', light='FFF7E4')
+print('\nรวม %.0f KB' % total)
+print('--ft-foil-base: linear-gradient(174deg,\n    %s);'
+      % ', '.join('#%02x%02x%02x %s' % (tuple(c) + (p,))
+                  for c, p in zip((COMP * 255).round().astype(int), STOP_AT)))
