@@ -74,8 +74,10 @@ const GYRO_CALIBRATE = 8;
    ⚠️ เครื่องส่งสัญญาณไม่เท่ากัน: iPhone 60 ครั้ง/วินาที แอนดรอยด์บางรุ่นเหลือ 10
    ถ้าคิดเป็นต่อสัญญาณ เครื่องช้าจะคลายตัวช้ากว่าหกเท่า = ค้างนานมาก
    คิดเป็นวินาทีแล้วทุกเครื่องรู้สึกเหมือนกัน */
+/* เร็วกว่านี้ถือว่า "กำลังเอียงอยู่" (องศาต่อวินาที) — มือสั่นปกติต่ำกว่านี้มาก */
+const GYRO_MOVING = 9;
 const GYRO_FOLLOW_SLOW = 0.09;   /* ต่อวินาที — ตัวคงเวลาราว 11 วินาที */
-const GYRO_FOLLOW_EDGE = 0.75;   /* ตอนค้างสุดขอบ — ราว 1.3 วินาที */
+const GYRO_FOLLOW_EDGE = 1.30;   /* ตอนค้างสุดขอบ — ราว 1.3 วินาที */
 
 const gyro = {
   /* idle = ยังไม่ขอ · unsupported = เครื่องไม่มี · denied = ถูกปฏิเสธ/ปิดไว้
@@ -90,6 +92,8 @@ const gyro = {
   bound: null,
   source: null,
   lastAt: 0,
+  prevX: 0,
+  prevY: 0,
 };
 
 function screenAngle() {
@@ -157,8 +161,17 @@ function onOrientation(ev) {
      ถ้าใช้ความเร็วเดียวทั้งหมด: เร็วไปการเอียงค้างไม่อยู่ · ช้าไปก็ค้างสุดขอบเหมือนเดิม */
   const r = Math.min(1, Math.max(Math.abs(dx), Math.abs(dy)) / GYRO_RANGE);
   const dt = Math.min(0.2, gyro.lastAt ? (at - gyro.lastAt) / 1000 : 0.016);
+  /* ⚠️ ไล่ศูนย์ **เฉพาะตอนเครื่องอยู่นิ่ง** เท่านั้น
+     ถ้าไล่ตลอดเวลา มันจะไล่ตามมือที่กำลังเอียงอยู่ด้วย แล้วกินระยะที่ประกายควรวิ่ง
+     (วัดได้: ประกายเลื่อนเหลือ 51% จากเดิม 96-100% — เอฟเฟกต์อ่อนลงครึ่งหนึ่ง)
+     กำลังเอียง = อย่าแตะศูนย์เลย · หยุดนิ่งเมื่อไหร่ค่อยไล่ = ได้ทั้งระยะเต็มและไม่ค้าง */
+  const spd = dt > 0 && gyro.lastAt ? Math.hypot(sx - gyro.prevX, sy - gyro.prevY) / dt : 0;
+  gyro.prevX = sx;
+  gyro.prevY = sy;
   gyro.lastAt = at;
-  const k = 1 - Math.exp(-(GYRO_FOLLOW_SLOW + (GYRO_FOLLOW_EDGE - GYRO_FOLLOW_SLOW) * r * r) * dt);
+  const k = spd > GYRO_MOVING
+    ? 0
+    : 1 - Math.exp(-(GYRO_FOLLOW_SLOW + (GYRO_FOLLOW_EDGE - GYRO_FOLLOW_SLOW) * r * r) * dt);
   gyro.zero.x += dx * k;
   gyro.zero.y += dy * k;
 

@@ -7,10 +7,15 @@
 <!--
   ตรวจ "ไจโรสโคป" อย่างเดียว แต่ลงลึกทุกทางที่มันพังได้บนมือถือจริง
   ทุกข้อ **ตัดสินผลเองจากค่าเซนเซอร์** ไม่ใช่ถามว่า "ดูโอเคไหม"
-  (เหลือแค่ 2 ข้อสุดท้ายที่คนต้องตอบ เพราะเครื่องตัดสินแทนตาไม่ได้)
 
   ⚠️ หน้านี้เกาะ src/ui/foil-tilt.js ตัวจริงที่ลูกค้าใช้ ไม่ได้เขียนตัวฟังใหม่ซ้อน
      ถ้าเขียนใหม่ซ้อน ผ่านไปก็ไม่ได้พิสูจน์ว่าของจริงทำงาน
+
+  ⚠️ หน้าตาถูกรื้อรอบสอง (ไท้ทดสอบจริงแล้วทักมา 2026-08-19):
+     · แบบเก่าเริ่มจับทันทีที่ขึ้นข้อใหม่ → ผู้ทดสอบไม่รู้ว่าเริ่มจับตอนไหน ตั้งท่าไม่ทัน
+       → ทุกข้อหยุดรอให้กด "พร้อมแล้ว" ก่อน แล้วค่อยเริ่มจับ
+     · แบบเก่าต่อข้อลงไปเรื่อย ๆ บัตรถูกดันขึ้นไปบนสุด ต้องเลื่อนขึ้นไปดูทุกครั้ง
+       → ทีละข้อเต็มจอ ไม่ต้องเลื่อน บัตรอยู่กลางจอตลอดเวลา
 -->
 <link rel="stylesheet" href="../src/styles/fonts.css">
 <link rel="stylesheet" href="../src/tokens/tokens.css">
@@ -23,55 +28,61 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; }
   body {
-    min-height: 100dvh; background: #b4ada0; color: #2b2419;
+    background: #b4ada0; color: #2b2419;
     font: 400 16px/1.45 'Noto Sans Thai', system-ui, sans-serif;
+    overflow: hidden;                    /* ทุกข้อต้องพอดีจอ ไม่ต้องเลื่อน */
   }
-  .wrap { max-width: 560px; margin-inline: auto; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
-  h1 { font-size: 15px; letter-spacing: .1em; text-transform: uppercase; color: #5b5040; margin: 4px 0 12px; }
-  .step { background: #f7f3ea; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
-  .step[data-state="now"] { box-shadow: 0 0 0 3px #26313f; }
-  .step[data-state="wait"] { opacity: .45; }
-  .step h2 { font-size: 16px; margin: 0 0 4px; }
-  .step p { margin: 0; font-size: 14px; color: #5b5040; }
-  .step .res { margin-top: 8px; font: 500 13px/1.5 ui-monospace, monospace; }
-  .ok { color: #1d6b3a; } .bad { color: #a4331f; } .skip { color: #7a6f5c; }
-  .gauge { margin-top: 10px; height: 8px; border-radius: 4px; background: #ded7c8; overflow: hidden; }
-  .gauge i { display: block; height: 100%; background: #26313f; width: 0; }
-  .live { font: 500 13px/1.5 ui-monospace, monospace; background: #26313f; color: #dfe6ee;
-          border-radius: 6px; padding: 9px 12px; margin-bottom: 10px; text-align: center; }
+  .screen {
+    /* ⚠️ ต้องเป็น height ไม่ใช่ min-height — หน้านี้เลื่อนไม่ได้
+       ปล่อยให้สูงเกินจอเมื่อไหร่ ปุ่มจะหลุดจอแล้วกดไม่ได้เลย */
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+    max-width: 560px; margin-inline: auto;
+  }
+  .hd { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: #5b5040; }
+  .hd b { color: #26313f; }
+  .mid { display: grid; align-content: center; justify-items: center; gap: 10px; min-height: 0;
+         overflow: hidden; grid-template-columns: minmax(0, 1fr); }
+  /* บัตรอยู่กลางจอเสมอ — ผู้ทดสอบต้องเห็นมันขณะเอียงโดยไม่ต้องเลื่อนหา */
+  #card { width: min(80vw, 300px, calc((100dvh - 23rem) * 0.82)); }
+  .live { font: 500 13px/1.4 ui-monospace, monospace; background: #26313f; color: #dfe6ee;
+          border-radius: 6px; padding: 8px 11px; text-align: center; }
   .live b { color: #7fd4a0; }
+  .live[data-bad="true"] b { color: #ff9c86; }
+  .say { font-size: 16px; text-align: center; }
+  .say small { display: block; margin-top: 5px; font-size: 13.5px; color: #5b5040; line-height: 1.5; }
+  .gauge { height: 8px; border-radius: 4px; background: #ded7c8; overflow: hidden; margin-top: 9px; }
+  .gauge i { display: block; height: 100%; background: #26313f; width: 0; transition: width .12s linear; }
   button { font: 600 16px/1.2 inherit; color: #f7f3ea; background: #26313f; border: 0;
-           border-radius: 6px; padding: 14px 18px; min-height: 50px; width: 100%; margin-top: 8px; }
+           border-radius: 6px; padding: 13px 18px; min-height: 50px; width: 100%; margin-top: 8px; }
   button.ghost { background: #ded7c8; color: #26313f; }
-  #card { margin: 0 auto 12px; max-width: 340px; }
-  #howto { background: #f7f3ea; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; font-size: 14px; }
-  #howto summary { font-weight: 700; cursor: pointer; }
-  #howto ol { margin: 8px 0; padding-inline-start: 20px; }
-  #howto li, #howto p { margin: 6px 0; color: #5b5040; line-height: 1.5; }
-  textarea { width: 100%; height: 240px; font: 400 11px/1.45 ui-monospace, monospace;
+  .done { font: 500 12.5px/1.5 ui-monospace, monospace; color: #5b5040; text-align: center; margin-top: 7px; }
+  .done b { color: #1d6b3a; } .done i { color: #a4331f; font-style: normal; }
+  textarea { width: 100%; height: 100%; min-height: 0; font: 400 11px/1.45 ui-monospace, monospace;
              border: 0; border-radius: 6px; padding: 10px; background: #f7f3ea; resize: none; }
+  #note { width: 100%; font: inherit; font-size: 15px; padding: 11px; border: 0; border-radius: 6px; margin-top: 8px; }
+  details { background: #f7f3ea; border-radius: 8px; padding: 9px 13px; font-size: 13.5px; }
+  details summary { font-weight: 700; }
+  details p { color: #5b5040; line-height: 1.55; margin: 7px 0 2px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>ห้องแล็บตรวจไจโรสโคป</h1>
-  <details id="howto">
-    <summary>อ่านก่อนเริ่ม · ควรเทสกี่รอบ</summary>
-    <ol>
-      <li><b>รอบที่ 1 — Safari ปกติ</b> ทำให้ครบทุกข้อ แล้วกดคัดลอกส่งกลับ</li>
-      <li><b>รอบที่ 2 — เปิดจากลิงก์ในแอป LINE</b> เพราะลูกค้าจริงจะเปิดจากตรงนั้น
-        เบราว์เซอร์ในแอปมักไม่ยอมให้อ่านการเอียง ต้องรู้ว่ามันพังแบบไหน</li>
-      <li><b>รอบที่ 3 — เปิดโหมดประหยัดพลังงาน</b> แล้วทำอีกรอบ (เครื่องจะหรี่ความลื่นลง)</li>
-    </ol>
-    <p>ข้อไหนทำไม่ได้ (เช่นล็อกหน้าจอไว้) <b>กดปุ่ม “ข้ามข้อนี้” ได้เลย</b> —
-      ระบบจะบันทึกว่าข้าม ไม่ใช่ว่าผ่าน · ทำผิดท่าไม่เป็นไร ทำใหม่ได้ด้วยการโหลดหน้าใหม่</p>
-    <p>อยากลองกรณี “เครื่องไม่อนุญาต” ด้วย ให้ปิด <b>ตั้งค่า → Safari → Motion &amp; Orientation Access</b>
-      แล้วเปิดหน้านี้ใหม่ · จะได้เห็นว่าเว็บบอกสาเหตุชัดไหม</p>
-  </details>
-  <div class="live" id="live">แตะปุ่มเริ่มเพื่อขอสิทธิ์อ่านการเอียง</div>
-  <div id="card"></div>
-  <div id="steps"></div>
-  <div id="foot"><button id="go">เริ่มตรวจ</button></div>
+<div class="screen">
+  <div class="hd" id="hd">ห้องแล็บตรวจไจโรสโคป</div>
+  <div class="mid" id="mid">
+    <div id="card"></div>
+    <div class="live" id="live">แตะปุ่มข้างล่างเพื่อเริ่ม</div>
+  </div>
+  <div class="foot">
+    <div class="say" id="say"></div>
+    <div class="gauge" id="gauge" hidden><i></i></div>
+    <div id="btns"></div>
+    <div class="done" id="done"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -81,21 +92,26 @@ import { attachFoilTilt, requestGyro, gyroStatus, recalibrateGyro, subscribeGyro
 import { openCardFullscreen } from '../src/ui/card-fullscreen.js';
 import { deviceInfo, loadInfo, frameProbe, copyText, isInAppBrowser } from '../src/ui/device-report.js';
 
-/* ── บัตรจริงหนึ่งใบไว้ให้ดูว่าประกายวิ่งตามไหม ────────────────────────── */
 const V = { kind: 'percent', value: 15, title: 'ตรวจไจโรสโคป', code: 'SPE-7K4M-92XH', minSpend: 10000, maxDiscount: 2000 };
-const CARD_HTML = cardHtml(createVoucher(V), { design: 'foilticket', shape: 'compact', art: 'stair' });
-document.getElementById('card').innerHTML = CARD_HTML;
+document.getElementById('card').innerHTML = cardHtml(createVoucher(V), { design: 'foilticket', shape: 'compact', art: 'stair' });
 const card = document.querySelector('#card .vk-card');
 
+const hdEl = document.getElementById('hd');
+const sayEl = document.getElementById('say');
+const btnsEl = document.getElementById('btns');
+const gaugeEl = document.getElementById('gauge');
+const barEl = gaugeEl.querySelector('i');
+const liveEl = document.getElementById('live');
+const doneEl = document.getElementById('done');
+const midEl = document.getElementById('mid');
+
 /* ── เก็บค่าดิบทุกสัญญาณตลอดการทดสอบ ──────────────────────────────────── */
-const raw = { n: 0, empty: 0, first: null, last: null, gaps: [], samples: [], sources: new Set(), screens: new Set() };
+const raw = { n: 0, empty: 0, last: null, gaps: [], samples: [], sources: new Set(), screens: new Set() };
 let latest = null;
-let lastAt = 0;
 subscribeGyroRaw((o) => {
   raw.n += 1;
   if (o.empty) { raw.empty += 1; return; }
   if (raw.last !== null) raw.gaps.push(o.at - raw.last);
-  if (raw.first === null) raw.first = o.at;
   raw.last = o.at;
   raw.sources.add(o.type);
   if (o.screen !== undefined) raw.screens.add(o.screen);
@@ -104,272 +120,289 @@ subscribeGyroRaw((o) => {
 
 const foil = () => [parseFloat(card.style.getPropertyValue('--ft-ex')) || 50,
                     parseFloat(card.style.getPropertyValue('--ft-ey')) || 50];
-
-/* ── โครงของ "หนึ่งข้อทดสอบ" ──────────────────────────────────────────── */
-const results = [];
-const stepsEl = document.getElementById('steps');
-const footEl = document.getElementById('foot');
-const liveEl = document.getElementById('live');
-
-function addStep(title, hint) {
-  const el = document.createElement('div');
-  el.className = 'step';
-  el.dataset.state = 'now';
-  el.innerHTML = `<h2>${title}</h2><p>${hint}</p><div class="gauge"><i></i></div><div class="res"></div>`;
-  stepsEl.append(el);
-  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  return el;
-}
-function finish(el, name, verdict, detail) {
-  el.dataset.state = 'done';
-  /* ⚠️ ต้องมี ?. — ข้อที่เป็นคำถามคนถอดแถบความคืบหน้าทิ้งไปตั้งแต่แรกแล้ว
-     ถ้าเรียก .remove() ตรง ๆ มันจะ error ตอนกดตอบ แล้ว **หน้าค้างตรงนั้นถาวร**
-     ไม่มีอะไรฟ้อง ผู้ทดสอบจะกดยังไงก็ไม่ไปต่อ (ตัวขับอัตโนมัติจับได้) */
-  el.querySelector('.gauge')?.remove();
-  const cls = verdict === 'ผ่าน' ? 'ok' : verdict === 'ข้าม' ? 'skip' : 'bad';
-  el.querySelector('.res').innerHTML = `<span class="${cls}">${verdict}</span> · ${detail}`;
-  results.push({ name, verdict, detail });
-}
-
-/** รอจนกว่าค่าดิบจะเข้าเงื่อนไข · มีปุ่มข้ามให้เสมอ เผื่อเครื่องทำท่านั้นไม่ได้ */
-function waitFor(el, test, { timeout = 30000, onTick } = {}) {
-  return new Promise((resolve) => {
-    const bar = el.querySelector('.gauge i');
-    const skip = document.createElement('button');
-    skip.className = 'ghost';
-    skip.textContent = 'ทำไม่ได้ · ข้ามข้อนี้';
-    footEl.replaceChildren(skip);
-    const t0 = performance.now();
-    let done = false;
-    const stop = (v) => { if (done) return; done = true; clearInterval(iv); off(); footEl.replaceChildren(); resolve(v); };
-    skip.onclick = () => stop(null);
-    const off = subscribeGyroRaw((o) => {
-      if (o.empty || o.calibrating) return;
-      const hit = test(o);
-      if (onTick) bar.style.width = Math.min(100, onTick(o)) + '%';
-      if (hit) stop(o);
-    });
-    const iv = setInterval(() => {
-      if (performance.now() - t0 > timeout) stop('timeout');
-    }, 250);
-  });
-}
-
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const fmt = (n, d = 1) => (n === null || n === undefined || Number.isNaN(n) ? '—' : n.toFixed(d));
 
-/** รอให้ผู้ทดสอบกดยืนยัน · คืน null ถ้ากดข้าม */
-function waitButton(el, label) {
+/* ── โครงของ "หนึ่งข้อ" — ทีละข้อเต็มจอ มีจังหวะถามก่อนเริ่มเสมอ ──────── */
+const TOTAL = 14;
+const results = [];
+let stepNo = 0;
+
+function show(n, title, hint) {
+  stepNo = n;
+  document.body.dataset.step = String(n);
+  hdEl.innerHTML = n === 0 ? 'ห้องแล็บตรวจไจโรสโคป'
+    : n >= TOTAL ? 'ตรวจไจโรสโคป · <b>เสร็จแล้ว</b>'
+      : `ตรวจไจโรสโคป · <b>ข้อ ${n} จาก ${TOTAL}</b>`;
+  sayEl.innerHTML = `<b>${title}</b><small>${hint}</small>`;
+  gaugeEl.hidden = true;
+  barEl.style.width = '0';
+  btnsEl.replaceChildren();
+  const ok = results.filter((r) => r.verdict === 'ผ่าน').length;
+  const bad = results.filter((r) => r.verdict === 'ไม่ผ่าน').length;
+  doneEl.innerHTML = results.length
+    ? `ทำไปแล้ว ${results.length} ข้อ · ผ่าน <b>${ok}</b>${bad ? ` · ไม่ผ่าน <i>${bad}</i>` : ''}`
+    : '';
+}
+
+const record = (name, verdict, detail) => results.push({ name, verdict, detail });
+
+/**
+ * ⚠️ จังหวะ "พร้อมหรือยัง" — ไท้ทักเองว่าทำตามยากเพราะมันเริ่มจับทันทีที่ขึ้นข้อใหม่
+ * ทุกข้อจึงหยุดรอให้กดยืนยันก่อน ผู้ทดสอบจะได้ตั้งท่าให้พร้อมแล้วค่อยเริ่ม
+ * คืน null เมื่อกดข้าม
+ */
+function ready(label = 'พร้อมแล้ว · เริ่มวัด') {
   return new Promise((resolve) => {
-    el.querySelector('.gauge')?.remove();
     const go = document.createElement('button');
     go.textContent = label;
     const skip = document.createElement('button');
     skip.className = 'ghost';
     skip.textContent = 'ทำไม่ได้ · ข้ามข้อนี้';
-    footEl.replaceChildren(go, skip);
-    const stop = (v) => { footEl.replaceChildren(); resolve(v); };
-    go.onclick = () => stop(true);
-    skip.onclick = () => stop(null);
+    btnsEl.replaceChildren(go, skip);
+    go.onclick = () => { btnsEl.replaceChildren(); gaugeEl.hidden = false; resolve(true); };
+    skip.onclick = () => { btnsEl.replaceChildren(); resolve(null); };
   });
 }
 
-/** รอจนประกายคลายกลับเข้าใกล้กลาง · คืนเวลาที่ใช้ (วินาที) หรือ null ถ้าไม่กลับ */
+/** รอจนกว่าค่าดิบจะเข้าเงื่อนไข · มีปุ่มข้ามให้เสมอ */
+function waitFor(test, { timeout = 30000, onTick } = {}) {
+  return new Promise((resolve) => {
+    const skip = document.createElement('button');
+    skip.className = 'ghost';
+    skip.textContent = 'ทำไม่ได้ · ข้ามข้อนี้';
+    btnsEl.replaceChildren(skip);
+    const t0 = performance.now();
+    let done = false;
+    const stop = (v) => { if (done) return; done = true; clearInterval(iv); off(); btnsEl.replaceChildren(); resolve(v); };
+    skip.onclick = () => stop(null);
+    const off = subscribeGyroRaw((o) => {
+      if (o.empty || o.calibrating) return;
+      if (onTick) barEl.style.width = Math.min(100, Math.max(0, onTick(o))) + '%';
+      if (test(o)) stop(o);
+    });
+    const iv = setInterval(() => { if (performance.now() - t0 > timeout) stop('timeout'); }, 250);
+  });
+}
+
+/** รอจนประกายคลายกลับเข้าใกล้กลาง · คืนเวลาที่ใช้ (วินาที) หรือ null */
 async function waitCentred(limit = 24, ms = 12000) {
   const t0 = performance.now();
   while (performance.now() - t0 < ms) {
     const [x, y] = foil();
+    barEl.style.width = Math.min(100, ((performance.now() - t0) / ms) * 100) + '%';
     if (Math.abs(x - 50) < limit && Math.abs(y - 50) < limit) return (performance.now() - t0) / 1000;
     await wait(120);
   }
   return null;
 }
-const fmt = (n, d = 1) => (n === null || n === undefined || Number.isNaN(n) ? '—' : n.toFixed(d));
 
-/* ── สถานะสดด้านบน ────────────────────────────────────────────────────── */
+/* ── แถบสถานะสด — อยู่ใต้บัตร เห็นพร้อมกันโดยไม่ต้องเลื่อน ───────────── */
 setInterval(() => {
   const g = gyroStatus();
   if (g.state === 'live' && latest) {
-    liveEl.innerHTML = `เอียง <b>${fmt(latest.dx, 0)}°, ${fmt(latest.dy, 0)}°</b>` +
-      ` · ดิบ β${fmt(latest.beta, 0)} γ${fmt(latest.gamma, 0)}` +
-      ` · จอ ${latest.screen}° · สัญญาณ ${g.events}`;
-  } else if (g.state === 'denied') liveEl.innerHTML = '<b class="bad">เครื่องไม่อนุญาต</b> ให้อ่านการเอียง';
-  else if (g.state === 'unsupported') liveEl.textContent = 'เครื่องนี้ไม่มีเซนเซอร์การเอียง';
-  else if (!g.secure) liveEl.innerHTML = '<b>ไม่ได้เปิดผ่าน https</b> เซนเซอร์จะเงียบเสมอ';
+    liveEl.dataset.bad = 'false';
+    liveEl.innerHTML = `เอียง <b>${fmt(latest.dx, 0)}°, ${fmt(latest.dy, 0)}°</b> · ดิบ β${fmt(latest.beta, 0)} γ${fmt(latest.gamma, 0)} · จอ ${latest.screen}°`;
+  } else if (g.state === 'denied') { liveEl.dataset.bad = 'true'; liveEl.innerHTML = '<b>เครื่องไม่อนุญาต</b>ให้อ่านการเอียง'; }
+  else if (g.state === 'unsupported') { liveEl.dataset.bad = 'true'; liveEl.textContent = 'เครื่องนี้ไม่มีเซนเซอร์การเอียง'; }
+  else if (!g.secure) { liveEl.dataset.bad = 'true'; liveEl.innerHTML = '<b>ไม่ได้เปิดผ่าน https</b> เซนเซอร์จะเงียบเสมอ'; }
 }, 250);
 
 /* ══════════════════════════════════════════════════════════════════════
    ลำดับการทดสอบ
    ══════════════════════════════════════════════════════════════════════ */
 const probe = frameProbe();
-const answers = {};
 
-document.getElementById('go').onclick = async () => {
-  footEl.replaceChildren();
-  const granted = await requestGyro();          /* ต้องอยู่ในการแตะ ห้ามเลื่อนไปทีหลัง */
-  await runAll(granted);
-};
+show(0, 'ห้องแล็บตรวจไจโรสโคป',
+  'จะพาตรวจทีละข้อ ข้อละไม่กี่วินาที · <b>ทุกข้อมีปุ่มให้กดเมื่อพร้อม</b> ไม่ต้องรีบ<br>ตอนกดเริ่ม เครื่องจะขออนุญาตอ่านการเอียง ให้กด “อนุญาต”');
+midEl.insertAdjacentHTML('beforeend',
+  `<details><summary>ควรเทสกี่รอบ</summary>
+   <p><b>1.</b> เปิดจากลิงก์ใน <b>LINE</b> ก่อน — ลูกค้าจริงเข้ามาทางนี้<br>
+      <b>2.</b> Safari ปกติ ไว้เทียบ<br>
+      <b>3.</b> เปิดโหมดประหยัดพลังงานแล้วทำอีกรอบ</p></details>`);
+{
+  const go = document.createElement('button');
+  go.textContent = 'เริ่มตรวจ';
+  btnsEl.replaceChildren(go);
+  go.onclick = async () => {
+    btnsEl.replaceChildren();
+    midEl.querySelector('details')?.remove();
+    const granted = await requestGyro();   /* ต้องอยู่ในการแตะ ห้ามเลื่อนไปทีหลัง */
+    await runAll(granted);
+  };
+}
 
 async function runAll(granted) {
   /* ── 1 · สิทธิ์ ─────────────────────────────────────────────────── */
-  let el = addStep('1 · สิทธิ์อ่านการเอียง', 'ตรวจอัตโนมัติ');
+  show(1, 'สิทธิ์อ่านการเอียง', 'ตรวจให้เองอัตโนมัติ');
   const g0 = gyroStatus();
   const inApp = isInAppBrowser();
-  finish(el, 'สิทธิ์', granted ? 'ผ่าน' : 'ไม่ผ่าน',
+  record('สิทธิ์', granted ? 'ผ่าน' : 'ไม่ผ่าน',
     `${g0.state}${g0.needsPermission ? ' · เครื่องนี้ต้องขอสิทธิ์' : ' · เครื่องนี้ไม่ต้องขอ'}` +
-    `${g0.secure ? '' : ' · ⚠️ ไม่ได้อยู่บน https'}` +
-    `${inApp ? ' · เปิดในเบราว์เซอร์ของแอป' : ''}`);
-  /* ⚠️ ลูกค้าจริงเปิดจาก LINE/เฟซบุ๊กเป็นหลัก ซึ่งเบราว์เซอร์ในแอปมักไม่ให้อ่านการเอียงบน iOS
-     ต้องบอกให้ชัดว่านี่คือข้อจำกัดของเบราว์เซอร์ ไม่ใช่บัตรพัง — ไม่งั้นอ่านผลผิดกันทั้งคู่ */
-  if (!granted && inApp) {
-    const w = addStep('เบราว์เซอร์ในแอปไม่ให้อ่านการเอียง', 'นี่คือเรื่องปกติ ไม่ใช่บัตรพัง');
-    finish(w, 'ข้อจำกัดของเบราว์เซอร์ในแอป', 'ข้อมูล',
-      'ลูกค้าที่เปิดจากลิงก์ในแอปจะไม่เห็นเอฟเฟกต์เอียง แต่ยังเห็นบัตรครบทุกอย่าง — ลองเปิดใน Safari เทียบดูได้');
-  }
-  if (!granted) return report();
-
-  await attachFoilTilt(card, { force: true });
-
-  /* ── 2 · มีสัญญาณเข้ามาจริงไหม ──────────────────────────────────── */
-  el = addStep('2 · เซนเซอร์ส่งค่ามาจริงไหม', 'ขยับเครื่องเบา ๆ');
-  const got = await waitFor(el, () => true, { timeout: 8000, onTick: () => 100 });
-  if (got === 'timeout' || got === null) {
-    finish(el, 'มีสัญญาณ', 'ไม่ผ่าน', `ได้สิทธิ์แล้วแต่ไม่มีสัญญาณเลย · ค่าว่าง ${raw.empty} ครั้ง`);
+    `${g0.secure ? '' : ' · ⚠️ ไม่ได้อยู่บน https'}${inApp ? ' · เปิดในเบราว์เซอร์ของแอป' : ''}`);
+  if (!granted) {
+    record('ข้อจำกัดของเบราว์เซอร์ในแอป', 'ข้อมูล',
+      inApp ? 'เบราว์เซอร์ในแอปไม่ให้อ่านการเอียง — ลูกค้ายังเห็นบัตรครบ แค่ไม่มีเอฟเฟกต์เอียง'
+            : 'ไม่ได้สิทธิ์อ่านการเอียง');
     return report();
   }
-  finish(el, 'มีสัญญาณ', 'ผ่าน', `มาทาง ${[...raw.sources].join(', ')}`);
+  await attachFoilTilt(card, { force: true });
+  await wait(400);
 
-  /* ── 3 · ถือนิ่ง — วัดความสั่นและความถี่ ────────────────────────── */
-  el = addStep('3 · ถือเครื่องนิ่ง ๆ 5 วินาที', 'อย่าขยับ · กำลังวัดว่าภาพสั่นเองไหม และสัญญาณมากี่ครั้งต่อวินาที');
-  const m0 = raw.samples.length;
-  const t0 = performance.now();
-  probe.start();
-  await waitFor(el, () => performance.now() - t0 > 5000, { timeout: 7000, onTick: () => (performance.now() - t0) / 50 });
-  probe.stop();
-  const still = raw.samples.slice(m0);
-  const sd = (a) => { if (a.length < 3) return NaN; const m = a.reduce((x, y) => x + y) / a.length; return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
-  const jitterX = sd(still.map((s) => s.dx));
-  const jitterY = sd(still.map((s) => s.dy));
-  const hz = still.length / ((performance.now() - t0) / 1000);
-  const foilJit = sd(still.map((s) => s.fx * 100));
-  const stillFrames = probe.result();
-  /* เกณฑ์: สั่นเกิน 1.5° ตาเริ่มเห็นภาพไหวเองทั้งที่ถือนิ่ง */
-  finish(el, 'ถือนิ่ง', jitterX < 1.5 && jitterY < 1.5 ? 'ผ่าน' : 'ไม่ผ่าน',
-    `สั่น ${fmt(jitterX)}° / ${fmt(jitterY)}° · ${fmt(hz, 0)} ครั้ง/วินาที · ประกายไหว ${fmt(foilJit)}%`);
-  results.push({ name: 'ความลื่นตอนถือนิ่ง', verdict: 'ข้อมูล',
-    detail: stillFrames ? `กลาง ${stillFrames.medianMs} ms · แย่สุด ${stillFrames.worst5pctMs} ms` : 'เก็บไม่พอ' });
+  /* ── 2 · มีสัญญาณเข้ามาจริงไหม ──────────────────────────────────── */
+  show(2, 'เซนเซอร์ส่งค่ามาจริงไหม', 'ถือเครื่องตามปกติ กดปุ่ม แล้วขยับเครื่องเบา ๆ');
+  if (await ready() === null) record('มีสัญญาณ', 'ข้าม', '');
+  else {
+    const got = await waitFor(() => true, { timeout: 8000, onTick: () => 100 });
+    if (got === 'timeout' || got === null) {
+      record('มีสัญญาณ', 'ไม่ผ่าน', `ได้สิทธิ์แล้วแต่ไม่มีสัญญาณเลย · ค่าว่าง ${raw.empty} ครั้ง`);
+      return report();
+    }
+    record('มีสัญญาณ', 'ผ่าน', `มาทาง ${[...raw.sources].join(', ')}`);
+  }
+
+  /* ── 3 · ถือนิ่ง ────────────────────────────────────────────────── */
+  show(3, 'ถือเครื่องนิ่ง ๆ 5 วินาที', 'ตั้งท่าถือให้สบายก่อน แล้วค่อยกด · กดแล้ว<b>อย่าขยับ</b>');
+  if (await ready() === null) record('ถือนิ่ง', 'ข้าม', '');
+  else {
+    const m0 = raw.samples.length;
+    const t0 = performance.now();
+    probe.start();
+    await waitFor(() => performance.now() - t0 > 5000, { timeout: 7000, onTick: () => (performance.now() - t0) / 50 });
+    probe.stop();
+    const still = raw.samples.slice(m0);
+    const sd = (a) => { if (a.length < 3) return NaN; const m = a.reduce((x, y) => x + y) / a.length; return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+    const jx = sd(still.map((s) => s.dx));
+    const jy = sd(still.map((s) => s.dy));
+    const hz = still.length / ((performance.now() - t0) / 1000);
+    const fr = probe.result();
+    record('ถือนิ่ง', jx < 1.5 && jy < 1.5 ? 'ผ่าน' : 'ไม่ผ่าน',
+      `สั่น ${fmt(jx)}° / ${fmt(jy)}° · ${fmt(hz, 0)} ครั้ง/วินาที · ประกายไหว ${fmt(sd(still.map((s) => s.fx * 100)))}%`);
+    record('ความลื่นตอนถือนิ่ง', 'ข้อมูล', fr ? `กลาง ${fr.medianMs} ms · แย่สุด ${fr.worst5pctMs} ms` : 'เก็บไม่พอ');
+  }
 
   /* ── 4-5 · แกนซ้าย-ขวา ──────────────────────────────────────────── */
-  el = addStep('4 · เอียงเครื่องไปทางซ้าย', 'ค่อย ๆ เอียงจนสุด แล้วค้างไว้แป๊บ');
-  const L = await waitFor(el, (o) => o.dx < -20, { onTick: (o) => (-o.dx / 20) * 100 });
-  const foilL = foil();
-  finish(el, 'เอียงซ้าย', L && L !== 'timeout' ? 'ผ่าน' : L === null ? 'ข้าม' : 'ไม่ผ่าน',
-    L && L !== 'timeout' ? `ถึง ${fmt(L.dx, 0)}° · ประกายไปที่ ${fmt(foilL[0], 0)}%` : 'ไม่ถึง 20°');
+  show(4, 'เอียงเครื่องไปทางซ้าย', 'กดปุ่มก่อน แล้วค่อย ๆ เอียงซ้ายจนสุด · ดูประกายบนบัตรไปด้วย');
+  let foilL = null;
+  if (await ready() === null) record('เอียงซ้าย', 'ข้าม', '');
+  else {
+    const L = await waitFor((o) => o.dx < -20, { onTick: (o) => (-o.dx / 20) * 100 });
+    foilL = foil();
+    record('เอียงซ้าย', L && L !== 'timeout' ? 'ผ่าน' : L === null ? 'ข้าม' : 'ไม่ผ่าน',
+      L && L !== 'timeout' ? `ถึง ${fmt(L.dx, 0)}° · ประกายไปที่ ${fmt(foilL[0], 0)}%` : 'ไม่ถึง 20°');
+  }
 
-  el = addStep('5 · เอียงเครื่องไปทางขวา', 'ค่อย ๆ เอียงกลับไปอีกทางจนสุด');
-  const R = await waitFor(el, (o) => o.dx > 20, { onTick: (o) => (o.dx / 20) * 100 });
-  const foilR = foil();
-  const swing = Math.abs(foilR[0] - foilL[0]);
-  const vert = Math.abs(foilR[1] - foilL[1]);
-  finish(el, 'เอียงขวา + ทิศประกาย', R && R !== 'timeout' && swing > 25 && swing > vert ? 'ผ่าน' : R === null ? 'ข้าม' : 'ไม่ผ่าน',
-    `ประกายเลื่อนแนวนอน ${fmt(swing, 0)}% · แนวตั้ง ${fmt(vert, 0)}% (แนวนอนต้องมากกว่า)`);
+  show(5, 'เอียงกลับไปทางขวา', 'กดปุ่มก่อน แล้วค่อย ๆ เอียงขวาจนสุด');
+  if (await ready() === null) record('เอียงขวา + ทิศประกาย', 'ข้าม', '');
+  else {
+    const R = await waitFor((o) => o.dx > 20, { onTick: (o) => (o.dx / 20) * 100 });
+    const foilR = foil();
+    const sw = foilL ? Math.abs(foilR[0] - foilL[0]) : 0;
+    const vt = foilL ? Math.abs(foilR[1] - foilL[1]) : 0;
+    record('เอียงขวา + ทิศประกาย', R && R !== 'timeout' && sw > 25 && sw > vt ? 'ผ่าน' : R === null ? 'ข้าม' : 'ไม่ผ่าน',
+      `ประกายเลื่อนแนวนอน ${fmt(sw, 0)}% · แนวตั้ง ${fmt(vt, 0)}% (แนวนอนต้องมากกว่า)`);
+  }
 
-  /* ── 6 · แกนเงย-ก้ม ─────────────────────────────────────────────── */
-  el = addStep('6 · เงยหัวเครื่องขึ้น แล้วก้มลง', 'เอียงไปข้างหน้า-ข้างหลัง ไม่ใช่ซ้าย-ขวา');
-  const U = await waitFor(el, (o) => o.dy < -20, { onTick: (o) => (-o.dy / 20) * 100 });
-  const foilU = foil();
-  const D = U === null ? null : await waitFor(el, (o) => o.dy > 20, { onTick: (o) => (o.dy / 20) * 100 });
-  const foilD = foil();
-  const vSwing = Math.abs(foilD[1] - foilU[1]);
-  const hSwing = Math.abs(foilD[0] - foilU[0]);
-  finish(el, 'เงย-ก้ม + ทิศประกาย', D && D !== 'timeout' && vSwing > 25 && vSwing > hSwing ? 'ผ่าน' : U === null || D === null ? 'ข้าม' : 'ไม่ผ่าน',
-    `ประกายเลื่อนแนวตั้ง ${fmt(vSwing, 0)}% · แนวนอน ${fmt(hSwing, 0)}% (แนวตั้งต้องมากกว่า)`);
+  /* ── 6 · เงย-ก้ม ────────────────────────────────────────────────── */
+  show(6, 'เงยหัวเครื่องขึ้น แล้วก้มลง', 'กดปุ่มก่อน แล้วเอียงไปข้างหน้า-ข้างหลัง · <b>ไม่ใช่ซ้าย-ขวา</b>');
+  if (await ready() === null) record('เงย-ก้ม + ทิศประกาย', 'ข้าม', '');
+  else {
+    const U = await waitFor((o) => o.dy < -20, { onTick: (o) => (-o.dy / 20) * 100 });
+    const fU = foil();
+    const D = U === null ? null : await waitFor((o) => o.dy > 20, { onTick: (o) => (o.dy / 20) * 100 });
+    const fD = foil();
+    const vs = Math.abs(fD[1] - fU[1]);
+    const hs = Math.abs(fD[0] - fU[0]);
+    record('เงย-ก้ม + ทิศประกาย', D && D !== 'timeout' && vs > 25 && vs > hs ? 'ผ่าน' : (U === null || D === null) ? 'ข้าม' : 'ไม่ผ่าน',
+      `ประกายเลื่อนแนวตั้ง ${fmt(vs, 0)}% · แนวนอน ${fmt(hs, 0)}% (แนวตั้งต้องมากกว่า)`);
+  }
 
-  /* ── 7 · หมุนจอเป็นแนวนอน — แกนต้องสลับตาม ──────────────────────── */
-  el = addStep('7 · หมุนเครื่องเป็นแนวนอน', 'ถ้าล็อกหน้าจอไว้ ให้กดข้าม · ปลดล็อกก่อนได้ยิ่งดี');
-  const rot = await waitFor(el, (o) => o.screen !== 0 && o.screen !== undefined, { timeout: 25000, onTick: (o) => (o.screen ? 100 : 0) });
-  if (rot && rot !== 'timeout') {
+  /* ── 7-8 · หมุนจอเป็นแนวนอน ─────────────────────────────────────── */
+  show(7, 'หมุนเครื่องเป็นแนวนอน', 'กดปุ่มก่อน แล้วค่อยหมุน · <b>ถ้าล็อกหน้าจอไว้ให้กดข้าม</b>');
+  let rotated = null;
+  if (await ready() === null) record('หมุนจอ', 'ข้าม', 'ล็อกหน้าจอไว้');
+  else {
+    rotated = await waitFor((o) => o.screen !== 0 && o.screen !== undefined, { timeout: 25000, onTick: (o) => (o.screen ? 100 : 8) });
+    record('หมุนจอ', rotated && rotated !== 'timeout' ? 'ผ่าน' : rotated === null ? 'ข้าม' : 'ไม่ผ่าน',
+      rotated && rotated !== 'timeout' ? `จอไปที่ ${rotated.screen}°` : 'จอไม่เปลี่ยนมุมเลย');
+  }
+
+  show(8, 'ถือแนวนอนแล้วเอียงซ้าย-ขวา', 'ตั้งท่าให้พร้อมก่อน แล้วกด · เอียงเหมือนเดิม ดูว่าประกายยังวิ่งถูกทาง');
+  if (!rotated || rotated === 'timeout') record('แนวนอน · แกนสลับถูก', 'ข้าม', 'ไม่ได้หมุนจอ');
+  else if (await ready() === null) record('แนวนอน · แกนสลับถูก', 'ข้าม', '');
+  else {
     recalibrateGyro();
-    await wait(1200);
-    const el7 = addStep('7ก · ถือแนวนอนแล้วเอียงซ้าย-ขวา', 'เอียงเหมือนเดิม ดูว่าประกายยังวิ่งถูกทาง');
     const a = foil();
-    const RL = await waitFor(el7, (o) => Math.abs(o.dx) > 20, { onTick: (o) => (Math.abs(o.dx) / 20) * 100 });
-    const b = foil();
-    const moved = Math.abs(b[0] - a[0]);
-    finish(el7, 'แนวนอน · แกนสลับถูก', RL && RL !== 'timeout' && moved > 20 ? 'ผ่าน' : RL === null ? 'ข้าม' : 'ไม่ผ่าน',
-      `จอ ${rot.screen}° · เอียงซ้าย-ขวาแล้วประกายเลื่อน ${fmt(moved, 0)}%`);
-    finish(el, 'หมุนจอ', 'ผ่าน', `จอไปที่ ${rot.screen}°`);
-  } else {
-    finish(el, 'หมุนจอ', rot === null ? 'ข้าม' : 'ไม่ผ่าน', rot === null ? 'ล็อกหน้าจอไว้' : 'จอไม่เปลี่ยนมุมเลย');
+    const RL = await waitFor((o) => Math.abs(o.dx) > 20, { onTick: (o) => (Math.abs(o.dx) / 20) * 100 });
+    const moved = Math.abs(foil()[0] - a[0]);
+    record('แนวนอน · แกนสลับถูก', RL && RL !== 'timeout' && moved > 20 ? 'ผ่าน' : RL === null ? 'ข้าม' : 'ไม่ผ่าน',
+      `จอ ${rotated.screen}° · เอียงซ้าย-ขวาแล้วประกายเลื่อน ${fmt(moved, 0)}%`);
   }
 
-  /* ── 8 · โหมดเต็มจอ — บัตรหมุนอีก 90° แกนต้องหมุนตาม ───────────── */
-  el = addStep('8 · โหมดเต็มจอ (บัตรหมุน 90°)', '<b>หมุนเครื่องกลับเป็นแนวตั้งก่อน</b> แล้วจะเปิดให้เอง · จากนั้นเอียงซ้าย-ขวา');
-  /* ⚠️ รอบเทสจริงสองรอบของไท้ได้ "บัตรไม่หมุน" ทั้งคู่ เพราะยังถือแนวนอนค้างจากข้อ 7
-     แปลว่าเส้นทางที่อยากทดสอบที่สุด (บัตรหมุน 90°) ไม่เคยถูกทดสอบเลย → รอให้กลับมาแนวตั้งก่อน */
-  const backUp = await waitFor(el, () => window.innerHeight >= window.innerWidth,
-    { timeout: 20000, onTick: () => (window.innerHeight >= window.innerWidth ? 100 : 15) });
-  if (backUp === null) { finish(el, 'เต็มจอ · แกนหมุนตามบัตร', 'ข้าม', 'ไม่ได้หมุนกลับเป็นแนวตั้ง'); }
-  else { await wait(900); }
-  if (backUp !== null) {
-  let fsTilt = null;
-  const fs = openCardFullscreen(cardHtml(createVoucher(V), { design: 'foilticket', shape: 'ticket', art: 'fence' }), {
-    shape: 'ticket',
-    onReady: (c, rotated) => {
-      if (fsTilt) { fsTilt.setRotate?.(rotated ? 90 : 0); return; }
-      attachFoilTilt(c, { rotate: rotated ? 90 : 0, force: true }).then((r) => { fsTilt = r; });
-    },
-  });
-  const fsCard = fs.card;
-  const fsFoil = () => [parseFloat(fsCard.style.getPropertyValue('--ft-ex')) || 50,
-                        parseFloat(fsCard.style.getPropertyValue('--ft-ey')) || 50];
-  await wait(1400);
-  const fa = fsFoil();
-  const FL = await waitFor(el, (o) => Math.abs(o.dx) > 20, { onTick: (o) => (Math.abs(o.dx) / 20) * 100 });
-  const fb = fsFoil();
-  const wasRot = fs.el.dataset.rotated === 'true';
-  const dEx = Math.abs(fb[0] - fa[0]);
-  const dEy = Math.abs(fb[1] - fa[1]);
-  /* บัตรหมุน 90° แล้ว เอียงซ้าย-ขวาต้องขยับ "แกนตั้งของบัตร" ไม่ใช่แกนนอน */
-  const axisOk = wasRot ? dEy > dEx : dEx > dEy;
-  finish(el, 'เต็มจอ · แกนหมุนตามบัตร', FL && FL !== 'timeout' && axisOk ? 'ผ่าน' : FL === null ? 'ข้าม' : 'ไม่ผ่าน',
-    `บัตร${wasRot ? 'หมุน 90°' : 'ไม่หมุน'} · เอียงซ้าย-ขวา → แกนนอน ${fmt(dEx, 0)}% แกนตั้ง ${fmt(dEy, 0)}%`);
-  fs.close();
-  await wait(300);
+  /* ── 9 · โหมดเต็มจอ ─────────────────────────────────────────────── */
+  show(9, 'โหมดเต็มจอ (บัตรหมุน 90°)',
+    '<b>หมุนเครื่องกลับเป็นแนวตั้งก่อน</b> แล้วค่อยกดปุ่ม<br>บัตรจะขึ้นเต็มจอให้เอง จากนั้นเอียงซ้าย-ขวา');
+  if (await ready('แนวตั้งแล้ว · เปิดเต็มจอ') === null) record('เต็มจอ · แกนหมุนตามบัตร', 'ข้าม', '');
+  else {
+    let fsTilt = null;
+    const fs = openCardFullscreen(cardHtml(createVoucher(V), { design: 'foilticket', shape: 'ticket', art: 'fence' }), {
+      shape: 'ticket',
+      onReady: (c, rot) => {
+        if (fsTilt) { fsTilt.setRotate?.(rot ? 90 : 0); return; }
+        attachFoilTilt(c, { rotate: rot ? 90 : 0, force: true }).then((r) => { fsTilt = r; });
+      },
+    });
+    const fsFoil = () => [parseFloat(fs.card.style.getPropertyValue('--ft-ex')) || 50,
+                          parseFloat(fs.card.style.getPropertyValue('--ft-ey')) || 50];
+    recalibrateGyro();
+    await wait(1500);
+    const fa = fsFoil();
+    const FL = await waitFor((o) => Math.abs(o.dx) > 20, { onTick: (o) => (Math.abs(o.dx) / 20) * 100 });
+    const fb = fsFoil();
+    const wasRot = fs.el.dataset.rotated === 'true';
+    const dEx = Math.abs(fb[0] - fa[0]);
+    const dEy = Math.abs(fb[1] - fa[1]);
+    record('เต็มจอ · แกนหมุนตามบัตร',
+      FL && FL !== 'timeout' && (wasRot ? dEy > dEx : dEx > dEy) ? 'ผ่าน' : FL === null ? 'ข้าม' : 'ไม่ผ่าน',
+      `บัตร${wasRot ? 'หมุน 90°' : 'ไม่หมุน'} · เอียงซ้าย-ขวา → แกนนอน ${fmt(dEx, 0)}% แกนตั้ง ${fmt(dEy, 0)}%`);
+    fs.close();
+    await wait(300);
   }
 
-  /* ── 9 · วางราบบนโต๊ะ แล้วต้องกลับเข้ากลางเอง ────────────────────── */
-  el = addStep('9 · วางเครื่องราบบนโต๊ะ', 'วางแล้วปล่อยมือ · บัตรต้องคลายกลับมากลาง ไม่ค้างเอียง');
-  const flatStart = performance.now();
-  const F = await waitFor(el, (o) => Math.abs(o.beta) < 14 && Math.abs(o.gamma) < 14 && performance.now() - flatStart > 2500,
-    { timeout: 25000, onTick: () => Math.min(100, (performance.now() - flatStart) / 25) });
-  /* ⚠️ นี่คือบั๊กที่ไท้เจอเอง: ท่าถือถูกจำครั้งเดียวตอนเริ่ม พอวางราบค่าอ้างอิงผิด
-     แล้วประกายค้างสุดขอบ (วัดได้ 123%) ทั้งที่เครื่องนิ่งสนิท
-     ตอนนี้ศูนย์ไล่ตามท่าปัจจุบันแล้ว จึงต้องกลับเข้ากลางได้เองภายในไม่กี่วินาที */
-  const backIn = F && F !== 'timeout' ? await waitCentred() : null;
-  const fl = foil();
-  finish(el, 'วางราบแล้วคลายกลับเข้ากลาง', F === null ? 'ข้าม' : backIn !== null ? 'ผ่าน' : 'ไม่ผ่าน',
-    F && F !== 'timeout'
-      ? (backIn !== null
-        ? `นิ่งที่ β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → คลายกลับเข้ากลางใน ${fmt(backIn)} วินาที`
-        : `ยังค้างที่ ${fmt(fl[0], 0)}%, ${fmt(fl[1], 0)}% หลังผ่านไป 12 วินาที (กลาง = 50%)`)
-      : 'ทำไม่ได้');
+  /* ── 10 · วางราบ แล้วต้องคลายกลับเข้ากลาง ────────────────────────── */
+  show(10, 'วางเครื่องราบบนโต๊ะ', 'วางแล้วปล่อยมือก่อน แล้วเอื้อมมากดปุ่ม<br>บัตรต้อง<b>คลายกลับมากลาง</b> ไม่ค้างเอียง');
+  if (await ready('วางแล้ว · เริ่มวัด') === null) record('วางราบแล้วคลายกลับเข้ากลาง', 'ข้าม', '');
+  else {
+    const t = performance.now();
+    const F = await waitFor((o) => Math.abs(o.beta) < 14 && Math.abs(o.gamma) < 14 && performance.now() - t > 900,
+      { timeout: 20000, onTick: () => Math.min(100, (performance.now() - t) / 9) });
+    /* ⚠️ บั๊กที่ไท้เจอเอง: ท่าถือถูกจำครั้งเดียวตอนเริ่ม พอวางราบค่าอ้างอิงผิด
+       ประกายค้างสุดขอบ (วัดได้ 123%) ทั้งที่เครื่องนิ่งสนิท */
+    const back = F && F !== 'timeout' ? await waitCentred() : null;
+    const fl = foil();
+    record('วางราบแล้วคลายกลับเข้ากลาง', F === null ? 'ข้าม' : back !== null ? 'ผ่าน' : 'ไม่ผ่าน',
+      F && F !== 'timeout'
+        ? (back !== null ? `นิ่งที่ β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → คลายกลับเข้ากลางใน ${fmt(back)} วินาที`
+                         : `ยังค้างที่ ${fmt(fl[0], 0)}%, ${fmt(fl[1], 0)}% หลัง 12 วินาที (กลาง = 50%)`)
+        : 'ทำไม่ได้');
+  }
 
-  el = addStep('9ก · ยกขึ้นมาถือใหม่', 'ยกขึ้นมาถือตามปกติ แล้วถือนิ่ง ๆ · บัตรต้องกลับมากลางอีกครั้ง');
-  const U2 = await waitFor(el, (o) => Math.abs(o.beta) > 25, { timeout: 25000, onTick: (o) => (Math.abs(o.beta) / 25) * 100 });
-  const backIn2 = U2 && U2 !== 'timeout' ? await waitCentred() : null;
-  const fu = foil();
-  finish(el, 'ยกขึ้นถือใหม่แล้วไม่ค้าง', U2 === null ? 'ข้าม' : backIn2 !== null ? 'ผ่าน' : 'ไม่ผ่าน',
-    U2 && U2 !== 'timeout'
-      ? (backIn2 !== null
-        ? `ถือที่ β${fmt(U2.beta, 0)} → กลับเข้ากลางใน ${fmt(backIn2)} วินาที`
-        : `ยังค้างที่ ${fmt(fu[0], 0)}%, ${fmt(fu[1], 0)}% หลังผ่านไป 12 วินาที`)
-      : 'ทำไม่ได้');
+  /* ── 11 · ยกขึ้นมาถือใหม่ ───────────────────────────────────────── */
+  show(11, 'ยกขึ้นมาถือใหม่', 'ยกขึ้นมาถือตามปกติก่อน แล้วกดปุ่ม · ถือนิ่ง ๆ<br>บัตรต้องกลับมากลางอีกครั้ง ไม่ค้าง');
+  if (await ready('ถืออยู่แล้ว · เริ่มวัด') === null) record('ยกขึ้นถือใหม่แล้วไม่ค้าง', 'ข้าม', '');
+  else {
+    const U = await waitFor((o) => Math.abs(o.beta) > 25, { timeout: 20000, onTick: (o) => (Math.abs(o.beta) / 25) * 100 });
+    const back = U && U !== 'timeout' ? await waitCentred() : null;
+    const fu = foil();
+    record('ยกขึ้นถือใหม่แล้วไม่ค้าง', U === null ? 'ข้าม' : back !== null ? 'ผ่าน' : 'ไม่ผ่าน',
+      U && U !== 'timeout'
+        ? (back !== null ? `ถือที่ β${fmt(U.beta, 0)} → กลับเข้ากลางใน ${fmt(back)} วินาที`
+                         : `ยังค้างที่ ${fmt(fu[0], 0)}%, ${fmt(fu[1], 0)}% หลัง 12 วินาที`)
+        : 'ทำไม่ได้');
+  }
 
-  el = addStep('10 · สลับไปแอปอื่นแล้วกลับมา',
-    'เลื่อนขึ้นออกไปหน้าโฮม รอ 2-3 วินาที แล้วกลับมาที่หน้านี้ <b>แล้วกดปุ่มข้างล่าง</b>');
-  /* ⚠️ ข้อนี้ใช้ปุ่ม ไม่เดาเองจากสัญญาณของเบราว์เซอร์
-     เพราะเบราว์เซอร์แต่ละตัวแจ้งไม่เหมือนกัน โดยเฉพาะเบราว์เซอร์ในแอป
-     สิ่งที่อยากรู้จริง ๆ คือ "กลับมาแล้วเซนเซอร์ยังส่งค่าอยู่ไหม" ซึ่งวัดได้ตรง ๆ */
+  /* ── 12 · สลับแอปแล้วกลับมา ─────────────────────────────────────── */
+  show(12, 'สลับไปแอปอื่นแล้วกลับมา', 'เลื่อนขึ้นออกไปหน้าโฮม รอ 2-3 วินาที แล้วกลับมา<br><b>แล้วค่อยกดปุ่ม</b>');
   let sawVis = false;
   let gapMax = 0;
   let prevAt = 0;
@@ -380,33 +413,31 @@ async function runAll(granted) {
     if (prevAt && o.at - prevAt > 400) gapMax = Math.max(gapMax, o.at - prevAt);
     prevAt = o.at;
   });
-  const backed = await waitButton(el, 'กลับมาแล้ว · ตรวจต่อ');
+  const backed = await ready('กลับมาแล้ว · ตรวจต่อ');
   const nBefore = raw.n;
-  await wait(1500);
+  if (backed !== null) { gaugeEl.hidden = false; barEl.style.width = '100%'; await wait(1500); }
   const flowing = raw.n - nBefore;
   document.removeEventListener('visibilitychange', onVis);
   offGap();
-  finish(el, 'กลับจากแอปอื่นแล้วยังทำงาน',
-    backed === null ? 'ข้าม' : flowing >= 8 ? 'ผ่าน' : 'ไม่ผ่าน',
+  record('กลับจากแอปอื่นแล้วยังทำงาน', backed === null ? 'ข้าม' : flowing >= 8 ? 'ผ่าน' : 'ไม่ผ่าน',
     backed === null ? 'ไม่ได้ทำ'
       : `กลับมาแล้วรับสัญญาณต่อ ${flowing} ครั้งใน 1.5 วินาที` +
         `${gapMax ? ` · เคยขาดไป ${Math.round(gapMax)} ms` : ' · สัญญาณไม่เคยขาด'}` +
         `${sawVis ? ' · เครื่องแจ้งว่าออกจากหน้า' : ' · เครื่องไม่แจ้งว่าออกจากหน้า'}`);
 
-  /* ── 11-12 · สิ่งที่เครื่องตัดสินแทนตาไม่ได้ ────────────────────── */
-  await ask('11 · เอียงเครื่องแล้ว "ประกายทอง" วิ่งตามลื่น ๆ ไหม', 'ลื่นดี', 'กระตุก/หน่วง', 'smooth');
-  await ask('12 · ทิศทางที่ประกายวิ่ง ดูเป็นธรรมชาติไหม', 'ใช่ ถูกทาง', 'ไม่ รู้สึกกลับด้าน', 'direction');
+  /* ── 13-14 · สิ่งที่เครื่องตัดสินแทนตาไม่ได้ ────────────────────── */
+  await ask(13, 'เอียงเครื่องแล้วประกายทองวิ่งตามลื่น ๆ ไหม', 'ลื่นดี', 'กระตุก/หน่วง');
+  await ask(14, 'ทิศทางที่ประกายวิ่ง ดูเป็นธรรมชาติไหม', 'ใช่ ถูกทาง', 'ไม่ รู้สึกกลับด้าน');
   report();
 }
 
-function ask(title, yes, no, key) {
+function ask(n, title, yes, no) {
   return new Promise((resolve) => {
-    const el = addStep(title, 'ข้อนี้ต้องใช้ตาคนตอบ');
-    el.querySelector('.gauge').remove();
+    show(n, title, 'ข้อนี้ต้องใช้ตาคนตอบ · ลองเอียงดูอีกทีก่อนตอบก็ได้ ไม่ต้องรีบ');
     const a = document.createElement('button'); a.textContent = yes;
     const b = document.createElement('button'); b.className = 'ghost'; b.textContent = no;
-    footEl.replaceChildren(a, b);
-    const pick = (v) => { answers[key] = v; footEl.replaceChildren(); finish(el, title.replace(/^\d+ · /, ''), v ? 'ผ่าน' : 'ไม่ผ่าน', v ? yes : no); resolve(); };
+    btnsEl.replaceChildren(a, b);
+    const pick = (v) => { btnsEl.replaceChildren(); record(title, v ? 'ผ่าน' : 'ไม่ผ่าน', v ? yes : no); resolve(); };
     a.onclick = () => pick(true);
     b.onclick = () => pick(false);
   });
@@ -419,7 +450,7 @@ function report() {
   const p = (q) => (gaps.length ? gaps[Math.floor(gaps.length * q)] : NaN);
   const betas = raw.samples.map((s) => s.beta);
   const gammas = raw.samples.map((s) => s.gamma);
-  const stepRes = raw.samples.slice(1).map((s, i) => Math.abs(s.beta - raw.samples[i].beta)).filter((x) => x > 0);
+  const res = raw.samples.slice(1).map((s, i) => Math.abs(s.beta - raw.samples[i].beta)).filter((x) => x > 0);
   const d = deviceInfo();
   const L = [];
   L.push('===== ผลตรวจไจโรสโคปแบบละเอียด =====');
@@ -435,31 +466,36 @@ function report() {
   L.push(`สถานะ ${g.state} · มาทาง ${g.source || '—'} · ทั้งหมด ${raw.n} ครั้ง (ค่าว่าง ${raw.empty})`);
   L.push(`จังหวะสัญญาณ กลาง ${fmt(p(0.5))} ms · ช้าสุด 5% ${fmt(p(0.95))} ms · ช่องว่างยาวสุด ${fmt(gaps[gaps.length - 1] || NaN)} ms`);
   L.push(`ช่วงค่าที่เจอ β ${fmt(Math.min(...betas), 0)}…${fmt(Math.max(...betas), 0)} · γ ${fmt(Math.min(...gammas), 0)}…${fmt(Math.max(...gammas), 0)}`);
-  L.push(`ความละเอียดค่าที่เล็กที่สุด ${stepRes.length ? Math.min(...stepRes).toExponential(1) : '—'}°` +
-    ` · ค่าที่ต่างกันจริง ${new Set(betas.map((b) => b.toFixed(4))).size} แบบ`);
+  L.push(`ความละเอียดค่าที่เล็กที่สุด ${res.length ? Math.min(...res).toExponential(1) : '—'}° · ค่าที่ต่างกันจริง ${new Set(betas.map((b) => b.toFixed(4))).size} แบบ`);
   L.push(`มุมจอที่ผ่านมา ${[...raw.screens].join(', ') || '—'}° · องศาที่ถือว่าสุดทาง ±${g.range}°`);
-  L.push('');
   const n = loadInfo();
+  L.push('');
   L.push(`โหลด ${n.downloadedKB} KB · ${n.requests} ไฟล์ · พร้อมใช้ ${n.readyMs} ms`);
   L.push('=====================================');
   const text = L.join('\n');
 
-  const box = document.createElement('div');
-  box.innerHTML = `<textarea id="out" readonly></textarea>
-    <input id="note" placeholder="อยากบอกอะไรเพิ่ม พิมพ์ตรงนี้" style="width:100%;font:inherit;font-size:15px;padding:11px;border:0;border-radius:6px;margin-top:8px">
-    <button id="copy">คัดลอกผลตรวจ</button>`;
-  stepsEl.append(box);
-  const out = box.querySelector('#out');
+  const ok = results.filter((r) => r.verdict === 'ผ่าน').length;
+  const bad = results.filter((r) => r.verdict === 'ไม่ผ่าน').length;
+  show(TOTAL, 'เสร็จแล้ว', `ผ่าน ${ok} ข้อ${bad ? ` · ไม่ผ่าน ${bad} ข้อ` : ''} · กดคัดลอกแล้ววางในแชตได้เลย`);
+  document.getElementById('card')?.remove();
+  liveEl.remove();
+  midEl.insertAdjacentHTML('beforeend', '<textarea id="out" readonly></textarea>');
+  const out = document.getElementById('out');
   out.value = text;
-  box.querySelector('#note').oninput = (e) => { out.value = text + (e.target.value ? `\n--- ผู้ทดสอบเขียนเพิ่ม ---\n${e.target.value}\n` : ''); };
-  box.querySelector('#copy').onclick = async (e) => {
-    const ok = await copyText(out.value);
-    e.target.textContent = ok ? '✅ คัดลอกแล้ว — วางในแชตได้เลย' : 'คัดลอกไม่ได้ · กดค้างที่กล่องแล้วเลือกทั้งหมด';
-    if (!ok) out.select();
+  const note = document.createElement('input');
+  note.id = 'note';
+  note.placeholder = 'อยากบอกอะไรเพิ่ม พิมพ์ตรงนี้';
+  note.oninput = () => { out.value = text + (note.value ? `\n--- ผู้ทดสอบเขียนเพิ่ม ---\n${note.value}\n` : ''); };
+  const copy = document.createElement('button');
+  copy.textContent = 'คัดลอกผลตรวจ';
+  copy.onclick = async () => {
+    const done = await copyText(out.value);
+    copy.textContent = done ? '✅ คัดลอกแล้ว — วางในแชตได้เลย' : 'คัดลอกไม่ได้ · กดค้างที่กล่องแล้วเลือกทั้งหมด';
+    if (!done) out.select();
   };
-  box.scrollIntoView({ behavior: 'smooth' });
-  window.GYRO_LAB = { results, raw: { n: raw.n, empty: raw.empty }, text };
-  console.log('LAB ' + JSON.stringify({ results, events: raw.n }));
+  btnsEl.replaceChildren(note, copy);
+  document.body.dataset.step = 'done';
+  window.GYRO_LAB = { results, text };
 }
 </script>
 </body>
