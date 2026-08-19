@@ -232,10 +232,14 @@
   transform: translate(-50%, -50%);
   height: calc(var(--vk-u) * var(--ft-mark));
   aspect-ratio: 151 / 320;      /* สัดส่วนจริงของไฟล์มอโนแกรม ห้ามยืดผิดส่วน */
+  /* ⚠️ ไฟล์มอโนแกรมต้องเป็น WebP **แบบไม่สูญเสีย** เท่านั้น (20.3 KB → 3.3 KB)
+     เป็นโลโก้สองโทน ขอบคม — แบบไม่สูญเสียได้ทั้งเล็กกว่าและตรงเป๊ะ
+     ลองแบบสูญเสียแล้ว **ใหญ่กว่า** (5-6 KB) เพราะต้องเก็บช่องความโปร่งใสแยกอีกชั้น
+     และทำให้ขอบเป็นคลื่น · อย่าเผลอ "ปรับให้เบา" ด้วยการลดคุณภาพ มันสวนทาง */
   background: var(--ft-stub-ink);
   opacity: var(--ft-mark-op);
-  -webkit-mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
-  mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
+  -webkit-mask: url('../../../assets/brand/spe-mark.webp') center / contain no-repeat;
+  mask: url('../../../assets/brand/spe-mark.webp') center / contain no-repeat;
   pointer-events: none;
 }
 
@@ -1012,8 +1016,8 @@
   aspect-ratio: 151 / 320;
   background: var(--ft-stub-ink);
   opacity: var(--ft-mark-op);
-  -webkit-mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
-  mask: url('../../../assets/brand/spe-mark.png') center / contain no-repeat;
+  -webkit-mask: url('../../../assets/brand/spe-mark.webp') center / contain no-repeat;
+  mask: url('../../../assets/brand/spe-mark.webp') center / contain no-repeat;
   pointer-events: none;
 }
 

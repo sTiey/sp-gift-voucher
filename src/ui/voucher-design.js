@@ -179,7 +179,7 @@ export function cardHtml(v, opt = {}) {
 
     <div class="vk-card__main">
       <header class="vk-card__head">
-        <span class="vk-card__logo"><img src="../assets/brand/spe-mark.png" alt="SP Empire"></span>
+        <span class="vk-card__logo"><img src="../assets/brand/spe-mark.webp" alt="SP Empire"></span>
         <span class="vk-card__brandname">SP EMPIRE</span>
         <span class="vk-card__pill" data-tone="${TONE[status] || 'dead'}">${esc(t(`status.${status}`))}</span>
       </header>
