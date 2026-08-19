@@ -1,19 +1,22 @@
 /**
  * foil-tilt.js — ทำให้คูปองเอียงตามเมาส์/การหมุนเครื่อง แล้วประกายทองวิ่งตาม
  * ---------------------------------------------------------------------------
- * ใช้ไลบรารี VanillaTilt (อยู่ใน vendor/ ไม่ได้ดึงจากเน็ตตอนใช้งาน)
- * เลือกตัวนี้เพราะ **มีไจโรสโคปมาในตัว** ซึ่งไลบรารีเอียงการ์ดตัวอื่นแทบไม่มี
- * และเล็ก (~9KB) ไม่พึ่งอะไรเลย
+ * ใช้ไลบรารี VanillaTilt (อยู่ใน vendor/ ไม่ได้ดึงจากเน็ตตอนใช้งาน) เล็ก ~9KB ไม่พึ่งอะไรเลย
+ * ใช้มันเฉพาะ "เอียงใบตามเมาส์" เท่านั้น
  *
- * สิ่งที่ไฟล์นี้ทำเพิ่มจากไลบรารี:
+ * สิ่งที่ไฟล์นี้ทำเพิ่ม:
  *   1. เอาองศาที่กำลังเอียงไปขยับ "การสะท้อนสภาพแวดล้อม" บนตัวเลข
  *      → ประกายวิ่งตามการเอียงจริง ไม่ใช่แอนิเมชันวนลูปที่วิ่งเองไม่สนใจอะไร
- *   2. ขอสิทธิ์ไจโรบน iOS ให้ (ไลบรารีไม่ได้ทำให้)
+ *   2. **ไจโรสโคปเขียนเองทั้งหมด** — ของไลบรารีใช้ไม่ได้บน iOS (เหตุผลเต็มอยู่ตรงศูนย์กลางข้างล่าง)
+ *      ขอสิทธิ์ให้ผ่านก่อนแล้วค่อยฟัง · หมุนแกนตามการหมุนจอ · จำท่าถือปกติของคนใช้
+ *      · นับสัญญาณไว้ให้ตรวจได้ว่ามันทำงานจริงไหม
  *
- * ⚠️ 2 ข้อจำกัดของไจโรที่แก้ที่โค้ดไม่ได้ ต้องรู้ไว้:
+ * ⚠️ ข้อจำกัดที่แก้ที่โค้ดไม่ได้ ต้องรู้ไว้:
  *   · iOS 13+ ต้องขอสิทธิ์ และ **ขอได้เฉพาะตอนผู้ใช้แตะจอ** — เรียกตอนโหลดหน้าไม่ได้
  *   · ต้องอยู่บน HTTPS — เปิดผ่าน IP วงแลน (http://192.168.x.x) ไจโรจะเงียบสนิท
  *     ไม่มี error ใด ๆ การ์ดแค่ไม่ขยับ → เทสบนมือถือต้อง deploy เอาลิงก์ https
+ *   · ผู้ใช้ปิด Settings → Safari → Motion & Orientation Access ไว้ = ถูกปฏิเสธเงียบ ๆ
+ *     → `gyroStatus().state` จะเป็น 'denied' ให้หน้าเว็บเอาไปบอกได้
  */
 
 const VENDOR = new URL('../../vendor/vanilla-tilt.js', import.meta.url).href;
@@ -35,18 +38,140 @@ function loadTilt() {
   return pending;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ศูนย์กลางการเอียงเครื่อง (ไจโรสโคป)
+   ──────────────────────────────────────────────────────────────────────────
+   ⚠️ ทำไมต้องเขียนเอง ไม่ใช้ของไลบรารี — ผลทดสอบบนเครื่องจริง 2026-08-18
+      เอียงเครื่องแล้วการ์ดไม่ขยับเลย ลากนิ้วขยับปกติ · เจอสามเรื่องซ้อนกัน:
+
+      1. ไลบรารี **สมัครฟังการเอียงตั้งแต่ตอน init()** ซึ่งคือก่อนได้สิทธิ์เสมอ
+         (iOS ขอสิทธิ์ได้เฉพาะตอนผู้ใช้แตะ ซึ่งเกิดทีหลัง) แล้วมันไม่เคยกลับไปสมัครใหม่
+         → ขอสิทธิ์ให้ผ่านก่อน **แล้วค่อยสมัครฟัง** ทางเดียวเท่านั้น
+      2. ผลของการขอสิทธิ์ถูกทิ้ง ไม่มีใครรับ → ถูกปฏิเสธหรือเครื่องปิดเซนเซอร์ไว้
+         ก็เงียบสนิทเหมือนกันหมด แยกไม่ออก → เก็บสถานะ + **นับจำนวนสัญญาณ** ไว้ให้อ่าน
+      3. ไลบรารีไม่รู้จักการหมุนจอ — beta/gamma สลับความหมายเมื่อถือแนวนอน
+         → หมุนแกนตามมุมจอก่อนใช้ทุกครั้ง
+
+   ⚠️ ต้องอยู่บน HTTPS — เปิดผ่าน IP วงแลน (http://192.168.x.x) เซนเซอร์เงียบสนิท
+      ไม่มี error ใด ๆ → เทสบนมือถือต้อง deploy เอาลิงก์ https
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* องศาที่เอียงจากท่าถือปกติแล้วนับว่า "สุดทาง" — แคบไปจะไวจนสั่น กว้างไปจะเอียงเท่าไหร่ก็ไม่ขยับ */
+const GYRO_RANGE = 30;
+/* จำนวนสัญญาณแรกที่ใช้จำ "ท่าถือปกติ" ของคนคนนั้น — คนถือมือถือเอียงเข้าหาตัวราว 30-50°
+   ถ้าไม่จำท่าตั้งต้น การ์ดจะค้างสุดทางตั้งแต่ยังไม่ขยับ แล้วเอียงยังไงก็ไม่กลับ */
+const GYRO_CALIBRATE = 8;
+
+const gyro = {
+  /* idle = ยังไม่ขอ · unsupported = เครื่องไม่มี · denied = ถูกปฏิเสธ/ปิดไว้
+     granted = ได้สิทธิ์แล้วแต่ยังไม่มีสัญญาณ · live = มีสัญญาณเข้ามาจริง */
+  state: 'idle',
+  events: 0,
+  nulls: 0,
+  angle: null,
+  subs: new Set(),
+  zero: null,
+  seen: 0,
+  bound: null,
+  source: null,
+};
+
+function screenAngle() {
+  const a = screen.orientation?.angle;
+  return typeof a === 'number' ? a : (window.orientation || 0);
+}
+
+function onOrientation(ev) {
+  /* เครื่องที่ไม่มีเซนเซอร์ยังยิง event มาได้ แต่ค่าเป็น null ทั้งหมด — ต้องแยกให้ออก
+     ไม่งั้นจะรายงานว่า "ทำงานอยู่" ทั้งที่ไม่มีอะไรเลย */
+  if (ev.gamma === null || ev.beta === null || ev.gamma === undefined) { gyro.nulls += 1; return; }
+  /* ⚠️ แอนดรอยด์บางรุ่นเงียบสนิทกับ 'deviceorientation' แต่ส่ง 'deviceorientationabsolute' มาแทน
+     จึงฟังทั้งสองทาง แล้ว **ยึดทางที่ส่งมาก่อนเป็นทางเดียว** ปล่อยฟังทั้งคู่ไว้
+     เครื่องที่ส่งทั้งสองทางจะขยับเป็นสองเท่าและกระตุก */
+  if (!gyro.source) {
+    gyro.source = ev.type;
+    const other = ev.type === 'deviceorientation' ? 'deviceorientationabsolute' : 'deviceorientation';
+    window.removeEventListener(other, gyro.bound);
+  } else if (ev.type !== gyro.source) {
+    return;
+  }
+  gyro.events += 1;
+  gyro.state = 'live';
+
+  /* หมุนแกนให้ตรงกับสิ่งที่ตาเห็นบนจอ — ถือแนวนอนแล้ว beta/gamma สลับหน้าที่กัน */
+  const th = (screenAngle() * Math.PI) / 180;
+  const cos = Math.cos(th);
+  const sin = Math.sin(th);
+  const sx = ev.gamma * cos + ev.beta * sin;
+  const sy = ev.beta * cos - ev.gamma * sin;
+
+  if (gyro.seen < GYRO_CALIBRATE) {
+    gyro.seen += 1;
+    gyro.zero = gyro.zero
+      ? { x: (gyro.zero.x + sx) / 2, y: (gyro.zero.y + sy) / 2 }
+      : { x: sx, y: sy };
+    return;
+  }
+
+  const fx = 0.5 + (sx - gyro.zero.x) / (GYRO_RANGE * 2);
+  const fy = 0.5 + (sy - gyro.zero.y) / (GYRO_RANGE * 2);
+  gyro.angle = [Math.round(sx - gyro.zero.x), Math.round(sy - gyro.zero.y)];
+  for (const fn of gyro.subs) fn(Math.min(Math.max(fx, 0), 1), Math.min(Math.max(fy, 0), 1));
+}
+
+function startGyro() {
+  if (gyro.bound) return;
+  gyro.bound = onOrientation;
+  window.addEventListener('deviceorientation', gyro.bound, { passive: true });
+  window.addEventListener('deviceorientationabsolute', gyro.bound, { passive: true });
+  if (gyro.state === 'idle') gyro.state = 'granted';
+  /* หมุนเครื่องไปแนวนอน = ท่าถือตั้งต้นเปลี่ยนไปคนละเรื่อง ต้องจำใหม่ */
+  window.addEventListener('orientationchange', recalibrateGyro, { passive: true });
+}
+
+/** ลืมท่าถือเดิมแล้วจำใหม่จากสัญญาณชุดถัดไป */
+export function recalibrateGyro() {
+  gyro.zero = null;
+  gyro.seen = 0;
+}
+
 /**
  * ขอสิทธิ์ใช้ไจโรสโคป — **ต้องเรียกจากใน event ที่ผู้ใช้แตะเท่านั้น**
- * เครื่องที่ไม่ต้องขอ (แอนดรอยด์/คอม) จะได้ true กลับไปเลย
+ * เครื่องที่ไม่ต้องขอ (แอนดรอยด์/คอม) จะเริ่มฟังได้เลย
+ *
+ * ⚠️ `D.requestPermission()` ต้องถูก "เรียก" ในจังหวะเดียวกับที่ผู้ใช้แตะ
+ *    เขียนเป็น async ได้ เพราะตัวฟังก์ชันวิ่งถึงบรรทัด await แบบซิงโครนัสก่อนจะหยุด
+ *    แต่ห้ามเอาไปใส่ใน setTimeout หรือหลัง await อื่น — iOS จะปฏิเสธทันที
  */
 export async function requestGyro() {
   const D = window.DeviceOrientationEvent;
-  if (!D || typeof D.requestPermission !== 'function') return true;
+  if (!D) { gyro.state = 'unsupported'; return false; }
+  if (typeof D.requestPermission !== 'function') { startGyro(); return true; }
   try {
-    return (await D.requestPermission()) === 'granted';
+    const ok = (await D.requestPermission()) === 'granted';
+    if (!ok) { gyro.state = 'denied'; return false; }
+    startGyro();
+    return true;
   } catch {
+    /* โยน error เมื่อไม่ได้เรียกจากการแตะจริง ๆ — ยังขอใหม่ได้ จึงกลับไปเป็น idle */
+    gyro.state = 'idle';
     return false;
   }
+}
+
+/** สถานะไจโรแบบอ่านได้ — หน้าเทสเอาไปแสดงและส่งกลับมาให้ตรวจได้ */
+export function gyroStatus() {
+  return {
+    state: gyro.state,
+    events: gyro.events,
+    nulls: gyro.nulls,
+    angle: gyro.angle,
+    source: gyro.source,
+    needsPermission: typeof window.DeviceOrientationEvent?.requestPermission === 'function',
+    listening: Boolean(gyro.bound),
+    cards: gyro.subs.size,
+    secure: window.isSecureContext !== false,
+  };
 }
 
 const REDUCED = () =>
@@ -88,11 +213,9 @@ export async function attachFoilTilt(card, opt = {}) {
     perspective: 1100,
     glare: true,
     'max-glare': opt.glare ?? 0.16,
-    gyroscope: true,
-    gyroscopeMinAngleX: -32,
-    gyroscopeMaxAngleX: 32,
-    gyroscopeMinAngleY: -32,
-    gyroscopeMaxAngleY: 32,
+    /* ⚠️ ปิดไจโรของไลบรารีทิ้ง — มันสมัครฟังตั้งแต่ init() คือก่อนได้สิทธิ์เสมอ
+       แล้วไม่เคยกลับไปสมัครใหม่ · เราขับเองจากศูนย์กลางข้างบนแทน ทางเดียวจบ */
+    gyroscope: false,
     transition: true,
     reset: true,
   });
@@ -169,17 +292,52 @@ export async function attachFoilTilt(card, opt = {}) {
     setSpot((ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height);
   };
   const onLeave = () => {
+    /* ⚠️ ตอนไจโรทำงานอยู่ ห้ามล้าง — บนมือถือ การยกนิ้วขึ้นยิง pointerleave ทุกครั้ง
+       ถ้าล้างตรงนี้ ผิวจะกระพริบกลับไปท่าพักทุกครั้งที่แตะจอ ทั้งที่เครื่องยังเอียงอยู่ */
+    if (gyro.state === 'live') return;
     for (const v of ['--ft-ex', '--ft-ey', '--ft-px', '--ft-py', '--ft-bx', '--ft-by']) card.style.removeProperty(v);
     lastX = lastY = -999;
   };
 
-  /* ทางเดินที่ 2 — ค่าจากไลบรารี ใช้ตอนหมุนเครื่อง (ไจโร) ซึ่งไม่มีเมาส์ให้อ่าน */
+  /* ทางเดินที่ 2 — ค่าจากไลบรารี ใช้ตอนไลบรารีขยับใบเอง (รวมถึงที่เราป้อนให้ตอนเอียงเครื่อง) */
   const onTilt = (e) => {
     const px = e.detail?.percentageX;
     const py = e.detail?.percentageY;
     if (typeof px !== 'number' || typeof py !== 'number') return;
     setSpot(px / 100, py / 100);
   };
+
+  /* ทางเดินที่ 3 — เอียงเครื่อง
+     ⚠️ ไม่ตั้ง transform เอง แต่ **ป้อนเป็น mousemove ปลอมให้ไลบรารี** เพราะ:
+        · เป็น API สาธารณะล้วน ไม่ต้องแตะข้างในไลบรารี
+        · ได้ทางเดินเดียวกับเมาส์เป๊ะ ซึ่งพิสูจน์แล้วว่าทำงาน (ไท้เห็นใบเอียงตามนิ้วในคลิป)
+        · ไลบรารียิง tiltChange ต่อให้เอง → ผิวฟอยล์ขยับตามโดยไม่ต้องเขียนซ้ำ
+     ต้องส่ง mouseenter นำก่อนหนึ่งครั้ง เพราะไลบรารีวัดตำแหน่ง/ขนาดใบตอนนั้น */
+  let entered = false;
+  const onGyro = (fx, fy) => {
+    const r = card.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    if (!entered) {
+      entered = true;
+      card.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+    }
+    card.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: false,
+      clientX: r.left + fx * r.width,
+      clientY: r.top + fy * r.height,
+    }));
+  };
+  gyro.subs.add(onGyro);
+  /* แอนดรอยด์/คอมไม่ต้องขอสิทธิ์ — เริ่มฟังได้เลย ไม่ต้องรอให้ผู้ใช้แตะก่อน
+     (iOS ต้องรอ requestGyro() จากการแตะจริงเท่านั้น กฎของเครื่องเอง แก้ที่โค้ดไม่ได้) */
+  if (typeof window.DeviceOrientationEvent?.requestPermission !== 'function'
+      && window.DeviceOrientationEvent) {
+    startGyro();
+  }
+  /* จอหมุน/หน้าเลื่อน = ตำแหน่งใบที่ไลบรารีจำไว้เก่าแล้ว ต้องให้มันวัดใหม่ */
+  const remeasure = () => { entered = false; };
+  addEventListener('resize', remeasure, { passive: true });
+  addEventListener('scroll', remeasure, { passive: true });
 
   /* บอกล่วงหน้าว่าตัวเลขจะเปลี่ยนบ่อย → เบราว์เซอร์แยกมันเป็นชั้นของตัวเอง
      การวาดใหม่จึงจำกัดอยู่แค่ตัวเลข ไม่ลามไปวาดทั้งใบ
@@ -200,6 +358,9 @@ export async function attachFoilTilt(card, opt = {}) {
     /** ให้หน้าเว็บอ่านสถานะแสงปัจจุบันไปแสดงได้ ตอนไล่หาสาเหตุ */
     spot: () => [card.style.getPropertyValue('--ft-ex'), card.style.getPropertyValue('--ft-ey')],
     destroy() {
+      gyro.subs.delete(onGyro);
+      removeEventListener('resize', remeasure);
+      removeEventListener('scroll', remeasure);
       card.removeEventListener('pointermove', onPointer);
       card.removeEventListener('pointerleave', onLeave);
       card.removeEventListener('tiltChange', onTilt);

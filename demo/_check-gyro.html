@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตรวจไจโรสโคปอัตโนมัติ</title>
+<!--
+  ตรวจว่า "เอียงเครื่องแล้วการ์ดเอียงตาม" ทำงานจริงหรือไม่ โดยไม่ต้องมีเครื่องจริง
+  วิธี: ยิงสัญญาณการเอียงปลอมเข้าไปทาง event เดียวกับที่เซนเซอร์จริงใช้
+        แล้วอ่านว่าใบเอียงจริงไหม และผิวฟอยล์ขยับตามไหม
+
+  ⚠️ สิ่งที่หน้านี้ยืนยันไม่ได้ (ต้องเครื่องจริงเท่านั้น):
+     · การขอสิทธิ์บน iOS ผ่านหรือไม่
+     · เซนเซอร์ของเครื่องส่งค่ามาจริงหรือเปล่า
+     สิ่งที่ยืนยันได้คือ "ถ้าสัญญาณมาถึง โค้ดแปลงเป็นการเอียงถูกต้อง" ซึ่งคือส่วนที่เคยพัง
+-->
+<link rel="stylesheet" href="../src/styles/voucher.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
+<style>
+  body { margin: 0; background: #b4ada0; font: 14px/1.6 system-ui, sans-serif; }
+  #log { background: #fff; padding: 12px 16px; white-space: pre; font: 12px/1.5 ui-monospace, monospace; }
+  #stage { padding: 24px; max-width: 620px; }
+</style>
+</head>
+<body>
+<div id="log">กำลังตรวจ…</div>
+<div id="stage"></div>
+
+<script type="module">
+import { cardHtml } from '../src/ui/voucher-design.js';
+import { createVoucher } from '../src/index.js';
+import { attachFoilTilt, gyroStatus, recalibrateGyro } from '../src/ui/foil-tilt.js';
+
+const stage = document.getElementById('stage');
+const v = createVoucher({ kind: 'percent', value: 15, title: 'ตรวจไจโร', code: 'SPE-7K4M-92XH', minSpend: 10000 });
+stage.innerHTML = cardHtml(v, { design: 'foilticket', shape: 'ticket' });
+const card = stage.querySelector('.vk-card');
+
+const results = [];
+const check = (name, pass, detail) => results.push({ name, pass: Boolean(pass), detail: String(detail) });
+
+/** ยิงสัญญาณการเอียงปลอม แล้วรอให้เบราว์เซอร์วาดสองเฟรม (ไลบรารีขยับใบใน rAF) */
+let settle = 30;
+function tilt(beta, gamma) {
+  const ev = typeof DeviceOrientationEvent === 'function'
+    ? new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta, gamma, bubbles: false })
+    : Object.assign(new Event('deviceorientation'), { alpha: 0, beta, gamma });
+  /* บางเบราว์เซอร์สร้าง event แล้ว beta/gamma เป็น null — เขียนทับให้แน่ */
+  if (ev.beta !== beta) Object.defineProperty(ev, 'beta', { value: beta });
+  if (ev.gamma !== gamma) Object.defineProperty(ev, 'gamma', { value: gamma });
+  window.dispatchEvent(ev);
+  /* ⚠️ ต้องรอให้ transition ของไลบรารีวิ่งจบก่อนอ่านค่า (speed 480ms)
+     อ่านเร็วกว่านั้นจะได้ค่าระหว่างทาง แล้วเทียบซ้าย-ขวาจะไม่สมมาตร หลอกให้คิดว่าโค้ดผิด */
+  return new Promise((r) => setTimeout(r, settle));
+}
+
+const xOf = () => {
+  const t = getComputedStyle(card).transform;
+  if (t === 'none') return null;
+  const m = t.match(/matrix3d\(([^)]+)\)/);
+  return m ? m[1].split(',').map(Number) : null;
+};
+const foil = () => card.style.getPropertyValue('--ft-ex') + ' ' + card.style.getPropertyValue('--ft-ey');
+
+(async function run() {
+  const att = await attachFoilTilt(card, { force: true });
+  check('ติดตัวเอียงได้', att.state === 'on', att.state);
+
+  const s0 = gyroStatus();
+  check('สมัครฟังการเอียงแล้ว (เครื่องที่ไม่ต้องขอสิทธิ์)', s0.listening, `listening=${s0.listening} state=${s0.state}`);
+
+  /* ป้อนท่าถือปกติให้ครบรอบสอบเทียบก่อน — ช่วงนี้ต้องยังไม่ขยับ */
+  for (let i = 0; i < 8; i++) await tilt(45, 0);
+  /* matrix3d ช่องที่ 9 (ดัชนี 8) คือการหมุนรอบแกนตั้ง — ไม่หมุนต้องเป็น 0 ไม่ใช่ 1 */
+  const rest = xOf();
+  check('ช่วงจำท่าถือ ยังไม่ขยับใบ', rest === null || Math.abs(rest[8]) < 1e-4, `หมุนรอบแกนตั้ง=${rest ? rest[8].toFixed(4) : 'none'}`);
+  settle = 560;   /* ต่อจากนี้ต้องรอ transition จบก่อนอ่านทุกครั้ง */
+
+  const s1 = gyroStatus();
+  check('นับสัญญาณได้', s1.events >= 8, `${s1.events} ครั้ง`);
+  check('สถานะขึ้นเป็นทำงานอยู่', s1.state === 'live', s1.state);
+
+  /* เอียงซ้าย/ขวา (gamma) แล้วใบต้องหมุนคนละทาง */
+  await tilt(45, -22);
+  const left = xOf();
+  const foilLeft = foil();
+  await tilt(45, 22);
+  const right = xOf();
+  const foilRight = foil();
+  check('เอียงซ้าย-ขวาแล้วใบหมุนจริง', left && right && Math.abs(left[8] - right[8]) > 1e-4,
+        `ซ้าย ${left ? left[8].toFixed(4) : '—'} · ขวา ${right ? right[8].toFixed(4) : '—'}`);
+  check('เอียงซ้าย-ขวาแล้วผิวฟอยล์ขยับ', foilLeft !== foilRight, `${foilLeft} → ${foilRight}`);
+
+  /* เงย/ก้ม (beta) ต้องขยับคนละแกนกับซ้าย-ขวา */
+  await tilt(20, 0);
+  const up = xOf();
+  const foilUp = foil();
+  await tilt(70, 0);
+  const down = xOf();
+  const foilDown = foil();
+  check('เงย-ก้มแล้วใบหมุนจริง', up && down && Math.abs(up[9] - down[9]) > 1e-4,
+        `เงย ${up ? up[9].toFixed(4) : '—'} · ก้ม ${down ? down[9].toFixed(4) : '—'}`);
+  check('เงย-ก้มแล้วผิวฟอยล์ขยับ', foilUp !== foilDown, `${foilUp} → ${foilDown}`);
+
+  /* หมุนจอเป็นแนวนอน — แกนต้องสลับตาม ไม่งั้นเอียงเครื่องแล้วใบเอียงผิดทาง */
+  const realAngle = Object.getOwnPropertyDescriptor(window, 'orientation');
+  Object.defineProperty(window, 'orientation', { value: 90, configurable: true });
+  if (screen.orientation) Object.defineProperty(screen.orientation, 'angle', { value: 90, configurable: true });
+  recalibrateGyro();
+  for (let i = 0; i < 8; i++) await tilt(45, 0);
+  await tilt(45, -22);
+  const lsLeft = foil();
+  await tilt(45, 22);
+  const lsRight = foil();
+  /* ถือแนวนอน: เอียงซ้าย-ขวาของ "เครื่อง" กลายเป็นแกนตั้งของ "จอ"
+     จึงต้องเห็น --ft-ey ขยับ ไม่ใช่ --ft-ex */
+  const eyMoved = lsLeft.split(' ')[1] !== lsRight.split(' ')[1];
+  check('หมุนจอแนวนอนแล้วแกนสลับถูก', eyMoved, `${lsLeft} → ${lsRight}`);
+  if (realAngle) Object.defineProperty(window, 'orientation', realAngle);
+
+  /* สัญญาณที่ไม่มีค่า (เครื่องไม่มีเซนเซอร์) ต้องไม่ถูกนับว่าทำงาน */
+  const before = gyroStatus();
+  await tilt(null, null);
+  const after = gyroStatus();
+  check('สัญญาณค่าว่างไม่ถูกนับว่าใช้ได้', after.events === before.events && after.nulls > before.nulls,
+        `events ${before.events}→${after.events} · ว่าง ${before.nulls}→${after.nulls}`);
+
+  const pass = results.filter((r) => r.pass).length;
+  const out = { pass, fail: results.length - pass, results };
+  document.getElementById('log').textContent =
+    results.map((r) => `${r.pass ? 'OK  ' : 'FAIL'}  ${r.name}  —  ${r.detail}`).join('\n') +
+    `\n\nผ่าน ${pass} / ${results.length}`;
+  console.log('MEASURE ' + JSON.stringify(out));
+  window.GYRO_CHECK = out;
+})();
+</script>
+</body>
+</html>

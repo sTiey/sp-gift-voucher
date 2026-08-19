@@ -69,12 +69,12 @@
 </div>
 
 <div class="wrap" id="wrap"></div>
-<div class="wrap" style="padding-top:0"><div class="diag" id="diag">กำลังตรวจ…</div></div>
+<div class="wrap" style="padding-top:0"><div class="diag" id="diag">กำลังตรวจ…</div><div class="diag" id="gyro" style="margin-top:8px">กำลังตรวจไจโร…</div></div>
 
 <script type="module">
 import { cardHtml } from '../src/ui/voucher-design.js';
 import { createVoucher } from '../src/index.js';
-import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
+import { attachFoilTilt, requestGyro, gyroStatus } from '../src/ui/foil-tilt.js';
 
 /* ?light=lx,hz ตรึงสภาพแสงไว้ที่จุดเดียว — ใช้ตอนแคปหน้าจอเทียบว่าดวงแสงขยับจริง
    ปกติ (ไม่ใส่) แสงจะวิ่งตามเมาส์/การเอียงเครื่อง */
@@ -201,11 +201,35 @@ function wire(cards, force) {
   });
 }
 
-/* iOS ขอสิทธิ์ไจโรได้เฉพาะตอนผู้ใช้แตะ — ผูกไว้กับการแตะครั้งแรกของหน้า */
+/* iOS ขอสิทธิ์ไจโรได้เฉพาะตอนผู้ใช้แตะ — ผูกไว้กับการแตะครั้งแรกของหน้า
+   ⚠️ เดิมทิ้งผลลัพธ์ไปเฉย ๆ ทำให้ "ถูกปฏิเสธ" กับ "ไม่มีเซนเซอร์" หน้าตาเหมือนกันหมด
+      คือเงียบสนิท · ตอนนี้รับผลมาแสดง และมีตัวนับสัญญาณคอยยืนยันว่ามันวิ่งจริง */
 addEventListener('pointerdown', function once() {
   removeEventListener('pointerdown', once);
-  requestGyro();
+  requestGyro().then(paintGyro);
 }, { once: true });
+
+const gyroBox = document.querySelector('#gyro');
+const GYRO_MSG = {
+  idle: ['⏳', 'ยังไม่ได้ขอสิทธิ์อ่านการเอียง — <b>แตะที่จอหนึ่งครั้ง</b>'],
+  unsupported: ['—', 'เครื่องนี้ไม่มีเซนเซอร์การเอียง (คอมส่วนใหญ่เป็นแบบนี้ ปกติ)'],
+  denied: ['🚫', 'เครื่อง<b>ปฏิเสธ</b>การอ่านการเอียง — เปิดที่ ตั้งค่า → Safari → Motion &amp; Orientation Access แล้วโหลดหน้าใหม่'],
+  granted: ['…', 'ได้สิทธิ์แล้ว <b>แต่ยังไม่มีสัญญาณเข้ามา</b> — ลองขยับเครื่องดู'],
+  live: ['✅', '<b>ไจโรทำงานอยู่</b>'],
+};
+
+function paintGyro() {
+  const g = gyroStatus();
+  const [icon, msg] = GYRO_MSG[g.state] || ['?', g.state];
+  const extra = g.state === 'live'
+    ? ` · รับสัญญาณแล้ว <b>${g.events}</b> ครั้ง · เอียงอยู่ ${g.angle ? g.angle[0] + '°, ' + g.angle[1] + '°' : '—'}`
+    : (g.nulls ? ` · มีสัญญาณเข้ามา ${g.nulls} ครั้งแต่ค่าว่างเปล่า (เครื่องไม่มีเซนเซอร์จริง)` : '');
+  const warn = g.secure ? '' : ' · <b>⚠️ หน้านี้ไม่ได้เปิดผ่าน https</b> เซนเซอร์จะเงียบเสมอ';
+  gyroBox.dataset.bad = String(g.state === 'denied' || !g.secure);
+  gyroBox.innerHTML = `${icon} ${msg}${extra}${warn}`;
+}
+paintGyro();
+setInterval(paintGyro, 500);
 
 document.querySelector('#seg').addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
