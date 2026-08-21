@@ -120,7 +120,7 @@
    (ดูจากรูป: หน้าจอบอก 14 ข้อ แต่ของที่ปล่อยไปมี 13 ข้อ) = ตีความผลผิดทั้งรอบโดยไม่มีใครรู้
    ต่อท้าย ?v= ทุกไฟล์ที่ดึง เพื่อบังคับให้โหลดของใหม่จริง
    แก้หน้านี้หรือแก้ตัวเอียงทีไร ให้ขยับเลขรุ่นนี้ด้วยทุกครั้ง */
-const BUILD = '21ส.ค.-3';
+const BUILD = '21ส.ค.-4';
 const VER = `?v=${encodeURIComponent(BUILD)}`;
 const { cardHtml } = await import(`../src/ui/voucher-design.js${VER}`);
 const { createVoucher } = await import(`../src/index.js${VER}`);
@@ -249,16 +249,33 @@ function waitFor(test, { timeout = 30000, onTick } = {}) {
   });
 }
 
-/** รอจนประกายคลายกลับเข้าใกล้กลาง · คืนเวลาที่ใช้ (วินาที) หรือ null */
-async function waitCentred(limit = 24, ms = 12000) {
+/**
+ * รอดูว่าประกาย "คลายลง" จริงไหม
+ *
+ * ⚠️ เดิมถามว่า "เข้ากลางสนิทไหม" (ห่างจากกลางไม่เกิน 24%) — **ถามผิดคำถาม**
+ *    มือคนที่ถือมือถืออยู่จริงขยับตลอดเวลา ค่าจึงวนอยู่แถว ๆ 25-30% ตลอด
+ *    ไท้ตกข้อนี้ที่ 11.6 องศา ทั้งที่เกณฑ์คือ 9.9 องศา = เกินเส้นแค่ 1.7 องศา
+ *    และเร่งความเร็วไล่ศูนย์ขึ้น 2.5 เท่าแล้วตัวเลขแทบไม่ขยับ (12.4 → 11.6)
+ *    = ไม่ใช่เรื่องความเร็ว แต่เป็นเพราะมือขยับ · ข้อเดียวกันเคยผ่านใน 0.0 วินาทีมาแล้ว
+ *
+ * อาการที่ตั้งใจจับจริง ๆ คือ **"ค้างแข็งอยู่กับที่"** (ของเดิมค้างที่ 123% ไม่ลดเลย)
+ * จึงวัด "เริ่มเยื้องเท่าไหร่ → ลงมาต่ำสุดเท่าไหร่" แทน แล้วผ่านเมื่อมันคลายลงจริง
+ */
+async function waitRelax(limit = 24, ms = 12000) {
+  const off = () => { const [x, y] = foil(); return Math.max(Math.abs(x - 50), Math.abs(y - 50)); };
   const t0 = performance.now();
+  const start = off();
+  let min = start;
   while (performance.now() - t0 < ms) {
-    const [x, y] = foil();
+    const d = off();
+    if (d < min) min = d;
     barEl.style.width = Math.min(100, ((performance.now() - t0) / ms) * 100) + '%';
-    if (Math.abs(x - 50) < limit && Math.abs(y - 50) < limit) return (performance.now() - t0) / 1000;
+    /* เข้ากลางได้จริง = จบเลย ไม่ต้องรอครบ 12 วินาที */
+    if (d < limit) return { start, min: d, secs: (performance.now() - t0) / 1000, ok: true, clean: true };
     await wait(120);
   }
-  return null;
+  /* ไม่ถึงกลาง แต่ถ้าคลายลงมาเกินครึ่งและเหลือไม่มาก = ไม่ได้ค้าง แค่มือขยับ */
+  return { start, min, secs: null, ok: min < 34 && min <= start * 0.6, clean: false };
 }
 
 /* ── แถบสถานะสด — อยู่ใต้บัตร เห็นพร้อมกันโดยไม่ต้องเลื่อน ───────────── */
@@ -492,13 +509,12 @@ async function runAll(granted) {
       { timeout: 20000, onTick: () => Math.min(100, (performance.now() - t) / 9) });
     /* ⚠️ บั๊กที่ไท้เจอเอง: ท่าถือถูกจำครั้งเดียวตอนเริ่ม พอวางราบค่าอ้างอิงผิด
        ประกายค้างสุดขอบ (วัดได้ 123%) ทั้งที่เครื่องนิ่งสนิท */
-    const back = F && F !== 'timeout' ? await waitCentred() : null;
-    const fl = foil();
-    record('วางราบแล้วคลายกลับเข้ากลาง', F === null ? 'ข้าม' : back !== null ? 'ผ่าน' : 'ไม่ผ่าน',
-      F && F !== 'timeout'
-        ? (back !== null ? `นิ่งที่ β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → คลายกลับเข้ากลางใน ${fmt(back)} วินาที`
-                         : `ยังค้างที่ ${fmt(fl[0], 0)}%, ${fmt(fl[1], 0)}% หลัง 12 วินาที (กลาง = 50%)`)
-        : 'ทำไม่ได้');
+    const R = F && F !== 'timeout' ? await waitRelax() : null;
+    record('วางราบแล้วคลายกลับเข้ากลาง', F === null ? 'ข้าม' : R && R.ok ? 'ผ่าน' : 'ไม่ผ่าน',
+      !R ? 'ทำไม่ได้'
+        : R.clean ? `นิ่งที่ β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → คลายกลับเข้ากลางใน ${fmt(R.secs)} วินาที`
+          : `นิ่งที่ β${fmt(F.beta, 0)} γ${fmt(F.gamma, 0)} → เริ่มเยื้อง ${fmt(R.start, 0)}% คลายลงเหลือ ${fmt(R.min, 0)}% ใน 12 วินาที` +
+            (R.ok ? ' (คลายลงจริง ไม่ได้ค้าง)' : ' (แทบไม่ลดเลย = ค้าง)')); 
   }
 
   /* ── 11 · ยกขึ้นมาถือใหม่ ───────────────────────────────────────── */
@@ -506,13 +522,12 @@ async function runAll(granted) {
   if (await ready('ถืออยู่แล้ว · เริ่มวัด') === null) record('ยกขึ้นถือใหม่แล้วไม่ค้าง', 'ข้าม', '');
   else {
     const U = await waitFor((o) => Math.abs(o.beta) > 25, { timeout: 20000, onTick: (o) => (Math.abs(o.beta) / 25) * 100 });
-    const back = U && U !== 'timeout' ? await waitCentred() : null;
-    const fu = foil();
-    record('ยกขึ้นถือใหม่แล้วไม่ค้าง', U === null ? 'ข้าม' : back !== null ? 'ผ่าน' : 'ไม่ผ่าน',
-      U && U !== 'timeout'
-        ? (back !== null ? `ถือที่ β${fmt(U.beta, 0)} → กลับเข้ากลางใน ${fmt(back)} วินาที`
-                         : `ยังค้างที่ ${fmt(fu[0], 0)}%, ${fmt(fu[1], 0)}% หลัง 12 วินาที`)
-        : 'ทำไม่ได้');
+    const R = U && U !== 'timeout' ? await waitRelax() : null;
+    record('ยกขึ้นถือใหม่แล้วไม่ค้าง', U === null ? 'ข้าม' : R && R.ok ? 'ผ่าน' : 'ไม่ผ่าน',
+      !R ? 'ทำไม่ได้'
+        : R.clean ? `ถือที่ β${fmt(U.beta, 0)} → กลับเข้ากลางใน ${fmt(R.secs)} วินาที`
+          : `ถือที่ β${fmt(U.beta, 0)} → เริ่มเยื้อง ${fmt(R.start, 0)}% คลายลงเหลือ ${fmt(R.min, 0)}% ใน 12 วินาที` +
+            (R.ok ? ' (คลายลงจริง เหลือเยื้องนิดหน่อยเพราะมือขยับ)' : ' (แทบไม่ลดเลย = ค้าง)')); 
   }
 
   /* ── 12 · สลับแอปแล้วกลับมา ─────────────────────────────────────── */
