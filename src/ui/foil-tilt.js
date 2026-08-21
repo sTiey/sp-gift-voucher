@@ -420,6 +420,19 @@ export async function attachFoilTilt(card, opt = {}) {
   const onGyro = (sx, sy) => {
     const r = card.getBoundingClientRect();
     if (!r.width || !r.height) return;
+    /* ⚠️ ต้องคูณด้วย **ขนาดใบก่อนถูกหมุน/ย่อ** (offsetWidth) ไม่ใช่กล่องครอบที่วัดได้ (rect)
+       เพราะไลบรารีคิดเปอร์เซ็นต์จาก offsetWidth เสมอ — ใช้คนละกล่องกันเมื่อไหร่ค่าเพี้ยนทันที
+       และไลบรารี **ตัดค่าที่เกิน 0-1 ทิ้ง** ค่าที่เพี้ยนจึงไปกองอยู่ที่ขอบแล้วนิ่งสนิท
+
+       ⚠️ ไท้เจอจริงบน iPhone 2026-08-21: โหมดเต็มจอ (ใบถูกหมุน 90°) เอียงแล้วประกายไม่ขยับเลย
+          ใบยาว 699 กว้าง 269 พอหมุนแล้วกล่องครอบกลายเป็น 289×728 = สลับด้านกันพอดี
+          แกนหนึ่งถูกบีบเหลือ 41% อีกแกนถูกขยาย 2.7 เท่าแล้วโดนตัดตกขอบเกือบทั้งช่วง
+          → เอียงสุดแรงถึงจะเห็นขยับ (เครื่องพัฒนาเลยผ่านมาตลอด) แต่เอียงพอประมาณแบบคนใช้จริง = นิ่งสนิท
+          วัดได้ (ใบหมุน 90° เอียงพอประมาณ): ของเดิม 49% → หลังแก้เต็มช่วง
+       ของใบที่ไม่ได้หมุนก็ดีขึ้นด้วย เพราะไลบรารีย่อใบ 1.02 เท่าและเอียงในสามมิติ
+       กล่องครอบจึงใหญ่กว่าใบจริงเสมอ ปลายทั้งสองข้างเคยโดนตัดทิ้งไปนิดหนึ่ง */
+    const w = card.offsetWidth || r.width;
+    const h = card.offsetHeight || r.height;
     const [fx, fy] = toLocal(sx, sy);
     if (!entered) {
       entered = true;
@@ -427,8 +440,8 @@ export async function attachFoilTilt(card, opt = {}) {
     }
     card.dispatchEvent(new MouseEvent('mousemove', {
       bubbles: false,
-      clientX: r.left + fx * r.width,
-      clientY: r.top + fy * r.height,
+      clientX: r.left + fx * w,
+      clientY: r.top + fy * h,
     }));
   };
   gyro.subs.add(onGyro);

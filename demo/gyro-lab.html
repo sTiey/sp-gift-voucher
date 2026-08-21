@@ -120,7 +120,7 @@
    (ดูจากรูป: หน้าจอบอก 14 ข้อ แต่ของที่ปล่อยไปมี 13 ข้อ) = ตีความผลผิดทั้งรอบโดยไม่มีใครรู้
    ต่อท้าย ?v= ทุกไฟล์ที่ดึง เพื่อบังคับให้โหลดของใหม่จริง
    แก้หน้านี้หรือแก้ตัวเอียงทีไร ให้ขยับเลขรุ่นนี้ด้วยทุกครั้ง */
-const BUILD = '21ส.ค.-1';
+const BUILD = '21ส.ค.-2';
 const VER = `?v=${encodeURIComponent(BUILD)}`;
 const { cardHtml } = await import(`../src/ui/voucher-design.js${VER}`);
 const { createVoucher } = await import(`../src/index.js${VER}`);
@@ -374,8 +374,14 @@ async function runAll(granted) {
     const D = U === null ? null : await waitFor((o) => o.dy > 20, { onTick: (o) => (o.dy / 20) * 100 });
     const vs = peakY();
     const hs = peakX();
-    record('เงย-ก้ม + ทิศประกาย', D && D !== 'timeout' && vs > 40 && vs > hs ? 'ผ่าน' : (U === null || D === null) ? 'ข้าม' : 'ไม่ผ่าน',
-      `ประกายกวาดแนวตั้ง ${fmt(vs, 0)}% · แนวนอน ${fmt(hs, 0)}% (แนวตั้งต้องมากกว่า)`);
+    /* ⚠️ เดิมบังคับว่า "แนวตั้งต้องมากกว่าแนวนอน" — เปราะเกินไป
+       คนจริงเอียงหน้า-หลังแล้วข้อมือบิดไปด้วยเสมอ แกนนอนจึงขยับตามไปด้วย
+       (ไท้เจอ 2026-08-21: แนวตั้ง 125% แนวนอน 145% → ตกทั้งที่ทิศไม่ได้ผิด)
+       ทิศของแกนถูกพิสูจน์ด้วยข้อเอียงซ้าย-ขวาอยู่แล้ว (115% ต่อ 26% = ชัดเจน)
+       ข้อนี้จึงดูแค่ว่า "เงย-ก้มแล้วประกายวิ่งแนวตั้งจริงไหม" พอ */
+    record('เงย-ก้ม + ทิศประกาย', D && D !== 'timeout' && vs > 40 ? 'ผ่าน' : (U === null || D === null) ? 'ข้าม' : 'ไม่ผ่าน',
+      `ประกายกวาดแนวตั้ง ${fmt(vs, 0)}%` +
+      (hs > vs ? ` · แนวนอนขยับ ${fmt(hs, 0)}% ด้วย (เอียงพร้อมกันสองแกน ไม่ใช่ความผิดพลาด)` : ` · แนวนอน ${fmt(hs, 0)}%`));
     peak = null;
   }
 
@@ -410,12 +416,25 @@ async function runAll(granted) {
     '<b>หมุนเครื่องกลับเป็นแนวตั้งก่อน</b> แล้วค่อยกดปุ่ม<br>บัตรจะขึ้นเต็มจอ (นอนอยู่) จากนั้น<b>เอียงเครื่องซ้าย-ขวาแรง ๆ</b> สัก 2-3 ที');
   if (await ready('แนวตั้งแล้ว · เปิดเต็มจอ') === null) record('เต็มจอ · แกนหมุนตามบัตร', 'ข้าม', '');
   else {
+    /* ⚠️ ข้อนี้พังบน iPhone ของไท้สองรอบติด (ได้ 0%/0%) แต่เครื่องพัฒนาทำซ้ำไม่ได้เลย
+       แม้ย่อจอให้เท่ากันเป๊ะ → ฝัง "เครื่องวัดย่อย" ไว้ในตัว เก็บทุกข้อต่อของห่วงโซ่
+       จะได้รู้จากรอบเดียวว่าขาดตรงไหน: ติดตั้งไม่ขึ้น / ใบไม่มีขนาด / ใบไม่ขยับ / ตัววัดไม่ทำงาน */
+    const dbg = { ready: 0, state: [], everSet: false };
     let fsTilt = null;
+    /* ⚠️ openCardFullscreen เรียก onReady สองครั้งตอนเปิด (ครั้งแรกจาก layout ครั้งที่สองตอนจบ)
+       ถ้าไม่กันไว้จะติดตั้งตัวเอียงซ้อนสองชุดบนใบเดียว (เคยเป็นแบบนั้นมาตลอด) */
+    let attaching = false;
     const fs = openCardFullscreen(cardHtml(createVoucher(V), { design: 'foilticket', shape: 'ticket', art: 'fence' }), {
       shape: 'ticket',
       onReady: (c, rot) => {
+        dbg.ready += 1;
+        dbg.turn = rot;
         if (fsTilt) { fsTilt.setRotate?.(rot ? 90 : 0); return; }
-        attachFoilTilt(c, { rotate: rot ? 90 : 0, force: true }).then((r) => { fsTilt = r; });
+        if (attaching) return;
+        attaching = true;
+        attachFoilTilt(c, { rotate: rot ? 90 : 0, force: true })
+          .then((r) => { fsTilt = r; dbg.state.push((r && r.state) || 'ไม่มีค่า'); })
+          .catch((e) => dbg.state.push('พัง: ' + (e && e.message)));
       },
     });
     const fsFoil = () => [parseFloat(fs.card.style.getPropertyValue('--ft-ex')) || 50,
@@ -425,14 +444,34 @@ async function runAll(granted) {
        วัดหัวเทียบท้ายได้ 18%/24% ต่ำกว่าที่ตาเห็นจริง เพราะตัวไล่ศูนย์ดึงกลับไปแล้ว */
     const seenFs = cardSeen(fs.card);
     resetPeak(fsFoil);
+    /* ตัววัดสำรอง — อ่านเองทุก 60 ms ไม่ผ่านตัววัดหลัก
+       ถ้าตัวนี้เห็นใบขยับแต่ตัวหลักได้ 0 = ตัววัดหลักพัง ไม่ใช่ตัวเอียง */
+    let sxlo = 999, sxhi = -999, sylo = 999, syhi = -999, dxMax = 0;
+    const spy = setInterval(() => {
+      const raw = fs.card.style.getPropertyValue('--ft-ex');
+      if (raw) dbg.everSet = true;
+      const [x, y] = fsFoil();
+      sxlo = Math.min(sxlo, x); sxhi = Math.max(sxhi, x);
+      sylo = Math.min(sylo, y); syhi = Math.max(syhi, y);
+      if (latest) dxMax = Math.max(dxMax, Math.abs(latest.dx));
+    }, 60);
     /* รับการเอียง "แกนไหนก็ได้" — เดิมรอเฉพาะแกนซ้าย-ขวา ถ้าผู้ทดสอบเอียงคนละแกน
        ข้อนี้จะนั่งรอจนหมดเวลา 30 วินาทีแล้วรายงาน 0% เหมือนของจริงพัง (ไท้เจอ 2026-08-19) */
     const FL = await waitFor((o) => Math.abs(o.dx) > 20 || Math.abs(o.dy) > 20,
       { onTick: (o) => (Math.max(Math.abs(o.dx), Math.abs(o.dy)) / 20) * 100 });
+    clearInterval(spy);
     const wasRot = fs.el.dataset.rotated === 'true';
     const dEx = peakX();
     const dEy = peakY();
     peak = null;
+    const rc = fs.card.getBoundingClientRect();
+    const g = gyroStatus();
+    record('เต็มจอ · ข้อมูลดิบไว้ไล่เหตุ', 'ข้อมูล',
+      `ติดตั้ง ${dbg.state.join('+') || 'ยังไม่เสร็จ'} · onReady ${dbg.ready} ครั้ง · สั่งหมุน ${dbg.turn}` +
+      ` · ใบ ${Math.round(rc.width)}x${Math.round(rc.height)} · ตัวรับสัญญาณ ${g.cards} ใบ` +
+      ` · เคยตั้งค่าประกาย ${dbg.everSet ? 'เคย' : 'ไม่เคยเลย'}` +
+      ` · ตัววัดสำรอง นอน ${fmt(sxhi - sxlo, 0)}% ตั้ง ${fmt(syhi - sylo, 0)}%` +
+      ` · เอียงจริงสุด ${fmt(dxMax, 0)}°`);
     record('เต็มจอ · แกนหมุนตามบัตร',
       FL === null ? 'ข้าม'
         : !seenFs ? 'ไม่ผ่าน'
