@@ -118,6 +118,7 @@ import {
   createVoucher, generateCode, KINDS, SEGMENTS, SKINS, t,
 } from '../src/index.js';
 import { cardHtml } from '../src/ui/voucher-design.js';
+import { mountExplain } from './explain.js';
 
 const $ = (s) => document.querySelector(s);
 mountThemeToggle($('#themeSlot'));
@@ -206,6 +207,12 @@ $('#makeBtn').addEventListener('click', async () => {
 });
 
 paint();
+
+mountExplain([
+  { sel: '#count', text: 'ปั๊มกี่ใบก็ได้ <b>รหัสไม่ซ้ำกันทั้งชุด</b> · ระบบตรวจความถูกต้องทุกใบก่อนบันทึก ถ้าใบไหนข้อมูลไม่ครบจะหยุดทั้งชุดและไม่บันทึกอะไรเลย' },
+  { sel: '#makeBtn', text: 'กดแล้ว <b>บัตรเกิดขึ้นจริงในระบบทันที</b> สถานะ “ออกแล้ว” พร้อมให้ลูกค้าใช้ · ได้รายการรหัสทั้งชุดให้ดาวน์โหลดไปส่งต่อ' },
+  { sel: '#preview', text: 'ใบตัวอย่างนี้ <b>อัปเดตสดตามฟอร์ม</b> กรอกอะไรเห็นทันที — แต่ยังไม่ถูกบันทึกจนกว่าจะกดสร้าง' },
+]);
 </script>
 </body>
 </html>

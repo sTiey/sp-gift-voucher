@@ -41,6 +41,7 @@ import {
 import { cardHtml } from '../src/ui/voucher-design.js';
 import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
 import { openCardFullscreen } from '../src/ui/card-fullscreen.js';
+import { mountExplain } from './explain.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -225,6 +226,12 @@ function startLive(v) {
   tick();
   liveTimer = setInterval(tick, 1000);
 }
+
+mountExplain([
+  { sel: '#fsSlot', text: 'กดแล้ว <b>บัตรใบยาวหมุน 90° เต็มจอให้เอง</b> แบบแอปบัตรประชาชน — ไม่ต้องหมุนมือถือ · เอียงเครื่องแล้วประกายทองวิ่งตามการเอียงจริง ไม่ใช่แอนิเมชันวนลูป' },
+  { sel: '#actionSlot', text: 'ปุ่มใช้สิทธิ์ต้อง <b>กดค้าง 1 วินาที</b> เพราะกดแล้วย้อนไม่ได้ ปล่อยนิ้วก่อนครบ = ยกเลิก ไม่มีอะไรเกิดขึ้น · ใช้แล้วบัตรจะย้ายไปแท็บ “ใช้แล้ว” ในกระเป๋าทันที' },
+  { sel: '#detailSlot', text: '<b>QR สร้างในเครื่องนี้เอง</b> ไม่ต้องพึ่งอินเทอร์เน็ต — บัตรจึงเปิดได้แม้สัญญาณแย่หน้างาน และไม่ต้องส่งรหัสของลูกค้าออกไปให้เว็บภายนอกวาดให้' },
+]);
 </script>
 </body>
 </html>

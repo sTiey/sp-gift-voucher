@@ -37,6 +37,7 @@
 import { getService, DEMO_CUSTOMER, cardOpts } from './app.js';
 import { sortForWallet, deriveStatus, t, CLOSED_STATUSES } from '../src/index.js';
 import { cardHtml } from '../src/ui/voucher-design.js';
+import { mountExplain } from './explain.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -89,6 +90,11 @@ $('#list').addEventListener('click', (e) => {
 });
 
 paint();
+
+mountExplain([
+  { sel: '#tabs', text: 'สถานะของทุกใบ <b>คำนวณสดทุกครั้งที่เปิดหน้า</b> จากวันหมดอายุกับโควตาที่เหลือ — ไม่ต้องมีระบบเบื้องหลังคอยไล่อัปเดตบัตรเป็นหมื่นใบทุกคืน ซึ่งเป็นจุดที่พังบ่อยและช้า' },
+  { sel: '#list', text: 'เรียง <b>ใบที่ใกล้หมดอายุขึ้นก่อน</b> ให้เอง · แตะใบไหนก็เข้าไปดูใบนั้นเต็ม ๆ ได้' },
+]);
 </script>
 </body>
 </html>
