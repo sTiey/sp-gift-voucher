@@ -60,7 +60,28 @@
 
   /* ตาราง */
   .tbl { width: 100%; overflow-x: auto; margin-block-start: 12px; }
-  table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 13.5px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  @media (min-width: 620px) { table { min-width: 480px; } }
+
+  /* ⚠️ มือถือไม่ควรต้องเลื่อนตารางไปข้าง ๆ ตอนยืนพรีเซนต์ — พับเป็นการ์ดทีละแถวแทน
+     ใช้ nth-child ติดป้ายหัวข้อ จะได้ไม่ต้องไปแก้ทุก <td> ในหน้า */
+  @media (max-width: 619px) {
+    .tbl { overflow-x: visible; }
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    tbody tr { display: block; background: #191d24; border: 1px solid var(--line);
+               border-radius: 9px; padding: 12px 14px; margin-block-end: 8px; }
+    tbody td { display: block; border: 0; padding: 2px 0; }
+
+    .t-reason td:nth-child(1) { color: var(--gold); font: 600 11px/1 'IBM Plex Mono', monospace;
+                                letter-spacing: .1em; margin-block-end: 3px; }
+    .t-reason td:nth-child(2) { font-weight: 600; font-size: 14.5px; }
+    .t-reason td:nth-child(3)::before { content: 'ระบบขึ้นว่า · '; color: var(--gold-soft); font-size: 12px; }
+
+    .t-group td:nth-child(1) { font-weight: 700; font-size: 15px; color: var(--gold-soft); }
+    .t-group td:nth-child(2)::before { content: 'ทดสอบ '; color: var(--dim); font-size: 12.5px; }
+    .t-group td:nth-child(2)::after { content: ' เรื่อง'; color: var(--dim); font-size: 12.5px; }
+    .t-group td:nth-child(3)::before { content: 'เช่น · '; color: var(--dim); font-size: 12.5px; }
+  }
   th, td { text-align: start; padding: 9px 10px; border-block-end: 1px solid var(--line); vertical-align: top; }
   th { color: var(--gold-soft); font-weight: 600; white-space: nowrap; }
   td code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--dim); }
@@ -106,7 +127,8 @@
     <a href="#sku"><b>03</b>ใส่โค้ดสินค้าแล้วเกิดอะไร (พร้อมตัวอย่างคิดเงิน)</a>
     <a href="#reject"><b>04</b>16 เหตุผลที่ระบบไม่ให้ใช้ · ขึ้นข้อความว่าอะไร</a>
     <a href="#qa"><b>05</b>คำถามที่เจ้านายน่าจะถาม</a>
-    <a href="#gap"><b>06</b>สิ่งที่ยังไม่มี — พูดก่อนถูกถาม</a>
+    <a href="#test"><b>06</b>ทดสอบอะไรไปบ้าง · 49 เรื่อง 13 หมวด</a>
+    <a href="#gap"><b>07</b>สิ่งที่ยังไม่มี — พูดก่อนถูกถาม</a>
   </nav>
 
   <!-- ═══════════════════════════════════════════════════════ -->
@@ -285,7 +307,7 @@
     เรียงตามลำดับข้างล่างนี้ (บนสุด = สำคัญสุด)</p>
 
   <div class="tbl">
-    <table>
+    <table class="t-reason">
       <thead><tr><th>#</th><th>เกิดเมื่อ</th><th>ข้อความที่ขึ้นจริง</th></tr></thead>
       <tbody>
         <tr><td>1</td><td>พิมพ์รหัสผิด (ตัวตรวจทานไม่ตรง)</td><td>รหัสไม่ถูกต้อง พิมพ์ตกหรือเกินหรือเปล่า</td></tr>
@@ -436,7 +458,39 @@
   </details>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <h2 id="gap"><span class="n">06</span>สิ่งที่ยังไม่มี</h2>
+  <h2 id="test"><span class="n">06</span>ทดสอบอะไรไปบ้าง</h2>
+  <p class="lead">ถ้าเจ้านายถามว่า “มั่นใจได้ยังไงว่ามันไม่พัง” — ตอบด้วยตารางนี้
+    แล้วเปิดหน้าชุดทดสอบกดโชว์สดได้เลย</p>
+
+  <div class="tbl">
+    <table class="t-group">
+      <thead><tr><th>หมวด</th><th>กี่เรื่อง</th><th>ตัวอย่างเรื่องที่ทดสอบ</th></tr></thead>
+      <tbody>
+        <tr><td>ชนิดสิทธิ์</td><td>5</td><td>ลด % · ลดเป็นเงิน · ราคาพิเศษ · ของแถม · ส่งฟรี</td></tr>
+        <tr><td>เพดาน / ขั้นต่ำ</td><td>5</td><td>ลด 15% แต่ชนเพดาน 2,000 · ยอดเท่าขั้นต่ำพอดี · บัตรใหญ่กว่าบิล</td></tr>
+        <tr><td>เวลา</td><td>4</td><td>ยังไม่ถึงวันเริ่ม · หมดอายุแล้ว · วันสุดท้ายยังใช้ได้ · ไม่มีวันหมด</td></tr>
+        <tr><td>กลุ่มลูกค้า</td><td>5</td><td>บัตรพาร์ทเนอร์ให้คนทั่วไปใช้ · บัตรผูกชื่อคนอื่นถือมาใช้</td></tr>
+        <tr><td>โควตา</td><td>4</td><td>ใบเดียวจบ · แจก 2 สิทธิ์ใครมาก่อน · โค้ดสาธารณะ · คนละ 2 ครั้ง</td></tr>
+        <tr><td>ช่องทาง / สาขา</td><td>2</td><td>เฉพาะหน้าร้าน · เฉพาะบางสาขา</td></tr>
+        <tr><td>สินค้าเฉพาะ</td><td>3</td><td>ลดเฉพาะหมวดราวบันได · ตะกร้าไม่มีของที่เข้าเงื่อนไข · ยกเว้นบางตัว</td></tr>
+        <tr><td>สถานะ</td><td>5</td><td>ถูกยกเลิก · จองแล้วจ่ายสำเร็จ · จองแล้วยกเลิก · จองค้างแล้วปิดหนี</td></tr>
+        <tr><td>รหัส</td><td>5</td><td>พิมพ์ผิด 1 ตัว · ไม่ใส่ขีด · พิมพ์ตัวเล็ก · พิมพ์ตัวที่คนสับสน</td></tr>
+        <tr><td>รหัสยืนยันสด</td><td>3</td><td>อ่านเลขทัน · อ่านช้าข้ามรอบ · ใช้ภาพหน้าจอเก่า</td></tr>
+        <tr><td>เลือกให้อัตโนมัติ</td><td>2</td><td>มีบัตร 3 ใบ เลือกใบที่คุ้มสุด · ไม่มีใบไหนใช้ได้เลย</td></tr>
+        <tr><td>QR</td><td>3</td><td>ลิงก์ปกติ · ภาษาไทย · ข้อความยาวเกินที่รับได้</td></tr>
+        <tr><td>เส้นทางเต็ม</td><td>3</td><td>ออกบัตร 3 ใบแล้วใช้จริงหน้าร้าน · กระเป๋าแยกใบที่ใช้ได้/จบแล้ว</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <b>จุดที่ควรพูด:</b> เครื่องมือทดสอบ <b>ตรวจตัวเองด้วย</b> ว่ายังมีชนิดสิทธิ์ สถานะ
+    หรือเหตุผลปฏิเสธข้อไหนที่<b>ยังไม่เคยถูกทดสอบเลย</b> — ตอนนี้<b>ไม่มีข้อไหนตกหล่น</b>
+    <br><br>และชุดทดสอบนี้เป็นไฟล์เดียวกับที่หน้าเว็บใช้แสดง — คนกดดูกับเครื่องรันเอง
+    <b>ใช้ของชุดเดียวกัน</b> ผลจึงตรงกันเสมอ ไม่มีทางที่หน้าเว็บบอกว่าผ่านแต่จริง ๆ ไม่ผ่าน
+  </div>
+
+  <h2 id="gap"><span class="n">07</span>สิ่งที่ยังไม่มี</h2>
   <p class="lead">พูดเองก่อนถูกถาม จะน่าเชื่อถือกว่าถูกจับได้</p>
 
   <details class="honest" open>
