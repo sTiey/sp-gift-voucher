@@ -10,7 +10,9 @@
 <link rel="stylesheet" href="../src/tokens/skin-ink.css">
 <link rel="stylesheet" href="../src/tokens/skin-voltage.css">
 <link rel="stylesheet" href="../src/styles/base.css">
-<link rel="stylesheet" href="../src/styles/voucher.css">
+<!-- ดีไซน์บัตรชุดใหม่ — หน้าร้านไม่ต้องมีเอฟเฟกต์เอียง เป็นเครื่องมือทำงาน ต้องนิ่งและเร็ว -->
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -49,11 +51,12 @@
 </div>
 
 <script type="module">
-import { getService, mountThemeToggle, toast } from './app.js';
+import { getService, mountThemeToggle, toast, cardOpts, q } from './app.js';
 import {
-  formatCode, evaluate, primaryReason, verifyLiveCode, voucherCardHtml,
+  formatCode, evaluate, primaryReason, verifyLiveCode,
   t, money, num,
 } from '../src/index.js';
+import { cardHtml } from '../src/ui/voucher-design.js';
 
 const $ = (s) => document.querySelector(s);
 mountThemeToggle($('#themeSlot'));
@@ -78,6 +81,15 @@ $('#codeIn').addEventListener('input', (e) => {
   }
 });
 $('#codeIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') check(); });
+
+/* เปิดมาพร้อมรหัสได้เลย — หน้าเปิดงาน (present.html) ส่งรหัสมาให้ตอนเดโม
+   จะได้ไม่ต้องพิมพ์รหัสยาว ๆ ต่อหน้าคนดู */
+{
+  const pre = q('c', '');
+  if (pre) $('#codeIn').value = formatCode(pre);
+  const total = q('total', '');
+  if (total) $('#totalIn').value = total;
+}
 $('#checkBtn').addEventListener('click', check);
 
 let current = null;
@@ -100,7 +112,7 @@ async function check() {
         <div class="verdict__head">${t('staff.resultInvalid')}</div>
         <div class="verdict__body">${t(`reject.${primaryReason(res.reasons)}`)}</div>
       </div>
-      ${res.voucher ? `<div style="margin-block-start:var(--vk-space-4)">${voucherCardHtml(res.voucher, { layout: 'strip' })}</div>` : ''}`;
+      ${res.voucher ? `<div style="margin-block-start:var(--vk-space-4)">${cardHtml(res.voucher, cardOpts(res.voucher, 'compact'))}</div>` : ''}`;
     return;
   }
 
@@ -111,7 +123,7 @@ async function check() {
       <div class="verdict__body">${v.title || ''}</div>
     </div>
 
-    <div style="margin-block-start:var(--vk-space-4)">${voucherCardHtml(v, { layout: 'strip' })}</div>
+    <div style="margin-block-start:var(--vk-space-4)">${cardHtml(v, cardOpts(v, 'compact'))}</div>
 
     <div class="panel">
       <div class="rows">
@@ -161,7 +173,7 @@ async function doRedeem(orderTotal) {
       <div class="verdict__head">${t('redeem.doneTitle')}</div>
       <div class="verdict__body">${t('staff.willDiscountPrefix')} ${money(res.discount)} · ${t('staff.payPrefix')} ${money(res.payable)}</div>
     </div>
-    <div style="margin-block-start:var(--vk-space-4)">${voucherCardHtml(res.voucher, { layout: 'strip' })}</div>`;
+    <div style="margin-block-start:var(--vk-space-4)">${cardHtml(res.voucher, cardOpts(res.voucher, 'compact'))}</div>`;
   $('#codeIn').value = '';
   current = null;
 }

@@ -150,3 +150,29 @@ export function mountThemeToggle(host) {
   paint();
   host.append(btn);
 }
+
+/* ══ ดีไซน์บัตรที่หน้าลูกค้าใช้ร่วมกัน ═══════════════════════════════════
+   รวมไว้ที่เดียวเพราะ 3 หน้าต้องวาดบัตรให้ "หน้าตาเหมือนกันเป๊ะ"
+   ถ้าแยกกันเขียน วันหนึ่งจะมีหน้าหนึ่งหลุดไปคนละแบบโดยไม่มีใครสังเกต */
+
+/** ดีไซน์ที่ไท้เคาะแล้ว — ตั๋วฟอยล์ทอง */
+export const CARD_DESIGN = 'foilticket';
+
+/* ภาพงานเหล็กจริงที่ใช้เป็นพื้นหลังใบ — วนตามรหัสบัตร ไม่สุ่ม
+   เพราะถ้าสุ่ม บัตรใบเดิมจะเปลี่ยนภาพทุกครั้งที่เปิดหน้า ซึ่งดูเหมือนระบบเพี้ยน */
+const ARTS = ['stair', 'fence', 'gate', 'window', 'balcony'];
+
+/** เลือกภาพพื้นหลังของบัตรใบหนึ่ง — ใบเดิมได้ภาพเดิมเสมอ */
+export function artFor(v) {
+  const s = String(v?.code || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return ARTS[h % ARTS.length];
+}
+
+/** ตัวเลือกมาตรฐานสำหรับวาดบัตร 1 ใบ */
+export const cardOpts = (v, shape = 'compact') => ({
+  design: CARD_DESIGN,
+  shape,
+  art: artFor(v),
+});

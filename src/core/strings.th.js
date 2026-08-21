@@ -65,6 +65,7 @@ export const TH = {
     perPersonSuffix: 'ต่อคน',
     forSegmentPrefix: 'สำหรับ',
     useNow: 'ใช้สิทธิ์นี้',
+    fullscreen: 'ดูเต็มจอ',
     holdToUse: 'กดค้างเพื่อใช้สิทธิ์',
     showToStaff: 'แสดงหน้านี้ให้พนักงาน',
     detailsToggle: 'เงื่อนไขการใช้',

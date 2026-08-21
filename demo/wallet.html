@@ -7,10 +7,10 @@
 <link rel="stylesheet" href="../src/styles/fonts.css">
 <link rel="stylesheet" href="../src/tokens/tokens.css">
 <link rel="stylesheet" href="../src/tokens/skin-steel.css">
-<link rel="stylesheet" href="../src/tokens/skin-ink.css">
-<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
 <link rel="stylesheet" href="../src/styles/base.css">
-<link rel="stylesheet" href="../src/styles/voucher.css">
+<!-- ดีไซน์บัตรชุดใหม่ (ตั๋วฟอยล์ทอง) — คนละไฟล์กับ voucher.css เดิม ใช้พร้อมกันไม่ได้ -->
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -24,7 +24,6 @@
         <div class="app__sub" id="sub"></div>
       </div>
       <div class="vk-spacer"></div>
-      <div id="themeSlot"></div>
     </div>
   </div>
 
@@ -35,11 +34,11 @@
 </div>
 
 <script type="module">
-import { getService, DEMO_CUSTOMER, mountThemeToggle } from './app.js';
-import { voucherCardHtml, sortForWallet, deriveStatus, t, CLOSED_STATUSES } from '../src/index.js';
+import { getService, DEMO_CUSTOMER, cardOpts } from './app.js';
+import { sortForWallet, deriveStatus, t, CLOSED_STATUSES } from '../src/index.js';
+import { cardHtml } from '../src/ui/voucher-design.js';
 
 const $ = (s) => document.querySelector(s);
-mountThemeToggle($('#themeSlot'));
 
 const svc = await getService();
 const mine = await svc.walletOf(DEMO_CUSTOMER.id, DEMO_CUSTOMER.segments);
@@ -66,7 +65,7 @@ function paint() {
   }).join('');
 
   $('#list').innerHTML = items.length
-    ? items.map((v) => voucherCardHtml(v, { layout: 'strip', clickable: true })).join('')
+    ? items.map((v) => cardHtml(v, cardOpts(v, 'compact'))).join('')
     : `<div class="app__empty">
          <strong>${active === 'closed' ? t('wallet.emptyUsed') : t('wallet.emptyUsable')}</strong>
          ${active === 'closed' ? '' : `<span>${t('wallet.emptyUsableHint')}</span>`}

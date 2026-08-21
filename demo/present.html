@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="th" data-vk-skin="steel" data-vk-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โชว์ระบบบัตรกำนัล · SP Empire</title>
+<!--
+  หน้าเปิดงานสำหรับพรีเซนต์ — ไม่ใช่ส่วนหนึ่งของระบบจริง
+
+  ทำไมต้องมี: ตอนอยู่หน้าห้องประชุมจะจำไม่ได้ว่าต้องเปิดหน้าไหนก่อน-หลัง
+  หน้านี้จึงเรียงให้เป็น "ฉาก" กดตามลำดับได้เลย และมีคำพูดกำกับไว้ให้ด้วย
+
+  ⚠️ ปุ่ม "เริ่มเดโมใหม่" สำคัญมาก — ซ้อมแล้วบัตรจะถูกตัดสิทธิ์ไปจริง ๆ
+     ถ้าไม่กดรีเซ็ตก่อนประชุม ฉากที่ 3 จะขึ้นว่า "ใช้ไปแล้ว" ต่อหน้าเจ้านาย
+-->
+<link rel="stylesheet" href="../src/styles/fonts.css">
+<link rel="stylesheet" href="../src/tokens/tokens.css">
+<link rel="stylesheet" href="../src/tokens/skin-steel.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<style>
+  :root { --gold: #c9a227; --gold-soft: #e0c56b; }
+  body { margin: 0; background: #12151a; color: #e9e6df; }
+  .wrap { max-width: 940px; margin-inline: auto; padding: clamp(20px, 4vw, 44px) clamp(16px, 4vw, 32px) 64px; }
+
+  .hd { border-block-end: 1px solid #262c35; padding-block-end: 20px; margin-block-end: 32px; }
+  .hd__kicker { font: 500 12px/1 'IBM Plex Mono', monospace; letter-spacing: .22em;
+                text-transform: uppercase; color: var(--gold); }
+  .hd__title { font: 700 clamp(26px, 5vw, 38px)/1.2 'Noto Sans Thai', sans-serif; margin: 10px 0 6px; }
+  .hd__sub { font: 400 15px/1.5 'Noto Sans Thai', sans-serif; color: #8e949e; max-width: 60ch; }
+
+  .sec__title { font: 700 19px/1.3 'Noto Sans Thai', sans-serif; margin: 40px 0 6px; }
+  .sec__note { font: 400 14px/1.55 'Noto Sans Thai', sans-serif; color: #8e949e; margin: 0 0 18px; }
+
+  /* ── ฉาก ─────────────────────────────────────────────────────────── */
+  .acts { display: grid; gap: 14px; }
+  .act { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 16px;
+         background: #191d24; border: 1px solid #262c35; border-radius: 10px;
+         padding: 18px 18px 18px 14px; }
+  .act__no { font: 700 26px/1 'Playfair Display', serif; color: var(--gold);
+             display: grid; place-items: start center; padding-block-start: 4px;
+             border-inline-end: 1px solid #262c35; }
+  .act__title { font: 700 17px/1.35 'Noto Sans Thai', sans-serif; margin: 0 0 6px; }
+  .act__say { font: 400 14.5px/1.6 'Noto Sans Thai', sans-serif; color: #a8aeb8; margin: 0 0 4px; }
+  .act__say b { color: #e9e6df; font-weight: 600; }
+  .act__hit { font: 500 13.5px/1.5 'Noto Sans Thai', sans-serif; color: var(--gold-soft); margin: 8px 0 0; }
+  .act__go { display: inline-block; margin-block-start: 14px; text-decoration: none;
+             background: var(--gold); color: #1a1508; font: 700 15px/1 'Noto Sans Thai', sans-serif;
+             padding: 12px 20px; border-radius: 6px; }
+  .act__go[data-quiet] { background: #262c35; color: #e9e6df; }
+
+  /* ── ความสามารถ ──────────────────────────────────────────────────── */
+  .caps { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .cap { background: #191d24; border: 1px solid #262c35; border-radius: 9px; padding: 15px 16px; }
+  .cap__title { font: 600 15px/1.35 'Noto Sans Thai', sans-serif; margin: 0 0 5px; }
+  .cap__body { font: 400 13.5px/1.55 'Noto Sans Thai', sans-serif; color: #9aa1ab; margin: 0; }
+  .cap__go { display: inline-block; margin-block-start: 10px; font: 600 13px/1 'Noto Sans Thai', sans-serif;
+             color: var(--gold-soft); text-decoration: none; border-block-end: 1px solid #4a4231; }
+  .cap__go::after { content: ' →'; }
+  .cap[data-nolink] .cap__title { color: #9aa1ab; }
+  .cap__soon { display: inline-block; margin-block-start: 10px; font: 500 12.5px/1 'Noto Sans Thai', sans-serif;
+               color: #6d737d; }
+
+  /* ── แถบล่าง ─────────────────────────────────────────────────────── */
+  .foot { margin-block-start: 44px; padding-block-start: 22px; border-block-start: 1px solid #262c35;
+          display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .foot__hint { font: 400 13.5px/1.5 'Noto Sans Thai', sans-serif; color: #8e949e; flex: 1 1 260px; }
+  .btn-reset { background: #2a1d1d; color: #ffb4a4; border: 1px solid #4a2c28;
+               font: 600 14px/1 'Noto Sans Thai', sans-serif; padding: 12px 18px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hd">
+    <div class="hd__kicker">SP Empire · Gift Voucher</div>
+    <h1 class="hd__title">ระบบบัตรกำนัล — ต้นแบบที่เดินได้จริง</h1>
+    <p class="hd__sub">เปิดในเบราว์เซอร์แล้วกดใช้งานได้เลยทุกขั้นตอน ตั้งแต่ลูกค้าเปิดบัตร
+      ไปจนพนักงานตัดสิทธิ์หน้าร้าน · ไม่ใช่ภาพนิ่งหรือแบบจำลอง</p>
+  </header>
+
+  <h2 class="sec__title">เส้นทางเดโม · 4 ฉาก</h2>
+  <p class="sec__note">กดตามลำดับได้เลย · แต่ละฉากมีคำพูดกำกับไว้ให้แล้ว</p>
+
+  <div class="acts">
+
+    <section class="act">
+      <div class="act__no">1</div>
+      <div>
+        <h3 class="act__title">ลูกค้าเปิดกระเป๋าบัตรของตัวเอง</h3>
+        <p class="act__say">พูดว่า: <b>“นี่คือสิ่งที่ลูกค้าเห็นในมือถือ”</b> —
+          บัตรของตัวเองทั้งหมด แยกเป็น ใช้ได้ / ยังไม่เริ่ม / ใช้แล้ว
+          และเรียงใบที่ใกล้หมดอายุขึ้นก่อนให้เอง</p>
+        <p class="act__hit">จุดสังเกต: บัตรแต่ละใบใช้ภาพงานเหล็กจริงของบริษัทเป็นพื้นหลัง</p>
+        <a class="act__go" href="wallet.html">เปิดกระเป๋าบัตร</a>
+      </div>
+    </section>
+
+    <section class="act">
+      <div class="act__no">2</div>
+      <div>
+        <h3 class="act__title">กดเข้าไปดูใบเดียว แล้วขยายเต็มจอ</h3>
+        <p class="act__say">กด <b>“ดูเต็มจอ”</b> → บัตรใบยาวหมุนเองให้เต็มจอ (เหมือนแอปบัตรประชาชน)
+          แล้ว <b>ยื่นมือถือให้เจ้านายเอียงเล่นเอง</b></p>
+        <p class="act__hit">จุดว้าว: ประกายทองวิ่งตามการเอียงจริง ไม่ใช่แอนิเมชันวนลูป</p>
+        <a class="act__go" href="voucher.html?c=SPE-7K4M-92XH">เปิดบัตรใบเด่น</a>
+      </div>
+    </section>
+
+    <section class="act">
+      <div class="act__no">3</div>
+      <div>
+        <h3 class="act__title">สลับเป็นฝั่งพนักงานหน้าร้าน</h3>
+        <p class="act__say">รหัสกับยอดเงินใส่ไว้ให้แล้ว กด <b>“ตรวจสอบ”</b> →
+          ระบบบอกว่าใช้ได้ ลดเท่าไหร่ เหลือจ่ายเท่าไหร่ → กด <b>“ตัดสิทธิ์”</b></p>
+        <p class="act__hit">จุดสังเกต: ลด 15% ของ 24,000 = 3,600 แต่บัตรใบนี้มีเพดาน 2,000 — ระบบตัดให้เอง</p>
+        <a class="act__go" href="staff.html?c=SPE-7K4M-92XH&amp;total=24000">เปิดหน้าร้าน (ใส่รหัสให้แล้ว)</a>
+      </div>
+    </section>
+
+    <section class="act">
+      <div class="act__no">4</div>
+      <div>
+        <h3 class="act__title">กลับไปดูกระเป๋าลูกค้าอีกครั้ง</h3>
+        <p class="act__say">พูดว่า: <b>“ทุกหน้าคุยกันจริง”</b> —
+          บัตรใบเมื่อกี้ย้ายไปอยู่แท็บ <b>“ใช้แล้ว”</b> ทันที และหน้าตาเปลี่ยนเป็นใบที่ใช้ไปแล้ว</p>
+        <p class="act__hit">นี่คือข้อพิสูจน์ว่าไม่ใช่หน้าเว็บสวย ๆ ที่ไม่รู้จักกัน</p>
+        <a class="act__go" href="wallet.html">กลับไปกระเป๋าบัตร</a>
+      </div>
+    </section>
+
+  </div>
+
+  <h2 class="sec__title">สิ่งที่ระบบทำได้ทั้งหมด</h2>
+  <p class="sec__note">ไว้กดโชว์ตอนเจ้านายถามลึก · ข้อที่มีลิงก์ = เปิดดูของจริงได้ทันที</p>
+
+  <div class="caps">
+
+    <div class="cap">
+      <h3 class="cap__title">ออกบัตรได้ 5 ชนิด</h3>
+      <p class="cap__body">ลดเป็น % · ลดเป็นเงิน · ขายราคาพิเศษ · ของแถม · ส่งฟรี</p>
+      <a class="cap__go" href="admin.html">ดูฟอร์มออกบัตร</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">ปั๊มรหัสใหม่ทีละหลายร้อยใบ</h3>
+      <p class="cap__body">กรอกฟอร์มครั้งเดียว ได้รหัสไม่ซ้ำกันทั้งชุด ดาวน์โหลดรายการไปใช้ต่อได้</p>
+      <a class="cap__go" href="admin.html">ลองปั๊มดู</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">ตั้งเงื่อนไขได้ 11 แบบ</h3>
+      <p class="cap__body">ยอดขั้นต่ำ · เพดานส่วนลด · ช่วงเวลา · เฉพาะสาขา · เฉพาะช่องทาง ·
+        เฉพาะหมวดสินค้า · เฉพาะกลุ่มลูกค้า · ผูกกับลูกค้าคนเดียว · โควตารวม · จำกัดต่อคน ·
+        ใช้ร่วมกับส่วนลดอื่น</p>
+      <a class="cap__go" href="scenarios.html">ดูว่าบังคับใช้จริง</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">รหัสบัตรกันพนักงานพิมพ์ผิด</h3>
+      <p class="cap__body">ตัวสุดท้ายเป็นตัวตรวจทาน — พิมพ์ผิด 1 ตัวระบบรู้ทันทีว่า “พิมพ์ผิด”
+        ไม่ใช่บอกว่า “ไม่พบบัตร” ให้สับสน · ตัดตัวอักษรที่คนมักสับสน (I L O U) ออกตั้งแต่แรก</p>
+      <a class="cap__go" href="staff.html">ลองพิมพ์ผิด 1 ตัว</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">QR สร้างเองในเครื่อง</h3>
+      <p class="cap__body">ไม่พึ่งอินเทอร์เน็ต — บัตรเปิดได้แม้สัญญาณแย่หน้างาน
+        และไม่ส่งรหัสลูกค้าออกไปให้เว็บนอกวาดให้</p>
+      <a class="cap__go" href="voucher.html?c=SPE-7K4M-92XH">ดู QR บนบัตร</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">กันแคปหน้าจอส่งต่อ</h3>
+      <p class="cap__body">บนบัตรมีเลข 4 หลักที่เปลี่ยนเองทุก 30 วินาที
+        พนักงานเทียบกับเครื่องตัวเอง — ภาพหน้าจอเก่าเลขไม่ตรงทันที</p>
+      <a class="cap__go" href="staff.html?c=SPE-7K4M-92XH&amp;total=24000">ดูตอนตัดสิทธิ์</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">จองสิทธิ์ระหว่างจ่ายเงิน</h3>
+      <p class="cap__body">กันลูกค้าเปิดสองเครื่องแล้วใช้บัตรใบเดียวสองรอบ ·
+        ปิดหน้าเว็บหนีระบบก็คืนสิทธิ์ให้เอง</p>
+      <a class="cap__go" href="scenarios.html">ดูสถานการณ์จริง</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">ชุดทดสอบสถานการณ์จริง 51 เรื่อง</h3>
+      <p class="cap__body">เรื่องที่เกิดจริงหน้าร้าน กดดูได้ทีละเรื่องว่าระบบตอบสนองยังไง —
+        ตรวจทั้งหมด 92 ข้อ ผ่านหมด</p>
+      <a class="cap__go" href="scenarios.html">กดทดสอบสด</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">เลือกหน้าตาบัตรได้ 7 แบบ</h3>
+      <p class="cap__body">ช่องเหล็ก · แผ่นทอง · ตั๋วทองเหลือง · เส้นปรุ · จานทอง · เอียง ·
+        ตั๋วฟอยล์ทอง (แบบที่เลือกใช้)</p>
+      <a class="cap__go" href="designs.html">ดูทั้ง 7 แบบ</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">บัตรเอียงตามการถือมือถือ</h3>
+      <p class="cap__body">ประกายทองวิ่งบนตัวเลขเหมือนฟอยล์จริง · เครื่องสเปกต่ำหรือคนที่ตั้ง
+        “ลดแอนิเมชัน” ไว้ ระบบปิดให้อัตโนมัติ บัตรยังสวยครบ</p>
+      <a class="cap__go" href="voucher.html?c=SPE-7K4M-92XH">ลองเอียง</a>
+    </div>
+
+    <div class="cap">
+      <h3 class="cap__title">ทำมาเพื่อมือถือโดยเฉพาะ</h3>
+      <p class="cap__body">ไม่ใช้ไลบรารีภายนอกเลย · ฟอนต์เก็บไว้เอง · เปิดซ้ำเหลือโหลด 21 KB ·
+        ทดสอบบนเครื่องจริงได้ 60 ภาพ/วินาที</p>
+      <a class="cap__go" href="mobile-test.html">ชุดตรวจบนมือถือ</a>
+    </div>
+
+    <div class="cap" data-nolink>
+      <h3 class="cap__title">ต่อกับระบบหลังบ้านได้โดยไม่ต้องรื้อ</h3>
+      <p class="cap__body">ตอนนี้เก็บข้อมูลในเบราว์เซอร์เพื่อให้ต้นแบบเดินได้
+        วันที่จะต่อระบบจริงเปลี่ยนแค่บรรทัดเดียว หน้าจอทั้งหมดไม่ต้องแก้</p>
+      <span class="cap__soon">เป็นเรื่องโครงสร้าง ไม่มีหน้าโชว์</span>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <p class="foot__hint"><b>ซ้อมเสร็จแล้วกดปุ่มนี้ก่อนเข้าประชุม</b> —
+      ถ้าซ้อมฉากที่ 3 ไปแล้ว บัตรจะถูกตัดสิทธิ์จริง ต้องคืนค่าก่อนไม่งั้นเดโมจะสะดุด</p>
+    <button class="btn-reset" id="resetBtn" type="button">เริ่มเดโมใหม่ทั้งหมด</button>
+  </div>
+
+</div>
+
+<script type="module">
+import { resetDemo } from './app.js';
+document.getElementById('resetBtn').addEventListener('click', resetDemo);
+</script>
+</body>
+</html>

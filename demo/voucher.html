@@ -7,10 +7,10 @@
 <link rel="stylesheet" href="../src/styles/fonts.css">
 <link rel="stylesheet" href="../src/tokens/tokens.css">
 <link rel="stylesheet" href="../src/tokens/skin-steel.css">
-<link rel="stylesheet" href="../src/tokens/skin-ink.css">
-<link rel="stylesheet" href="../src/tokens/skin-voltage.css">
 <link rel="stylesheet" href="../src/styles/base.css">
-<link rel="stylesheet" href="../src/styles/voucher.css">
+<!-- ดีไซน์บัตรชุดใหม่ (ตั๋วฟอยล์ทอง) — คนละไฟล์กับ voucher.css เดิม ใช้พร้อมกันไม่ได้ -->
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -21,26 +21,28 @@
       <a class="app__back" href="wallet.html" aria-label="ย้อนกลับ">←</a>
       <div class="app__title">คูปองของคุณ</div>
       <div class="vk-spacer"></div>
-      <div id="themeSlot"></div>
     </div>
   </div>
 
   <div class="app__wrap">
     <div id="cardSlot" style="display:grid;justify-items:center"></div>
+    <div id="fsSlot"></div>
     <div id="actionSlot" style="margin-block-start: var(--vk-space-6)"></div>
     <div id="detailSlot" style="margin-block-start: var(--vk-space-4)"></div>
   </div>
 </div>
 
 <script type="module">
-import { getService, DEMO_CUSTOMER, mountThemeToggle, bindHold, toast, copyText, q } from './app.js';
+import { getService, DEMO_CUSTOMER, bindHold, toast, copyText, q, cardOpts } from './app.js';
 import {
-  voucherCardHtml, qrSvg, voucherUrl, deriveStatus, evaluate, primaryReason,
+  qrSvg, voucherUrl, deriveStatus, evaluate, primaryReason,
   liveCode, msUntilRotate, LIVE_CODE_PERIOD, t, dateTime, money,
 } from '../src/index.js';
+import { cardHtml } from '../src/ui/voucher-design.js';
+import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
+import { openCardFullscreen } from '../src/ui/card-fullscreen.js';
 
 const $ = (s) => document.querySelector(s);
-mountThemeToggle($('#themeSlot'));
 
 const svc = await getService();
 const code = q('c', '');
@@ -49,6 +51,62 @@ const found = await svc.find(code);
 /* ต้องประกาศก่อนเรียก render() — ไม่งั้น startLive() จะอ้างถึงตัวแปรที่ยังไม่เกิด
    (อาการ: แผงรหัสยืนยันสดขึ้นกรอบมาแต่ไม่มีตัวเลข และส่วน QR ข้างล่างหายทั้งก้อน) */
 let liveTimer = null;
+
+/* ══ บัตร: เอียงตามการถือ + กดดูเต็มจอ ═══════════════════════════════════
+   ในหน้านี้โชว์ "ทรงกระทัดรัด" เพราะใบแนวยาวใส่จอมือถือแนวตั้งไม่ลง
+   กดดูเต็มจอ = สลับเป็นใบแนวยาวที่หมุน 90° ให้เอง (แบบแอปบัตรประชาชน) */
+
+let cardTilt = null;
+let fsTilt = null;
+let fsAttaching = false;
+let shown = null;   /* ใบที่กำลังโชว์อยู่ — ปุ่มเต็มจอต้องอ่านใบล่าสุดเสมอ */
+
+function paintCard(v) {
+  shown = v;
+  cardTilt?.destroy?.();
+  cardTilt = null;
+  $('#cardSlot').innerHTML = cardHtml(v, cardOpts(v, 'compact'));
+  const el = $('#cardSlot .vk-card');
+  if (el) attachFoilTilt(el, {}).then((r) => { cardTilt = r; });
+}
+
+function openFull() {
+  if (!shown) return;
+  /* ⚠️ iOS ให้ขอสิทธิ์อ่านการเอียงได้เฉพาะ "ในจังหวะที่ผู้ใช้แตะจริง" เท่านั้น
+     เรียกทีหลัง (เช่นใน setTimeout หรือหลัง await) จะถูกปฏิเสธเงียบ ๆ */
+  requestGyro();
+  fsTilt = null;
+  fsAttaching = false;
+  openCardFullscreen(cardHtml(shown, cardOpts(shown, 'ticket')), {
+    shape: 'ticket',
+    onReady: (c, rotated) => {
+      if (fsTilt) { fsTilt.setRotate?.(rotated ? 90 : 0); return; }
+      /* ⚠️ onReady ถูกเรียกสองครั้งตอนเปิด — ถ้าไม่กันไว้จะติดตั้งตัวเอียงซ้อนสองชุด */
+      if (fsAttaching) return;
+      fsAttaching = true;
+      attachFoilTilt(c, { rotate: rotated ? 90 : 0 }).then((r) => { fsTilt = r; });
+    },
+    onClose: () => { fsTilt?.destroy?.(); fsTilt = null; },
+  });
+}
+
+{
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'vk-fs-open';
+  btn.textContent = t('card.fullscreen');
+  btn.addEventListener('click', openFull);
+  $('#fsSlot').append(btn);
+
+  /* แตะที่ตัวบัตรก็เปิดเต็มจอ — แต่ต้องไม่ไปกินการลากนิ้วเอียงบัตรเล่น */
+  let dragged = false;
+  const slot = $('#cardSlot');
+  slot.addEventListener('pointerdown', () => { dragged = false; }, { passive: true });
+  slot.addEventListener('pointermove', () => { dragged = true; }, { passive: true });
+  slot.addEventListener('click', (e) => {
+    if (!dragged && !e.target.closest('button, a')) openFull();
+  });
+}
 
 if (!found.ok) {
   $('#cardSlot').innerHTML = `<div class="app__empty">
@@ -61,7 +119,7 @@ if (!found.ok) {
 
 function render(v) {
   const status = deriveStatus(v);
-  $('#cardSlot').innerHTML = voucherCardHtml(v, { layout: 'slab' });
+  paintCard(v);
 
   /* ---------- ส่วนที่กดได้ ---------- */
   if (status === 'active') {
