@@ -56,7 +56,9 @@
   .pair { display: grid; gap: 30px; align-items: start; grid-template-columns: 1fr; }
   @media (min-width: 900px) { .pair { grid-template-columns: minmax(0, 720px) minmax(0, 380px); } }
 
-  .slot { display: grid; gap: 9px; justify-items: start; }
+  /* ⚠️ ต้องมี minmax(0, 1fr) — ไม่งั้นคอลัมน์ยืดตามใบแนวยาว (720px) แล้วล้นจอมือถือ 354px
+     อาการ: เปิดบนมือถือแล้วใบโดนตัดครึ่ง เลื่อนซ้าย-ขวาทั้งหน้า */
+  .slot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; justify-items: start; }
   .slot__cap { font: 500 11px/1 'IBM Plex Mono', monospace; color: rgb(20 22 26 / 55%); letter-spacing: .08em; }
 </style>
 </head>

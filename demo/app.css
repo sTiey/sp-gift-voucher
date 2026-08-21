@@ -89,7 +89,10 @@
 }
 
 /* ---- รายการคูปอง ---- */
-.app__list { display: grid; gap: var(--vk-space-3); }
+/* ⚠️ ต้องเป็น minmax(0, 1fr) — grid ตั้งต้นให้คอลัมน์กว้างตามเนื้อหา (max-content)
+   ใบบัตรมีเพดาน 380px คอลัมน์จึงยืดเป็น 380 แล้วดันล้นขอบจอ 6px บนมือถือ 390
+   อาการ: เลื่อนซ้าย-ขวาได้นิด ๆ ทั้งที่ไม่ควรเลื่อนได้ */
+.app__list { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--vk-space-3); }
 
 .app__empty {
   display: grid;
@@ -269,7 +272,8 @@
 .grid2 { display: grid; gap: var(--vk-space-4); grid-template-columns: 1fr; }
 @media (min-width: 480px) { .grid2 { grid-template-columns: 1fr 1fr; } }
 
-.split { display: grid; gap: var(--vk-space-6); align-items: start; }
+/* ⚠️ minmax(0, 1fr) เหมือน .app__list — ใบตัวอย่างกว้าง 380 จะดันคอลัมน์ให้ล้นจอมือถือ */
+.split { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--vk-space-6); align-items: start; }
 @media (min-width: 860px) { .split { grid-template-columns: minmax(0, 1fr) 360px; } }
 
 /* ---- แถบผลลัพธ์ ---- */

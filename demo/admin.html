@@ -10,7 +10,9 @@
 <link rel="stylesheet" href="../src/tokens/skin-ink.css">
 <link rel="stylesheet" href="../src/tokens/skin-voltage.css">
 <link rel="stylesheet" href="../src/styles/base.css">
-<link rel="stylesheet" href="../src/styles/voucher.css">
+<!-- ใบตัวอย่างต้องหน้าตาเดียวกับที่ลูกค้าเห็นจริง ไม่งั้นตอนพรีเซนต์จะดูเหมือนคนละระบบ -->
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -111,10 +113,11 @@
 </div>
 
 <script type="module">
-import { getService, mountThemeToggle, toast, copyText } from './app.js';
+import { getService, mountThemeToggle, toast, copyText, cardOpts } from './app.js';
 import {
-  createVoucher, voucherCardHtml, generateCode, KINDS, SEGMENTS, SKINS, t,
+  createVoucher, generateCode, KINDS, SEGMENTS, SKINS, t,
 } from '../src/index.js';
+import { cardHtml } from '../src/ui/voucher-design.js';
 
 const $ = (s) => document.querySelector(s);
 mountThemeToggle($('#themeSlot'));
@@ -153,10 +156,8 @@ function readForm() {
 function paint() {
   const tpl = readForm();
   document.documentElement.setAttribute('data-vk-skin', tpl.design.skin);
-  $('#preview').innerHTML = voucherCardHtml(
-    createVoucher({ ...tpl, code: sampleCode }),
-    { layout: 'slab' }
-  );
+  const sample = createVoucher({ ...tpl, code: sampleCode });
+  $('#preview').innerHTML = cardHtml(sample, cardOpts(sample, 'compact'));
   const n = Number($('#count').value || 1);
   $('#hint').textContent = `จะสร้าง ${n} ใบ · รหัสไม่ซ้ำกัน · ใบตัวอย่างนี้ยังไม่ถูกบันทึก`;
 }

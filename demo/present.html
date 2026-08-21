@@ -17,15 +17,33 @@
 <link rel="stylesheet" href="../src/tokens/tokens.css">
 <link rel="stylesheet" href="../src/tokens/skin-steel.css">
 <link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/card-base.css">
+<link rel="stylesheet" href="../src/styles/designs/foilticket.css">
 <style>
   :root { --gold: #c9a227; --gold-soft: #e0c56b; }
   body { margin: 0; background: #12151a; color: #e9e6df; }
   .wrap { max-width: 940px; margin-inline: auto; padding: clamp(20px, 4vw, 44px) clamp(16px, 4vw, 32px) 64px; }
 
-  .hd { border-block-end: 1px solid #262c35; padding-block-end: 20px; margin-block-end: 32px; }
+  /* ⚠️ เรียงแบบมือถือก่อน: หัวเรื่องสั้น ๆ → **บัตรจริง** → คำอธิบาย
+     ของเดิมเอาคำอธิบายไว้ก่อน บัตรเลยถูกดันตกไปครึ่งจอ ซึ่งคือของชิ้นเดียวที่ต้องเห็นทันที */
+  .hd { border-block-end: 1px solid #262c35; padding-block-end: 26px; margin-block-end: 30px;
+        display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .hd__card { width: min(100%, 320px); margin-inline: auto; cursor: pointer; }
+  @media (min-width: 820px) {
+    .hd { grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto auto;
+          column-gap: 44px; row-gap: 10px; align-items: center; }
+    .hd__lead { grid-column: 1; grid-row: 1; align-self: end; }
+    .hd__sub { grid-column: 1; grid-row: 2; align-self: start; }
+    .hd__media { grid-column: 2; grid-row: 1 / span 2; }
+    .hd__card { width: 300px; }
+  }
+  .hd__cap { display: block; margin-block-start: 12px; text-align: center;
+             font: 500 12.5px/1.5 'Noto Sans Thai', sans-serif; color: #7f8691; }
+  .hd__cap b { color: var(--gold-soft); font-weight: 600; }
   .hd__kicker { font: 500 12px/1 'IBM Plex Mono', monospace; letter-spacing: .22em;
                 text-transform: uppercase; color: var(--gold); }
-  .hd__title { font: 700 clamp(26px, 5vw, 38px)/1.2 'Noto Sans Thai', sans-serif; margin: 10px 0 6px; }
+  .hd__title { font: 700 clamp(25px, 4.4vw, 34px)/1.25 'Noto Sans Thai', sans-serif; margin: 10px 0 8px;
+               text-wrap: balance; }
   .hd__sub { font: 400 15px/1.5 'Noto Sans Thai', sans-serif; color: #8e949e; max-width: 60ch; }
 
   .sec__title { font: 700 19px/1.3 'Noto Sans Thai', sans-serif; margin: 40px 0 6px; }
@@ -33,19 +51,31 @@
 
   /* ── ฉาก ─────────────────────────────────────────────────────────── */
   .acts { display: grid; gap: 14px; }
-  .act { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 16px;
-         background: #191d24; border: 1px solid #262c35; border-radius: 10px;
-         padding: 18px 18px 18px 14px; }
-  .act__no { font: 700 26px/1 'Playfair Display', serif; color: var(--gold);
-             display: grid; place-items: start center; padding-block-start: 4px;
-             border-inline-end: 1px solid #262c35; }
+  /* มือถือ: เลขฉากเป็นป้ายเล็กบรรทัดบน — คอลัมน์เลข 54px กินความกว้างไปเปล่า ๆ
+     ทำให้ตัวหนังสือตกบรรทัดรัวจนอ่านยากบนจอ 390 */
+  .act { display: grid; gap: 3px;
+         background: #191d24; border: 1px solid #262c35; border-radius: 10px; padding: 16px; }
+  .act__no { font: 700 12px/1 'IBM Plex Mono', monospace; letter-spacing: .18em; color: var(--gold); }
+  .act__no::before { content: 'ฉาก '; }
+  @media (min-width: 620px) {
+    .act { grid-template-columns: 54px minmax(0, 1fr); gap: 16px; padding: 18px 18px 18px 14px; }
+    /* align-content ไม่ใช่ align-items — แถวเดียวที่ถูกยืดเต็มความสูง
+       ต้องสั่งที่ "แถว" ไม่งั้นเลขจะไปลอยกลางบล็อก */
+    .act__no { font: 700 26px/1 'Playfair Display', serif;
+               display: grid; align-content: start; justify-items: center;
+               padding-block-start: 2px; border-inline-end: 1px solid #262c35; }
+    .act__no::before { content: ''; }
+  }
   .act__title { font: 700 17px/1.35 'Noto Sans Thai', sans-serif; margin: 0 0 6px; }
   .act__say { font: 400 14.5px/1.6 'Noto Sans Thai', sans-serif; color: #a8aeb8; margin: 0 0 4px; }
   .act__say b { color: #e9e6df; font-weight: 600; }
   .act__hit { font: 500 13.5px/1.5 'Noto Sans Thai', sans-serif; color: var(--gold-soft); margin: 8px 0 0; }
-  .act__go { display: inline-block; margin-block-start: 14px; text-decoration: none;
+  /* ปุ่มบนมือถือต้องเต็มความกว้าง กดด้วยนิ้วโป้งได้ถนัด */
+  .act__go { display: block; width: 100%; box-sizing: border-box; text-align: center;
+             margin-block-start: 14px; text-decoration: none;
              background: var(--gold); color: #1a1508; font: 700 15px/1 'Noto Sans Thai', sans-serif;
-             padding: 12px 20px; border-radius: 6px; }
+             padding: 14px 20px; border-radius: 6px; }
+  @media (min-width: 620px) { .act__go { display: inline-block; width: auto; padding: 12px 20px; } }
   .act__go[data-quiet] { background: #262c35; color: #e9e6df; }
 
   /* ── ความสามารถ ──────────────────────────────────────────────────── */
@@ -64,18 +94,24 @@
   .foot { margin-block-start: 44px; padding-block-start: 22px; border-block-start: 1px solid #262c35;
           display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
   .foot__hint { font: 400 13.5px/1.5 'Noto Sans Thai', sans-serif; color: #8e949e; flex: 1 1 260px; }
-  .btn-reset { background: #2a1d1d; color: #ffb4a4; border: 1px solid #4a2c28;
-               font: 600 14px/1 'Noto Sans Thai', sans-serif; padding: 12px 18px; border-radius: 6px; }
+  .btn-reset { width: 100%; background: #2a1d1d; color: #ffb4a4; border: 1px solid #4a2c28;
+               font: 600 14px/1 'Noto Sans Thai', sans-serif; padding: 14px 18px; border-radius: 6px; }
+  @media (min-width: 620px) { .btn-reset { width: auto; } }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header class="hd">
-    <div class="hd__kicker">SP Empire · Gift Voucher</div>
-    <h1 class="hd__title">ระบบบัตรกำนัล — ต้นแบบที่เดินได้จริง</h1>
-    <p class="hd__sub">เปิดในเบราว์เซอร์แล้วกดใช้งานได้เลยทุกขั้นตอน ตั้งแต่ลูกค้าเปิดบัตร
-      ไปจนพนักงานตัดสิทธิ์หน้าร้าน · ไม่ใช่ภาพนิ่งหรือแบบจำลอง</p>
+    <div class="hd__lead">
+      <div class="hd__kicker">SP Empire · Gift Voucher</div>
+      <h1 class="hd__title">ระบบบัตรกำนัล — ต้นแบบที่เดินได้จริง</h1>
+    </div>
+    <div class="hd__media">
+      <div class="hd__card" id="heroCard"></div>
+      <span class="hd__cap"><b>เอียงมือถือดูได้เลย</b> · แตะบัตรเพื่อดูเต็มจอ</span>
+    </div>
+    <p class="hd__sub">กดใช้งานได้จริงทุกขั้นตอน ตั้งแต่ลูกค้าเปิดบัตร ไปจนพนักงานตัดสิทธิ์หน้าร้าน</p>
   </header>
 
   <h2 class="sec__title">เส้นทางเดโม · 4 ฉาก</h2>
@@ -229,8 +265,51 @@
 </div>
 
 <script type="module">
-import { resetDemo } from './app.js';
+import { resetDemo, cardOpts } from './app.js';
+import { createVoucher } from '../src/index.js';
+import { cardHtml } from '../src/ui/voucher-design.js';
+import { attachFoilTilt, requestGyro } from '../src/ui/foil-tilt.js';
+import { openCardFullscreen } from '../src/ui/card-fullscreen.js';
+
 document.getElementById('resetBtn').addEventListener('click', resetDemo);
+
+/* ⚠️ ใบบนหัวหน้าตั้งใจสร้างสด ไม่ได้ดึงจากที่เก็บ
+   เพราะถ้าดึงของจริง พอซ้อมฉาก 3 ไปแล้วใบจะกลายเป็น "ใช้แล้ว" (สีเทา ๆ)
+   แล้วหน้าเปิดงานจะเปิดมาเจอใบตายตั้งแต่วินาทีแรก */
+const hero = createVoucher({
+  kind: 'percent', value: 15,
+  title: 'ส่วนลดงานเหล็กดัด',
+  code: 'SPE-7K4M-92XH',
+  conditions: { minSpend: 10000, maxDiscount: 2000 },
+  audience: { segments: ['partner'] },
+  validUntil: '2026-12-31T23:59:59+07:00',
+});
+
+const slot = document.getElementById('heroCard');
+slot.innerHTML = cardHtml(hero, cardOpts(hero, 'compact'));
+attachFoilTilt(slot.querySelector('.vk-card'), {});
+
+/* แตะบัตร = เปิดเต็มจอ (ใบแนวยาวหมุนเอง) — จุดว้าวอยู่ตรงนี้ */
+let fsTilt = null;
+let busy = false;
+let dragged = false;
+slot.addEventListener('pointerdown', () => { dragged = false; }, { passive: true });
+slot.addEventListener('pointermove', () => { dragged = true; }, { passive: true });
+slot.addEventListener('click', () => {
+  if (dragged) return;
+  requestGyro();          /* iOS ให้ขอสิทธิ์ได้เฉพาะในจังหวะที่ผู้ใช้แตะจริง */
+  fsTilt = null; busy = false;
+  openCardFullscreen(cardHtml(hero, cardOpts(hero, 'ticket')), {
+    shape: 'ticket',
+    onReady: (c, rot) => {
+      if (fsTilt) { fsTilt.setRotate?.(rot ? 90 : 0); return; }
+      if (busy) return;
+      busy = true;
+      attachFoilTilt(c, { rotate: rot ? 90 : 0 }).then((r) => { fsTilt = r; });
+    },
+    onClose: () => { fsTilt?.destroy?.(); fsTilt = null; },
+  });
+});
 </script>
 </body>
 </html>
