@@ -104,7 +104,10 @@ export function bindHold(btn, { ms = 1000, onDone, onCancel } = {}) {
   const start = (e) => {
     if (btn.disabled) return;
     e.preventDefault();
-    btn.setPointerCapture?.(e.pointerId);
+    /* ⚠️ จับ pointer ไว้กันนิ้วเลื่อนออกนอกปุ่ม — แต่ห้ามให้มันล้มทั้งฟังก์ชัน
+       ถ้าจับไม่ได้ (pointerId ไม่ถูกต้อง) มันโยน error ออกมา แล้วบรรทัดข้างล่างจะไม่ทำงานเลย
+       = กดค้างแล้วไม่มีอะไรเกิดขึ้น โดยไม่มีอะไรฟ้อง · การจับ pointer เป็นของเสริม ไม่ใช่ของจำเป็น */
+    try { btn.setPointerCapture?.(e.pointerId); } catch { /* จับไม่ได้ก็ไม่เป็นไร */ }
     btn.dataset.holding = 'true';
     btn.dataset.armed = 'true';
     timer = setTimeout(() => { stop(false); onDone?.(); }, ms);
